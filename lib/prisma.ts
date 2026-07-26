@@ -3,16 +3,10 @@ import "server-only"
 import { PrismaMariaDb } from "@prisma/adapter-mariadb"
 
 import { PrismaClient } from "@/lib/generated/prisma/client"
-
-const connectionString = process.env.DATABASE_URL
-
-if (!connectionString) {
-  throw new Error("DATABASE_URL no está configurada")
-}
+import { createMariaDbAdapter } from "@/lib/prisma-adapter"
 
 const createPrismaClient = () => {
-  const adapter = new PrismaMariaDb(connectionString)
-  return new PrismaClient({ adapter })
+  return new PrismaClient({ adapter: createMariaDbAdapter(5) })
 }
 
 type AppPrismaClient = ReturnType<typeof createPrismaClient>
@@ -37,13 +31,12 @@ function getPrismaClient() {
   }
 
   const client = createPrismaClient()
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = client
-  }
+  // Importante: también en producción. Sin esto cada acceso abría un pool nuevo
+  // y MySQL llegaba a "Too many connections".
+  globalForPrisma.prisma = client
   return client
 }
 
-/** Proxy: en HMR recrea el cliente si faltan modelos nuevos. */
 export const prisma = new Proxy({} as AppPrismaClient, {
   get(_target, prop, receiver) {
     const client = getPrismaClient()
