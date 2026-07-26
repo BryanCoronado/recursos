@@ -125,8 +125,8 @@ async function main() {
     return
   }
 
-  if (password.length < 12) {
-    throw new Error("SEED_ADMIN_PASSWORD debe tener al menos 12 caracteres")
+  if (password.length < 8) {
+    throw new Error("SEED_ADMIN_PASSWORD debe tener al menos 8 caracteres")
   }
 
   const passwordHash = await hash(password, 12)
