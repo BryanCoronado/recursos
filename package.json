@@ -10,6 +10,8 @@
     "test": "vitest run",
     "db:seed": "prisma db seed",
     "worker": "tsx worker/index.ts",
+    "display:start": "bash scripts/start-display.sh",
+    "display:stop": "bash scripts/stop-display.sh",
     "deploy": "prisma generate && next build && pm2 restart recursos-web --update-env",
     "deploy:all": "prisma generate && next build && pm2 restart recursos-web recursos-worker --update-env"
   },

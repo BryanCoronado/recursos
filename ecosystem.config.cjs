@@ -13,11 +13,12 @@ module.exports = {
     {
       name: "recursos-worker",
       cwd: "/var/www/recursos",
-      // tsx directo evita el bug de PM2 con "npm run ..."
       script: "node_modules/tsx/dist/cli.mjs",
       args: ["worker/index.ts"],
       env: {
         NODE_ENV: "production",
+        // Pantalla virtual (opción A: Xvfb + noVNC)
+        DISPLAY: ":99",
       },
     },
   ],
