@@ -1,0 +1,13 @@
+:root {
+  --mich-black: #0b1220;
+  --mich-surface: #ffffff;
+  --mich-surface-muted: #f4f7fb;
+  --mich-surface-elevated: #eef3fa;
+  --mich-blue: #5d9cec;
+  --mich-blue-bright: #4a90e2;
+  --mich-indigo: #3f51b5;
+  --mich-border: rgba(63, 81, 181, 0.14);
+  --mich-glow: rgba(93, 156, 236, 0.35);
+  --mich-text: #0b1220;
+  --mich-muted: #5b6b82;
+}

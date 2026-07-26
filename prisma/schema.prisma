@@ -1,0 +1,197 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+model User {
+  id                  String        @id @default(cuid())
+  email               String        @unique
+  name                String
+  passwordHash        String
+  status              UserStatus    @default(ACTIVE)
+  mustChangePassword  Boolean       @default(true)
+  failedLoginAttempts Int           @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+  passwordChangedAt   DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  createdById         String?
+  createdBy           User?         @relation("UserCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdUsers        User[]        @relation("UserCreator")
+  roles               UserRole[]
+  auditLogs           AuditLog[]    @relation("AuditActor")
+  downloadJobs        DownloadJob[]
+
+  @@index([status])
+  @@index([createdById])
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  systemKey   String?          @unique
+  isSystem    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  module      String
+  action      String
+  label       String
+  description String?
+  roles       RolePermission[]
+
+  @@unique([module, action])
+  @@index([module])
+}
+
+model UserRole {
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+  assignedBy String?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  assignedAt   DateTime   @default(now())
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+enum ResourceProvider {
+  ENVATO
+  MAGNIFIC
+}
+
+enum ProviderSessionStatus {
+  DISCONNECTED
+  SYNCING
+  READY
+  EXPIRED
+}
+
+enum DownloadJobStatus {
+  QUEUED
+  RUNNING
+  DONE
+  FAILED
+}
+
+model ProviderSession {
+  id           String                @id @default(cuid())
+  provider     ResourceProvider      @unique
+  status       ProviderSessionStatus @default(DISCONNECTED)
+  profilePath  String
+  lastSyncedAt DateTime?
+  lastError    String?               @db.Text
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+}
+
+model DownloadJob {
+  id               String            @id @default(cuid())
+  provider         ResourceProvider
+  url              String            @db.Text
+  status           DownloadJobStatus @default(QUEUED)
+  category         String?
+  filePath         String?
+  fileName         String?
+  error            String?           @db.Text
+  requestedById    String
+  requestedBy      User              @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([status, createdAt])
+  @@index([provider, status])
+  @@index([requestedById])
+}
+
+model AutomationRule {
+  id         String           @id @default(cuid())
+  provider   ResourceProvider
+  category   String
+  /// Fragmento de ruta a coincidir, ej. "/free-files". Null = solo por categoría.
+  urlPattern String?
+  name       String
+  priority   Int              @default(100)
+  isActive   Boolean          @default(true)
+  steps      Json
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([provider, category, isActive, priority])
+  @@index([provider, isActive, priority])
+}
+
+enum AutomationRecordingStatus {
+  IDLE
+  RECORDING
+  STOPPED
+}
+
+/// Sesión de grabación de clics (singleton lógico por provider).
+model AutomationRecording {
+  id                 String                     @id @default(cuid())
+  provider           ResourceProvider           @unique
+  status             AutomationRecordingStatus  @default(IDLE)
+  name               String?
+  sampleUrl          String?                    @db.Text
+  urlPattern         String?
+  category           String                     @default("default")
+  priority           Int                        @default(50)
+  steps              Json                       @default("[]")
+  nextClickIsDownload Boolean                   @default(false)
+  /// Cambia solo al iniciar una grabación; el worker abre el browser una vez por token.
+  recordToken        String?
+  lastError          String?                    @db.Text
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+}
