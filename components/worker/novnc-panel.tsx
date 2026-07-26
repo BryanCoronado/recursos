@@ -130,9 +130,11 @@ export function NovncPanel({
       />
       <div className="h-[min(58vh,560px)] w-full bg-black">{iframe}</div>
       <p className="border-t border-[var(--mich-border)] px-4 py-2 text-[11px] text-[var(--mich-muted)]">
-        Si no carga, revisa que el display/VNC esté activo (
-        <code>bash scripts/start-display.sh</code>) y{" "}
-        <code>NEXT_PUBLIC_NOVNC_URL</code>.
+        Si no carga: arranca el display (
+        <code>bash scripts/start-display.sh</code>), configura Nginx{" "}
+        <code>/vnc/</code> y{" "}
+        <code>NEXT_PUBLIC_NOVNC_URL=&quot;/vnc/vnc.html&quot;</code>. No uses{" "}
+        <code>127.0.0.1</code> desde el navegador público.
       </p>
     </section>
   )
