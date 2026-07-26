@@ -82,6 +82,7 @@ function ResourceCard({
             alt={title}
             width={40}
             height={40}
+            unoptimized
             className="size-9 object-contain"
           />
         </span>

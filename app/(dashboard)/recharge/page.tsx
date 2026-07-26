@@ -133,6 +133,7 @@ export default async function RechargePage() {
             alt=""
             width={40}
             height={40}
+            unoptimized
             className="size-10 rounded-xl object-contain opacity-90"
           />
         </div>

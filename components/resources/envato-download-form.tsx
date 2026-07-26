@@ -165,6 +165,7 @@ export function EnvatoDownloadForm({
               alt="Envato"
               width={72}
               height={72}
+              unoptimized
               className="h-14 w-14 object-contain"
               priority
             />

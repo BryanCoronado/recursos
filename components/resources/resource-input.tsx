@@ -38,6 +38,7 @@ export function ResourceInput({
             alt={logoAlt}
             width={72}
             height={72}
+            unoptimized
             className="h-14 w-14 object-contain"
             priority
           />

@@ -188,6 +188,7 @@ export function AppShell({ user, navigation, children }: AppShellProps) {
                         alt={item.label}
                         width={20}
                         height={20}
+                        unoptimized
                         className="size-5 object-contain"
                       />
                     </span>
