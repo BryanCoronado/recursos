@@ -52,8 +52,9 @@ export function NovncPanel({
       key={frameKey}
       title={title}
       src={viewerUrl}
-      className="h-full w-full border-0 bg-black"
+      className="h-full w-full border-0 bg-[#1a2740]"
       allow="clipboard-read; clipboard-write"
+      referrerPolicy="no-referrer"
     />
   )
 
@@ -129,12 +130,13 @@ export function NovncPanel({
         onClose={() => setMode("minimized")}
       />
       <div className="h-[min(58vh,560px)] w-full bg-black">{iframe}</div>
-      <p className="border-t border-[var(--mich-border)] px-4 py-2 text-[11px] text-[var(--mich-muted)]">
-        Si no carga: arranca el display (
-        <code>bash scripts/start-display.sh</code>), configura Nginx{" "}
-        <code>/vnc/</code> y{" "}
-        <code>NEXT_PUBLIC_NOVNC_URL=&quot;/vnc/vnc.html&quot;</code>. No uses{" "}
-        <code>127.0.0.1</code> desde el navegador público.
+      <p className="border-t border-[var(--mich-border)] px-4 py-2 text-[11px] leading-relaxed text-[var(--mich-muted)]">
+        URL del iframe: <code className="break-all">{viewerUrl}</code>
+        <br />
+        Si la web es HTTPS y el VNC es HTTP (IP:6080), el navegador bloquea el
+        iframe (queda negro). Usa proxy Nginx{" "}
+        <code>/vnc/</code> en el mismo dominio HTTPS, o abre VNC en pestaña
+        nueva.
       </p>
     </section>
   )

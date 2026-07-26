@@ -22,6 +22,11 @@ if ! pgrep -f "openbox" >/dev/null 2>&1; then
   sleep 1
 fi
 
+# Fondo visible (si no, el escritorio vacío se ve negro y parece “roto”)
+if command -v xsetroot >/dev/null 2>&1; then
+  DISPLAY=":${DISPLAY_NUM}" xsetroot -solid "#1a2740" >/dev/null 2>&1 || true
+fi
+
 if ! pgrep -f "x11vnc.*rfbport ${VNC_PORT}" >/dev/null 2>&1; then
   echo "[display] Iniciando x11vnc :${VNC_PORT}"
   x11vnc -display ":${DISPLAY_NUM}" -forever -shared -rfbport "${VNC_PORT}" -nopw -localhost \
@@ -38,5 +43,6 @@ fi
 
 echo "[display] Listo"
 echo "  DISPLAY=${DISPLAY}"
-echo "  noVNC: http://TU_IP:${NOVNC_PORT}/vnc.html"
-echo "  (mejor protégelo con firewall/Nginx + auth)"
+echo "  noVNC local: http://127.0.0.1:${NOVNC_PORT}/vnc.html"
+echo "  Embebido: configura Nginx /vnc/ y NEXT_PUBLIC_NOVNC_URL=/vnc/vnc.html"
+echo "  (escritorio vacío = azul oscuro; Chromium aparece al Iniciar sesión / Grabar)"
