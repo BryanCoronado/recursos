@@ -31,8 +31,9 @@ function appendNovncParams(href: string) {
       url.searchParams.set("reconnect", "true")
     }
 
-    // Con proxy Nginx en /vnc/, el WebSocket debe ir a /vnc/websockify
-    // (si no, noVNC pide /websockify en la raíz → pantalla negra).
+    // path del WebSocket:
+    // - página en /vnc/ → preferimos vnc/websockify (mismo prefijo)
+    // - además Nginx debe exponer /websockify (ver scripts/nginx-novnc-snippet.conf)
     if (!url.searchParams.has("path")) {
       const underVncProxy =
         isRelative &&
