@@ -3,8 +3,8 @@ module.exports = {
     {
       name: "recursos-web",
       cwd: "/var/www/recursos",
-      script: "npm",
-      args: "start",
+      script: "node_modules/next/dist/bin/next",
+      args: ["start", "-p", "3000"],
       env: {
         NODE_ENV: "production",
         PORT: 3000,
@@ -13,8 +13,9 @@ module.exports = {
     {
       name: "recursos-worker",
       cwd: "/var/www/recursos",
-      script: "npm",
-      args: "run worker",
+      // tsx directo evita el bug de PM2 con "npm run ..."
+      script: "node_modules/tsx/dist/cli.mjs",
+      args: ["worker/index.ts"],
       env: {
         NODE_ENV: "production",
       },
