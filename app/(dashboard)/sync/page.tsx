@@ -51,7 +51,7 @@ export default async function SyncPage() {
         </p>
       </div>
 
-      <Card className="border-[var(--mich-border)] bg-white">
+      <Card className="border-[var(--mich-border)] bg-[var(--mich-surface)]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <RefreshCw className="size-4 text-[var(--mich-blue)]" />

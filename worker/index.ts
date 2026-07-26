@@ -1,4 +1,5 @@
 import {
+  expireMembershipsTick,
   processAutomationRecording,
   processProviderSyncRequests,
   processQueuedDownloads,
@@ -8,6 +9,7 @@ import { prisma } from "./prisma"
 const POLL_MS = 2500
 
 async function tick() {
+  await expireMembershipsTick()
   await processProviderSyncRequests()
   await processAutomationRecording()
   await processQueuedDownloads()

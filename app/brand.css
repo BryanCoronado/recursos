@@ -11,3 +11,17 @@
   --mich-text: #0b1220;
   --mich-muted: #5b6b82;
 }
+
+.dark {
+  --mich-black: #060a12;
+  --mich-surface: #121a2b;
+  --mich-surface-muted: #0b1220;
+  --mich-surface-elevated: #1a2438;
+  --mich-blue: #6eabf0;
+  --mich-blue-bright: #7eb6f5;
+  --mich-indigo: #7b8cff;
+  --mich-border: rgba(126, 182, 245, 0.16);
+  --mich-glow: rgba(110, 171, 240, 0.28);
+  --mich-text: #e8eef8;
+  --mich-muted: #93a4bc;
+}

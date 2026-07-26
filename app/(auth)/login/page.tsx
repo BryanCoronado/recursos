@@ -1,8 +1,9 @@
-import { getServerSession } from "next-auth/next"
-import Image from "next/image"
 import { redirect } from "next/navigation"
+import { getServerSession } from "next-auth/next"
 
 import { LoginForm } from "@/components/auth/login-form"
+import { BrandLogo } from "@/components/brand/brand-logo"
+import { ThemeToggle } from "@/components/theme/theme-toggle"
 import { authOptions } from "@/lib/auth/config"
 
 type LoginPageProps = {
@@ -21,6 +22,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-[var(--mich-surface-muted)] p-4">
+      <div className="absolute right-4 top-4 z-20">
+        <ThemeToggle />
+      </div>
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-50"
@@ -43,20 +47,18 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
       <section className="relative w-full max-w-[420px]">
         <div className="mb-8 flex flex-col items-center text-center">
-            <Image
-              src="/michitech.png"
-              alt="MICHITECH"
-              width={220}
-              height={220}
-              priority
-              className="h-auto w-[168px] sm:w-[196px]"
-            />
+          <BrandLogo
+            width={280}
+            height={280}
+            priority
+            className="w-[220px] sm:w-[260px]"
+          />
           <p className="mt-6 max-w-sm text-[15px] leading-6 text-[var(--mich-muted)]">
             Inicia sesión en tu panel de recursos.
           </p>
         </div>
 
-        <div className="rounded-3xl border border-[var(--mich-border)] bg-white p-6 shadow-[0_24px_60px_-36px_rgba(11,18,32,0.35)] sm:p-7">
+        <div className="rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-6 shadow-[0_24px_60px_-36px_rgba(11,18,32,0.35)] sm:p-7">
          
           <LoginForm callbackUrl={callbackUrl} />
         </div>

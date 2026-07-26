@@ -1,5 +1,8 @@
 import type { Metadata } from "next"
 import { JetBrains_Mono, Manrope, Outfit } from "next/font/google"
+
+import { ThemeProvider } from "@/components/theme/theme-provider"
+
 import "./globals.css"
 
 const manrope = Manrope({
@@ -28,6 +31,8 @@ export const metadata: Metadata = {
   description: "Panel de recursos MICHITECH",
 }
 
+const themeInitScript = `(function(){try{var t=localStorage.getItem('mich-theme');var d=t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -36,9 +41,15 @@ export default function RootLayout({
   return (
     <html
       lang="es"
+      suppressHydrationWarning
       className={`${manrope.variable} ${outfit.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="flex min-h-full flex-col font-sans">
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   )
 }

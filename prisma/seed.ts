@@ -73,6 +73,30 @@ async function main() {
     skipDuplicates: true,
   })
 
+  // Clientes con Envato también ven Recarga / WhatsApp
+  const rechargePermission = await prisma.permission.findUnique({
+    where: { key: "recharge:access" },
+    select: { id: true },
+  })
+  const envatoPermission = await prisma.permission.findUnique({
+    where: { key: "envato:access" },
+    select: { id: true },
+  })
+
+  if (rechargePermission && envatoPermission) {
+    const rolesWithEnvato = await prisma.rolePermission.findMany({
+      where: { permissionId: envatoPermission.id },
+      select: { roleId: true },
+    })
+    await prisma.rolePermission.createMany({
+      data: rolesWithEnvato.map(({ roleId }) => ({
+        roleId,
+        permissionId: rechargePermission.id,
+      })),
+      skipDuplicates: true,
+    })
+  }
+
   await prisma.providerSession.upsert({
     where: { provider: "ENVATO" },
     update: {},

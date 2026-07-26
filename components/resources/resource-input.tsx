@@ -18,7 +18,7 @@ export function ResourceInput({
   logoAlt,
 }: ResourceInputProps) {
   return (
-    <section className="relative isolate flex min-h-[calc(100vh-10rem)] items-center justify-center overflow-hidden rounded-3xl border border-[var(--mich-border)] bg-white px-6 py-20 shadow-[0_24px_60px_-36px_rgba(11,18,32,0.3)]">
+    <section className="relative isolate flex min-h-[calc(100vh-10rem)] items-center justify-center overflow-hidden rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] px-6 py-20 shadow-[0_24px_60px_-36px_rgba(11,18,32,0.3)]">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 z-0 opacity-60"
@@ -32,7 +32,7 @@ export function ResourceInput({
       />
       <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--mich-blue)]/15 blur-[120px]" />
       <div className="relative z-10 w-full max-w-2xl text-center">
-        <div className="mx-auto mb-6 flex size-20 items-center justify-center overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-white p-3 shadow-[0_12px_30px_-16px_var(--mich-glow)]">
+        <div className="mx-auto mb-6 flex size-20 items-center justify-center overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-3 shadow-[0_12px_30px_-16px_var(--mich-glow)]">
           <Image
             src={logoSrc}
             alt={logoAlt}

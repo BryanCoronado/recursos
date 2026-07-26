@@ -7,6 +7,7 @@ import { useEffect, useState, type ReactNode } from "react"
 import {
   ChevronLeft,
   ChevronRight,
+  CreditCard,
   Gem,
   ImageIcon,
   LayoutDashboard,
@@ -16,12 +17,15 @@ import {
   ScrollText,
   Shield,
   Users,
+  Wallet,
   Workflow,
   X,
   type LucideIcon,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 
+import { BrandLogo } from "@/components/brand/brand-logo"
+import { ThemeToggle } from "@/components/theme/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -31,6 +35,8 @@ const ICONS = {
   magnific: ImageIcon,
   sync: RefreshCw,
   automations: Workflow,
+  subscriptions: CreditCard,
+  recharge: Wallet,
   users: Users,
   roles: Shield,
   audit: ScrollText,
@@ -95,7 +101,7 @@ export function AppShell({ user, navigation, children }: AppShellProps) {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[var(--mich-border)] bg-white/95 shadow-[0_10px_40px_-24px_rgba(11,18,32,0.35)] backdrop-blur-xl transition-all duration-300 ease-out",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[var(--mich-border)] bg-[var(--mich-surface)]/95 shadow-[0_10px_40px_-24px_rgba(11,18,32,0.35)] backdrop-blur-xl transition-all duration-300 ease-out",
           "w-[272px] md:translate-x-0",
           collapsed ? "md:w-[88px]" : "md:w-[272px]",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
@@ -114,14 +120,8 @@ export function AppShell({ user, navigation, children }: AppShellProps) {
               collapsed && "md:justify-center"
             )}
           >
-            <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--mich-border)] bg-white shadow-[0_8px_24px_-12px_var(--mich-glow)]">
-              <Image
-                src="/michitech.png"
-                alt="MICHITECH"
-                width={40}
-                height={40}
-                className="size-9 object-contain"
-              />
+            <span className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)] shadow-[0_8px_24px_-12px_var(--mich-glow)]">
+              <BrandLogo width={52} height={52} className="size-12" priority />
             </span>
             <span
               className={cn(
@@ -182,7 +182,7 @@ export function AppShell({ user, navigation, children }: AppShellProps) {
                   )}
                 >
                   {logoSrc ? (
-                    <span className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white">
+                    <span className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--mich-surface)]">
                       <Image
                         src={logoSrc}
                         alt={item.label}
@@ -251,7 +251,7 @@ export function AppShell({ user, navigation, children }: AppShellProps) {
           collapsed ? "md:pl-[88px]" : "md:pl-[272px]"
         )}
       >
-        <header className="sticky top-0 z-30 border-b border-[var(--mich-border)] bg-white/80 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 border-b border-[var(--mich-border)] bg-[var(--mich-surface)]/80 backdrop-blur-xl">
           <div className="flex h-16 items-center justify-between gap-3 px-4 md:px-8">
             <div className="flex items-center gap-2">
               <Button
@@ -284,7 +284,8 @@ export function AppShell({ user, navigation, children }: AppShellProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <ThemeToggle />
               <div className="hidden text-right text-xs sm:block">
                 <p className="font-medium text-[var(--mich-text)]">{user.name}</p>
                 <p className="text-[var(--mich-muted)]">

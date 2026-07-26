@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import { useActionState, useEffect, useState, useTransition } from "react"
 import {
   AlertCircle,
@@ -10,6 +9,7 @@ import {
   ExternalLink,
   Loader2,
 } from "lucide-react"
+import Image from "next/image"
 
 import {
   createEnvatoDownloadJob,
@@ -21,9 +21,21 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
+type EnvatoQuota =
+  | { allowed: true; unlimited: true; membershipEndsAt: string }
+  | { allowed: true; unlimited: false; used: number; remaining: number }
+  | {
+      allowed: false
+      unlimited: false
+      used: number
+      remaining: 0
+      reason: string
+    }
+
 type EnvatoDownloadFormProps = {
   sessionReady: boolean
   initialHistory: EnvatoHistoryItem[]
+  quota: EnvatoQuota
 }
 
 type JobView = {
@@ -67,6 +79,7 @@ function shortenUrl(url: string) {
 export function EnvatoDownloadForm({
   sessionReady,
   initialHistory,
+  quota,
 }: EnvatoDownloadFormProps) {
   const [state, formAction, pending] = useActionState(
     createEnvatoDownloadJob,
@@ -131,7 +144,7 @@ export function EnvatoDownloadForm({
 
   return (
     <div className="space-y-8">
-      <section className="relative isolate overflow-hidden rounded-3xl border border-[var(--mich-border)] bg-white px-6 py-16 shadow-[0_24px_60px_-36px_rgba(11,18,32,0.3)] sm:px-10">
+      <section className="relative isolate overflow-hidden rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] px-6 py-16 shadow-[0_24px_60px_-36px_rgba(11,18,32,0.3)] sm:px-10">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-0 opacity-60"
@@ -146,7 +159,7 @@ export function EnvatoDownloadForm({
         <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--mich-blue)]/15 blur-[120px]" />
 
         <div className="relative z-10 mx-auto w-full max-w-2xl text-center">
-          <div className="mx-auto mb-6 flex size-20 items-center justify-center overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-white p-3 shadow-[0_12px_30px_-16px_var(--mich-glow)]">
+          <div className="mx-auto mb-6 flex size-20 items-center justify-center overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-3 shadow-[0_12px_30px_-16px_var(--mich-glow)]">
             <Image
               src="/envato.png"
               alt="Envato"
@@ -166,6 +179,32 @@ export function EnvatoDownloadForm({
             Pega el enlace de Elements y descarga el recurso con la sesión
             sincronizada.
           </p>
+
+          <div className="mx-auto mt-4 max-w-md rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-4 py-3 text-sm text-[var(--mich-muted)]">
+            {quota.unlimited ? (
+              <p>
+                Membresía activa · descargas ilimitadas
+                {"membershipEndsAt" in quota
+                  ? ` hasta ${new Date(quota.membershipEndsAt).toLocaleDateString("es")}`
+                  : ""}
+              </p>
+            ) : quota.allowed ? (
+              <p>
+                Plan gratis · {quota.remaining} de{" "}
+                {quota.used + quota.remaining} descargas restantes.{" "}
+                <a href="/recharge" className="text-[var(--mich-blue-bright)] underline">
+                  Recargar
+                </a>
+              </p>
+            ) : (
+              <p className="text-amber-900">
+                {quota.reason}{" "}
+                <a href="/recharge" className="underline">
+                  Ir a Recarga
+                </a>
+              </p>
+            )}
+          </div>
 
           {!sessionReady ? (
             <p className="mx-auto mt-8 max-w-md rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -196,7 +235,7 @@ export function EnvatoDownloadForm({
             />
             <Button
               type="submit"
-              disabled={!sessionReady || pending}
+              disabled={!sessionReady || pending || !quota.allowed}
               className="h-11 rounded-xl px-6"
             >
               {pending ? <Loader2 className="animate-spin" /> : <Download />}
@@ -238,7 +277,7 @@ export function EnvatoDownloadForm({
         </div>
       </section>
 
-      <section className="rounded-3xl border border-[var(--mich-border)] bg-white p-6 shadow-[0_16px_40px_-32px_rgba(11,18,32,0.25)] sm:p-8">
+      <section className="rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-6 shadow-[0_16px_40px_-32px_rgba(11,18,32,0.25)] sm:p-8">
         <div className="mb-5 flex items-end justify-between gap-3">
           <div>
             <h2 className="font-heading text-xl font-semibold tracking-[-0.03em] text-[var(--mich-text)]">

@@ -84,6 +84,40 @@
   --sidebar-ring: #5d9cec;
 }
 
+.dark {
+  --background: #0b1220;
+  --foreground: #e8eef8;
+  --card: #121a2b;
+  --card-foreground: #e8eef8;
+  --popover: #121a2b;
+  --popover-foreground: #e8eef8;
+  --primary: #6eabf0;
+  --primary-foreground: #0b1220;
+  --secondary: #1a2438;
+  --secondary-foreground: #e8eef8;
+  --muted: #1a2438;
+  --muted-foreground: #93a4bc;
+  --accent: #1a2740;
+  --accent-foreground: #e8eef8;
+  --destructive: oklch(0.65 0.2 25);
+  --border: rgba(126, 182, 245, 0.16);
+  --input: rgba(126, 182, 245, 0.22);
+  --ring: #6eabf0;
+  --chart-1: #6eabf0;
+  --chart-2: #7eb6f5;
+  --chart-3: #7b8cff;
+  --chart-4: #4a90e2;
+  --chart-5: #a8c8f5;
+  --sidebar: #121a2b;
+  --sidebar-foreground: #e8eef8;
+  --sidebar-primary: #6eabf0;
+  --sidebar-primary-foreground: #0b1220;
+  --sidebar-accent: #1a2740;
+  --sidebar-accent-foreground: #e8eef8;
+  --sidebar-border: rgba(126, 182, 245, 0.16);
+  --sidebar-ring: #6eabf0;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -95,6 +129,11 @@
       radial-gradient(circle at 92% 0%, rgba(63, 81, 181, 0.1), transparent 28rem);
     background-attachment: fixed;
     font-feature-settings: "ss01" on, "cv11" on;
+  }
+  .dark body {
+    background-image:
+      radial-gradient(circle at 12% -10%, rgba(110, 171, 240, 0.14), transparent 30rem),
+      radial-gradient(circle at 88% 0%, rgba(123, 140, 255, 0.1), transparent 26rem);
   }
   html {
     @apply font-sans;

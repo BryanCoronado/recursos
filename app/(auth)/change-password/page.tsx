@@ -16,7 +16,7 @@ export default async function ChangePasswordPage() {
   return (
     <main className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-[var(--mich-surface-muted)] p-4">
       <div className="absolute left-1/2 top-1/2 -z-10 size-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--mich-blue)]/18 blur-[130px]" />
-      <Card className="w-full max-w-md border-[var(--mich-border)] bg-white shadow-[0_24px_60px_-36px_rgba(11,18,32,0.3)]">
+      <Card className="w-full max-w-md border-[var(--mich-border)] bg-[var(--mich-surface)] shadow-[0_24px_60px_-36px_rgba(11,18,32,0.3)]">
         <CardHeader>
           <div className="mb-2 flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--mich-blue)] to-[var(--mich-indigo)] text-white shadow-[0_0_30px_-8px_var(--mich-glow)]">
             <LockKeyhole className="size-5" />

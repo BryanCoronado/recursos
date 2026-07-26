@@ -20,7 +20,8 @@ function isClientCurrent(client: AppPrismaClient | undefined) {
     client?.providerSession &&
       client?.automationRecording &&
       client?.downloadJob &&
-      client?.automationRule
+      client?.automationRule &&
+      client?.membership
   )
 }
 

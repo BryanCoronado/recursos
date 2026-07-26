@@ -4,6 +4,7 @@ import { z } from "zod"
 
 import { requirePermission } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
+import { checkEnvatoDownloadAccess } from "@/lib/billing/membership"
 import { prisma } from "@/lib/prisma"
 
 export type EnvatoDownloadState = {
@@ -39,6 +40,11 @@ export async function createEnvatoDownloadJob(
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "URL inválida" }
+  }
+
+  const access = await checkEnvatoDownloadAccess(user.id)
+  if (!access.allowed) {
+    return { error: access.reason }
   }
 
   const session = await prisma.providerSession.findUnique({

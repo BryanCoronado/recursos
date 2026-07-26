@@ -34,6 +34,18 @@ const navigation = [
     permission: PERMISSIONS.AUTOMATIONS_MANAGE,
   },
   {
+    href: "/recharge",
+    label: "Recarga",
+    icon: "recharge",
+    permission: PERMISSIONS.RECHARGE_ACCESS,
+  },
+  {
+    href: "/subscriptions",
+    label: "Membresías",
+    icon: "subscriptions",
+    permission: PERMISSIONS.SUBSCRIPTIONS_MANAGE,
+  },
+  {
     href: "/users",
     label: "Usuarios",
     icon: "users",

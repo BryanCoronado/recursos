@@ -35,6 +35,9 @@ model User {
   roles               UserRole[]
   auditLogs           AuditLog[]    @relation("AuditActor")
   downloadJobs        DownloadJob[]
+  memberships         Membership[]
+  cancelledMemberships Membership[] @relation("MembershipCancelledBy")
+  createdMemberships  Membership[]  @relation("MembershipCreatedBy")
 
   @@index([status])
   @@index([createdById])
@@ -194,4 +197,46 @@ model AutomationRecording {
   lastError          String?                    @db.Text
   createdAt          DateTime                   @default(now())
   updatedAt          DateTime                   @updatedAt
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+enum SubscriptionPlan {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+/// Membresía de un proveedor (ej. Envato a S/ 20 por mes).
+model Membership {
+  id                String             @id @default(cuid())
+  userId            String
+  provider          ResourceProvider
+  plan              SubscriptionPlan
+  /// Duración contratada en meses (1, 3, 12...).
+  months            Int
+  /// Precio mensual en soles al momento de contratar.
+  monthlyPriceSoles Decimal            @db.Decimal(10, 2)
+  /// Total cobrado (months * monthlyPriceSoles).
+  totalPriceSoles   Decimal            @db.Decimal(10, 2)
+  status            SubscriptionStatus @default(ACTIVE)
+  startsAt          DateTime
+  endsAt            DateTime
+  cancelledAt       DateTime?
+  cancelledById     String?
+  createdById       String?
+  notes             String?            @db.Text
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cancelledBy       User?              @relation("MembershipCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
+  createdBy         User?              @relation("MembershipCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([userId, provider, status])
+  @@index([provider, status, endsAt])
+  @@index([endsAt])
 }

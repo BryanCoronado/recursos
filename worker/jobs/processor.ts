@@ -18,6 +18,16 @@ let recorderOpening = false
 let handledSyncAtMs: number | null = null
 let handledRecordingToken: string | null = null
 
+export async function expireMembershipsTick() {
+  await prisma.membership.updateMany({
+    where: {
+      status: "ACTIVE",
+      endsAt: { lt: new Date() },
+    },
+    data: { status: "EXPIRED" },
+  })
+}
+
 export async function processProviderSyncRequests() {
   const session = await prisma.providerSession.findUnique({
     where: { provider: "ENVATO" },

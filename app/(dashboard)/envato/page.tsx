@@ -2,6 +2,7 @@ import { AccessDenied } from "@/components/auth/access-denied"
 import { EnvatoDownloadForm } from "@/components/resources/envato-download-form"
 import { requirePagePermission } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
+import { checkEnvatoDownloadAccess } from "@/lib/billing/membership"
 import { prisma } from "@/lib/prisma"
 
 export default async function EnvatoPage() {
@@ -10,7 +11,7 @@ export default async function EnvatoPage() {
     return <AccessDenied moduleName="Envato" />
   }
 
-  const [session, jobs] = await Promise.all([
+  const [session, jobs, quota] = await Promise.all([
     prisma.providerSession.findUnique({
       where: { provider: "ENVATO" },
       select: { status: true },
@@ -32,11 +33,22 @@ export default async function EnvatoPage() {
         finishedAt: true,
       },
     }),
+    checkEnvatoDownloadAccess(access.user.id),
   ])
+
+  const quotaForClient =
+    quota.unlimited === true
+      ? {
+          allowed: true as const,
+          unlimited: true as const,
+          membershipEndsAt: quota.membershipEndsAt.toISOString(),
+        }
+      : quota
 
   return (
     <EnvatoDownloadForm
       sessionReady={session?.status === "READY"}
+      quota={quotaForClient}
       initialHistory={jobs.map((job) => ({
         id: job.id,
         status: job.status,

@@ -73,10 +73,10 @@ function ResourceCard({
   return (
     <Link
       href={href}
-      className="group relative overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-white p-6 shadow-[0_16px_40px_-30px_rgba(11,18,32,0.35)] transition-all hover:-translate-y-0.5 hover:border-[var(--mich-blue)]/45 hover:shadow-[0_20px_50px_-28px_var(--mich-glow)]"
+      className="group relative overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-6 shadow-[0_16px_40px_-30px_rgba(11,18,32,0.35)] transition-all hover:-translate-y-0.5 hover:border-[var(--mich-blue)]/45 hover:shadow-[0_20px_50px_-28px_var(--mich-glow)]"
     >
       <div className="flex items-start justify-between">
-        <span className="flex size-12 items-center justify-center overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-white p-1.5 shadow-sm">
+        <span className="flex size-12 items-center justify-center overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-1.5 shadow-sm">
           <Image
             src={logoSrc}
             alt={title}
@@ -107,7 +107,7 @@ function MetricCard({
   icon: typeof Users
 }) {
   return (
-    <Card className="border-[var(--mich-border)] bg-white shadow-[0_16px_40px_-30px_rgba(11,18,32,0.3)]">
+    <Card className="border-[var(--mich-border)] bg-[var(--mich-surface)] shadow-[0_16px_40px_-30px_rgba(11,18,32,0.3)]">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-sm text-[var(--mich-muted)]">{title}</CardTitle>
         <Icon className="size-4 text-[var(--mich-blue)]" />
