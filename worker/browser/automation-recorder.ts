@@ -10,6 +10,7 @@ import {
   type ResourceProviderId,
 } from "../../lib/providers/catalog"
 import { providerProfilePath } from "../../lib/storage/paths"
+import { ensureWorkerDisplay } from "./display"
 import { ensureDir } from "./helpers"
 import { prisma } from "../prisma"
 
@@ -217,6 +218,7 @@ async function attachRecorder(page: Page, provider: ResourceProviderId) {
 }
 
 export async function openAutomationRecorder(provider: ResourceProviderId) {
+  ensureWorkerDisplay()
   const def = getProvider(provider)
   const recording = await prisma.automationRecording.findUnique({
     where: { provider },

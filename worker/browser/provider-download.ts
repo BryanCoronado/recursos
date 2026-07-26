@@ -11,6 +11,7 @@ import {
 } from "../../lib/providers/catalog"
 import { jobDownloadDir, providerProfilePath } from "../../lib/storage/paths"
 import { detectEnvatoCategory, ensureDir, runAutomationSteps } from "./helpers"
+import { ensureWorkerDisplay } from "./display"
 import { prisma } from "../prisma"
 
 function detectCategory(provider: ResourceProviderId, url: string) {
@@ -54,6 +55,7 @@ export async function downloadProviderResource(
   const profilePath = session.profilePath || providerProfilePath(def.slug)
   const downloadDir = jobDownloadDir(jobId)
   ensureDir(downloadDir)
+  ensureWorkerDisplay()
 
   const context = await chromium.launchPersistentContext(profilePath, {
     headless: false,

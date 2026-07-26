@@ -17,7 +17,7 @@ module.exports = {
       args: ["worker/index.ts"],
       env: {
         NODE_ENV: "production",
-        // Pantalla virtual (opción A: Xvfb + noVNC)
+        // Obligatoria para Chromium headed + Xvfb
         DISPLAY: ":99",
       },
     },

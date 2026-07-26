@@ -5,6 +5,7 @@ import {
   type ResourceProviderId,
 } from "../../lib/providers/catalog"
 import { providerProfilePath } from "../../lib/storage/paths"
+import { ensureWorkerDisplay } from "./display"
 import { ensureDir } from "./helpers"
 
 /** Una ventana de sync por proveedor (perfiles independientes). */
@@ -20,6 +21,7 @@ export function listOpenSyncProviders(): ResourceProviderId[] {
 }
 
 export async function openSyncBrowser(provider: ResourceProviderId) {
+  ensureWorkerDisplay()
   const def = getProvider(provider)
   const profilePath = providerProfilePath(def.slug)
   ensureDir(profilePath)
