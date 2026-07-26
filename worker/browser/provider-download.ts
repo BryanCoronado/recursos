@@ -1,5 +1,3 @@
-import { chromium } from "playwright"
-
 import { pickAutomationRule } from "../../lib/automation/match"
 import {
   automationStepsSchema,
@@ -11,7 +9,7 @@ import {
 } from "../../lib/providers/catalog"
 import { jobDownloadDir, providerProfilePath } from "../../lib/storage/paths"
 import { detectEnvatoCategory, ensureDir, runAutomationSteps } from "./helpers"
-import { ensureWorkerDisplay } from "./display"
+import { launchWorkerContext } from "./launch"
 import { prisma } from "../prisma"
 
 function detectCategory(provider: ResourceProviderId, url: string) {
@@ -55,14 +53,9 @@ export async function downloadProviderResource(
   const profilePath = session.profilePath || providerProfilePath(def.slug)
   const downloadDir = jobDownloadDir(jobId)
   ensureDir(downloadDir)
-  ensureWorkerDisplay()
 
-  const context = await chromium.launchPersistentContext(profilePath, {
-    headless: false,
-    acceptDownloads: true,
-    viewport: { width: 1360, height: 900 },
+  const context = await launchWorkerContext(profilePath, {
     downloadsPath: downloadDir,
-    args: ["--disable-blink-features=AutomationControlled"],
   })
 
   try {

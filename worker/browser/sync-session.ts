@@ -1,12 +1,12 @@
-import { chromium, type BrowserContext } from "playwright"
+import { type BrowserContext } from "playwright"
 
 import {
   getProvider,
   type ResourceProviderId,
 } from "../../lib/providers/catalog"
 import { providerProfilePath } from "../../lib/storage/paths"
-import { ensureWorkerDisplay } from "./display"
 import { ensureDir } from "./helpers"
+import { launchWorkerContext } from "./launch"
 
 /** Una ventana de sync por proveedor (perfiles independientes). */
 const syncContexts = new Map<ResourceProviderId, BrowserContext>()
@@ -21,7 +21,6 @@ export function listOpenSyncProviders(): ResourceProviderId[] {
 }
 
 export async function openSyncBrowser(provider: ResourceProviderId) {
-  ensureWorkerDisplay()
   const def = getProvider(provider)
   const profilePath = providerProfilePath(def.slug)
   ensureDir(profilePath)
@@ -38,12 +37,7 @@ export async function openSyncBrowser(provider: ResourceProviderId) {
     closingIntentionally.delete(provider)
   }
 
-  const context = await chromium.launchPersistentContext(profilePath, {
-    headless: false,
-    viewport: { width: 1360, height: 900 },
-    acceptDownloads: true,
-    args: ["--disable-blink-features=AutomationControlled"],
-  })
+  const context = await launchWorkerContext(profilePath)
 
   syncContexts.set(provider, context)
 

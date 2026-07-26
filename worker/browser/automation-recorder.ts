@@ -1,4 +1,4 @@
-import { chromium, type BrowserContext, type Page } from "playwright"
+import { type BrowserContext, type Page } from "playwright"
 import { z } from "zod"
 
 import {
@@ -10,8 +10,8 @@ import {
   type ResourceProviderId,
 } from "../../lib/providers/catalog"
 import { providerProfilePath } from "../../lib/storage/paths"
-import { ensureWorkerDisplay } from "./display"
 import { ensureDir } from "./helpers"
+import { launchWorkerContext } from "./launch"
 import { prisma } from "../prisma"
 
 const RECORDER_INIT = `(() => {
@@ -218,7 +218,6 @@ async function attachRecorder(page: Page, provider: ResourceProviderId) {
 }
 
 export async function openAutomationRecorder(provider: ResourceProviderId) {
-  ensureWorkerDisplay()
   const def = getProvider(provider)
   const recording = await prisma.automationRecording.findUnique({
     where: { provider },
@@ -257,12 +256,7 @@ export async function openAutomationRecorder(provider: ResourceProviderId) {
     closingIntentionally.delete(provider)
   }
 
-  const context = await chromium.launchPersistentContext(profilePath, {
-    headless: false,
-    viewport: { width: 1360, height: 900 },
-    acceptDownloads: true,
-    args: ["--disable-blink-features=AutomationControlled"],
-  })
+  const context = await launchWorkerContext(profilePath)
 
   recordContexts.set(provider, context)
   await context.addInitScript(RECORDER_INIT)
