@@ -1,23 +1,41 @@
 import { AccessDenied } from "@/components/auth/access-denied"
 import { AutomationRecorderPanel } from "@/components/admin/automation-recorder-panel"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { NovncPanel } from "@/components/worker/novnc-panel"
 import { requirePagePermission } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
+import { getNovncViewerUrl } from "@/lib/novnc"
+import {
+  isResourceProviderId,
+  type ResourceProviderId,
+} from "@/lib/providers/catalog"
 import { prisma } from "@/lib/prisma"
 
-export default async function RecordAutomationPage() {
+export default async function RecordAutomationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ provider?: string }>
+}) {
   const access = await requirePagePermission(PERMISSIONS.AUTOMATIONS_MANAGE)
   if (!access.allowed) return <AccessDenied moduleName="Automatizaciones" />
 
+  const params = await searchParams
+  const provider: ResourceProviderId =
+    params.provider && isResourceProviderId(params.provider)
+      ? params.provider
+      : "ENVATO"
+
   const recording = await prisma.automationRecording.upsert({
-    where: { provider: "ENVATO" },
+    where: { provider },
     update: {},
     create: {
-      provider: "ENVATO",
+      provider,
       status: "IDLE",
       steps: [],
     },
   })
+
+  const isRecording = recording.status === "RECORDING"
+  const novncUrl = getNovncViewerUrl()
 
   return (
     <div className="space-y-6">
@@ -26,29 +44,34 @@ export default async function RecordAutomationPage() {
           Grabar automatización
         </h1>
         <p className="mt-2 max-w-2xl text-[15px] text-[var(--mich-muted)]">
-          Abre la URL de ejemplo (por ejemplo{" "}
-          <code>/free-files</code>), haz los clics en el navegador visible y
-          guarda la secuencia como regla.
+          Elige proveedor, abre el escritorio del worker abajo (iframe) y graba
+          los clics. Puedes maximizar o minimizar el panel.
         </p>
       </div>
-      <Card className="border-[var(--mich-border)]">
-        <CardHeader>
-          <CardTitle>Grabadora Envato</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AutomationRecorderPanel
-            initial={{
-              status: recording.status,
-              name: recording.name,
-              sampleUrl: recording.sampleUrl,
-              urlPattern: recording.urlPattern,
-              nextClickIsDownload: recording.nextClickIsDownload,
-              lastError: recording.lastError,
-              steps: recording.steps,
-            }}
-          />
-        </CardContent>
-      </Card>
+
+      <NovncPanel
+        viewerUrl={novncUrl}
+        autoOpen={isRecording}
+        title="Escritorio del worker (grabación)"
+      />
+
+      <section className="rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-6 shadow-[0_16px_40px_-32px_rgba(11,18,32,0.3)]">
+        <h2 className="font-heading mb-4 text-lg font-semibold tracking-[-0.03em]">
+          Controles de grabación
+        </h2>
+        <AutomationRecorderPanel
+          provider={provider}
+          initial={{
+            status: recording.status,
+            name: recording.name,
+            sampleUrl: recording.sampleUrl,
+            urlPattern: recording.urlPattern,
+            nextClickIsDownload: recording.nextClickIsDownload,
+            lastError: recording.lastError,
+            steps: recording.steps,
+          }}
+        />
+      </section>
     </div>
   )
 }

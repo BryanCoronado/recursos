@@ -17,15 +17,18 @@ export default async function NewAutomationPage() {
           Nueva automatización
         </h1>
         <p className="mt-2 text-[15px] text-[var(--mich-muted)]">
-          Configura los pasos que Playwright ejecutará al descargar.
+          Elige el proveedor y los pasos que Playwright ejecutará al descargar.
         </p>
       </div>
       <Card className="border-[var(--mich-border)]">
         <CardHeader>
-          <CardTitle>Regla Envato</CardTitle>
+          <CardTitle>Nueva regla</CardTitle>
         </CardHeader>
         <CardContent>
-          <AutomationRuleForm action={createAutomationRule} />
+          <AutomationRuleForm
+            action={createAutomationRule}
+            showProviderSelect
+          />
         </CardContent>
       </Card>
     </div>

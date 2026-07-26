@@ -4,6 +4,7 @@ import { useActionState } from "react"
 import { Loader2, Save } from "lucide-react"
 
 import type { AutomationActionState } from "@/app/(dashboard)/automations/actions"
+import { ProviderSelect } from "@/components/providers/provider-select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -21,14 +22,25 @@ type AutomationRuleFormProps = {
     isActive: boolean
     stepsJson: string
   }
+  /** Solo al crear: permite elegir proveedor */
+  showProviderSelect?: boolean
+  defaultProvider?: "ENVATO" | "MAGNIFIC"
 }
 
-export function AutomationRuleForm({ action, rule }: AutomationRuleFormProps) {
+export function AutomationRuleForm({
+  action,
+  rule,
+  showProviderSelect = false,
+  defaultProvider = "ENVATO",
+}: AutomationRuleFormProps) {
   const [state, formAction, pending] = useActionState(action, {})
 
   return (
     <form action={formAction} className="space-y-4">
       {rule ? <input type="hidden" name="id" value={rule.id} /> : null}
+      {showProviderSelect ? (
+        <ProviderSelect name="provider" defaultValue={defaultProvider} />
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
           label="Nombre"

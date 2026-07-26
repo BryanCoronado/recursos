@@ -21,8 +21,13 @@ import {
   stopAutomationRecording,
   type RecordingActionState,
 } from "@/app/(dashboard)/automations/recording-actions"
+import { ProviderSelect } from "@/components/providers/provider-select"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  PROVIDERS,
+  type ResourceProviderId,
+} from "@/lib/providers/catalog"
 import { cn } from "@/lib/utils"
 
 type RecordingView = {
@@ -35,21 +40,32 @@ type RecordingView = {
   steps: unknown
 }
 
+function providerFormData(provider: ResourceProviderId) {
+  const fd = new FormData()
+  fd.set("provider", provider)
+  return fd
+}
+
 export function AutomationRecorderPanel({
   initial,
+  provider: initialProvider,
 }: {
   initial: RecordingView
+  provider: ResourceProviderId
 }) {
+  const [provider, setProvider] = useState<ResourceProviderId>(initialProvider)
   const [recording, setRecording] = useState(initial)
   const [startState, startAction, startPending] = useActionState(
     startAutomationRecording,
     {} as RecordingActionState
   )
   const [saveState, saveAction, savePending] = useActionState(
-    async () => saveRecordingAsRule(),
+    async (_prev: RecordingActionState, formData: FormData) =>
+      saveRecordingAsRule(formData),
     {} as RecordingActionState
   )
   const [, startTransition] = useTransition()
+  const def = PROVIDERS[provider]
 
   useEffect(() => {
     if (recording.status !== "RECORDING" && recording.status !== "STOPPED") {
@@ -58,7 +74,7 @@ export function AutomationRecorderPanel({
 
     const timer = window.setInterval(() => {
       startTransition(async () => {
-        const next = await getAutomationRecording()
+        const next = await getAutomationRecording(provider)
         if (!next) return
         setRecording({
           status: next.status,
@@ -73,12 +89,12 @@ export function AutomationRecorderPanel({
     }, 1500)
 
     return () => window.clearInterval(timer)
-  }, [recording.status])
+  }, [recording.status, provider])
 
   useEffect(() => {
     if (startState.ok) {
       startTransition(async () => {
-        const next = await getAutomationRecording()
+        const next = await getAutomationRecording(provider)
         if (!next) return
         setRecording({
           status: next.status,
@@ -91,7 +107,7 @@ export function AutomationRecorderPanel({
         })
       })
     }
-  }, [startState.ok])
+  }, [startState.ok, provider])
 
   const steps = Array.isArray(recording.steps) ? recording.steps : []
   const isBusy =
@@ -101,32 +117,33 @@ export function AutomationRecorderPanel({
     <div className="space-y-6">
       {!isBusy ? (
         <form action={startAction} className="space-y-4">
+          <ProviderSelect
+            name="provider"
+            value={provider}
+            onChange={setProvider}
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
               label="Nombre de la regla"
               name="name"
-              placeholder="Free files"
+              placeholder="Flujo principal"
               required
             />
             <Field
               label="Patrón de ruta"
               name="urlPattern"
-              placeholder="/free-files (auto si lo dejas vacío)"
+              placeholder="/ruta (auto si lo dejas vacío)"
             />
           </div>
           <Field
             label="URL de ejemplo para grabar"
             name="sampleUrl"
             type="url"
-            placeholder="https://elements.envato.com/es/free-files"
+            placeholder={def.sampleUrlPlaceholder}
             required
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field
-              label="Categoría"
-              name="category"
-              defaultValue="default"
-            />
+            <Field label="Categoría" name="category" defaultValue="default" />
             <Field
               label="Prioridad"
               name="priority"
@@ -148,14 +165,15 @@ export function AutomationRecorderPanel({
         <div className="space-y-4">
           <div className="rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] p-4 text-sm">
             <p>
-              Estado: <strong>{recording.status}</strong>
+              Proveedor: <strong>{def.shortLabel}</strong> · Estado:{" "}
+              <strong>{recording.status}</strong>
             </p>
             <p className="mt-1 text-[var(--mich-muted)]">
               {recording.name} · patrón <code>{recording.urlPattern}</code>
             </p>
             <p className="mt-2 text-[var(--mich-muted)]">
-              En el Chromium que abrió el worker: navega y haz clic. Antes del
-              botón de descarga, pulsa «Siguiente clic = descarga».
+              En el Chromium del worker: navega y haz clic. Antes del botón de
+              descarga, pulsa «Siguiente clic = descarga».
             </p>
             {recording.nextClickIsDownload ? (
               <p className="mt-2 font-medium text-[var(--mich-blue-bright)]">
@@ -174,7 +192,7 @@ export function AutomationRecorderPanel({
               disabled={recording.status !== "RECORDING"}
               onClick={() =>
                 startTransition(async () => {
-                  await markNextClickAsDownload()
+                  await markNextClickAsDownload(providerFormData(provider))
                 })
               }
             >
@@ -187,8 +205,8 @@ export function AutomationRecorderPanel({
               disabled={recording.status !== "RECORDING"}
               onClick={() =>
                 startTransition(async () => {
-                  await stopAutomationRecording()
-                  const next = await getAutomationRecording()
+                  await stopAutomationRecording(providerFormData(provider))
+                  const next = await getAutomationRecording(provider)
                   if (next) {
                     setRecording({
                       status: next.status,
@@ -207,6 +225,7 @@ export function AutomationRecorderPanel({
               Detener grabación
             </Button>
             <form action={saveAction}>
+              <input type="hidden" name="provider" value={provider} />
               <Button type="submit" disabled={savePending || steps.length === 0}>
                 {savePending ? <Loader2 className="animate-spin" /> : <Save />}
                 Guardar como regla
@@ -217,7 +236,7 @@ export function AutomationRecorderPanel({
               variant="destructive"
               onClick={() =>
                 startTransition(async () => {
-                  await cancelAutomationRecording()
+                  await cancelAutomationRecording(providerFormData(provider))
                   setRecording({
                     status: "IDLE",
                     name: null,

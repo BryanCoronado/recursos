@@ -1,22 +1,35 @@
-import { downloadEnvatoResource } from "../browser/envato-download"
+import {
+  RESOURCE_PROVIDERS,
+  getProvider,
+  type ResourceProviderId,
+} from "../../lib/providers/catalog"
 import {
   closeAutomationRecorder,
   isRecorderBrowserOpen,
+  listOpenRecorderProviders,
   openAutomationRecorder,
-} from "../browser/envato-recorder"
+} from "../browser/automation-recorder"
+import { downloadProviderResource } from "../browser/provider-download"
 import {
-  closeEnvatoSyncBrowser,
-  isEnvatoSyncBrowserOpen,
-  openEnvatoSyncBrowser,
-} from "../browser/envato-session"
+  closeSyncBrowser,
+  isSyncBrowserOpen,
+  listOpenSyncProviders,
+  openSyncBrowser,
+} from "../browser/sync-session"
 import { prisma } from "../prisma"
 
-let processing = false
-let syncOpening = false
-let recorderOpening = false
-/** Evita reabrir el navegador si el usuario lo cerró con la X durante el mismo SYNCING. */
-let handledSyncAtMs: number | null = null
-let handledRecordingToken: string | null = null
+/** Descargas en paralelo entre proveedores; 1 a la vez por perfil Chromium. */
+const MAX_CONCURRENT_DOWNLOADS = Math.max(
+  1,
+  Number(process.env.WORKER_MAX_DOWNLOADS ?? 2)
+)
+
+const activeDownloadJobs = new Set<string>()
+const activeDownloadProviders = new Set<ResourceProviderId>()
+const syncOpening = new Set<ResourceProviderId>()
+const recorderOpening = new Set<ResourceProviderId>()
+const handledSyncAtMs = new Map<ResourceProviderId, number>()
+const handledRecordingToken = new Map<ResourceProviderId, string>()
 
 export async function expireMembershipsTick() {
   await prisma.membership.updateMany({
@@ -28,108 +41,165 @@ export async function expireMembershipsTick() {
   })
 }
 
+function providersBusyWithUi(): ResourceProviderId[] {
+  return [
+    ...new Set([
+      ...listOpenSyncProviders(),
+      ...listOpenRecorderProviders(),
+    ]),
+  ]
+}
+
 export async function processProviderSyncRequests() {
+  for (const provider of RESOURCE_PROVIDERS) {
+    await processOneProviderSync(provider)
+  }
+}
+
+async function processOneProviderSync(provider: ResourceProviderId) {
+  const def = getProvider(provider)
   const session = await prisma.providerSession.findUnique({
-    where: { provider: "ENVATO" },
+    where: { provider },
   })
 
   if (!session) return
 
   if (session.status !== "SYNCING") {
-    handledSyncAtMs = null
+    handledSyncAtMs.delete(provider)
   }
 
   if (
     session.status === "SYNCING" &&
-    !isEnvatoSyncBrowserOpen() &&
-    !syncOpening &&
-    handledSyncAtMs !== session.updatedAt.getTime()
+    !isSyncBrowserOpen(provider) &&
+    !syncOpening.has(provider) &&
+    handledSyncAtMs.get(provider) !== session.updatedAt.getTime()
   ) {
-    syncOpening = true
+    syncOpening.add(provider)
     try {
-      handledSyncAtMs = session.updatedAt.getTime()
-      await openEnvatoSyncBrowser()
-      console.info("[worker] Navegador Envato abierto para sincronización")
+      handledSyncAtMs.set(provider, session.updatedAt.getTime())
+      await openSyncBrowser(provider)
+      console.info(`[worker] Navegador ${def.shortLabel} abierto (sync)`)
     } catch (error) {
       await prisma.providerSession.update({
-        where: { provider: "ENVATO" },
+        where: { provider },
         data: {
           status: "DISCONNECTED",
           lastError: error instanceof Error ? error.message : String(error),
         },
       })
-      console.error("[worker] Error abriendo sync Envato", error)
+      console.error(`[worker] Error sync ${def.shortLabel}`, error)
     } finally {
-      syncOpening = false
+      syncOpening.delete(provider)
     }
     return
   }
 
   if (
-    isEnvatoSyncBrowserOpen() &&
+    isSyncBrowserOpen(provider) &&
     (session.status === "READY" || session.status === "DISCONNECTED")
   ) {
-    await closeEnvatoSyncBrowser()
-    console.info("[worker] Navegador de sincronización cerrado")
+    await closeSyncBrowser(provider)
+    console.info(`[worker] Sync ${def.shortLabel} cerrado`)
   }
 }
 
 export async function processAutomationRecording() {
+  for (const provider of RESOURCE_PROVIDERS) {
+    await processOneRecording(provider)
+  }
+}
+
+async function processOneRecording(provider: ResourceProviderId) {
   const recording = await prisma.automationRecording.findUnique({
-    where: { provider: "ENVATO" },
+    where: { provider },
   })
 
   if (!recording) return
 
   if (recording.status !== "RECORDING") {
-    handledRecordingToken = null
-    if (isRecorderBrowserOpen()) {
-      await closeAutomationRecorder()
-      console.info("[worker] Grabadora cerrada")
+    handledRecordingToken.delete(provider)
+    if (isRecorderBrowserOpen(provider)) {
+      await closeAutomationRecorder(provider)
+      console.info(`[worker] Grabadora ${provider} cerrada`)
     }
     return
   }
 
   if (
-    !isRecorderBrowserOpen() &&
-    !recorderOpening &&
+    !isRecorderBrowserOpen(provider) &&
+    !recorderOpening.has(provider) &&
     recording.recordToken &&
-    handledRecordingToken !== recording.recordToken
+    handledRecordingToken.get(provider) !== recording.recordToken
   ) {
-    recorderOpening = true
+    recorderOpening.add(provider)
     try {
-      handledRecordingToken = recording.recordToken
-      await openAutomationRecorder()
+      handledRecordingToken.set(provider, recording.recordToken)
+      await openAutomationRecorder(provider)
     } catch (error) {
       await prisma.automationRecording.update({
-        where: { provider: "ENVATO" },
+        where: { provider },
         data: {
           status: "IDLE",
           lastError: error instanceof Error ? error.message : String(error),
         },
       })
-      console.error("[worker] Error abriendo grabadora", error)
+      console.error(`[worker] Error grabadora ${provider}`, error)
     } finally {
-      recorderOpening = false
+      recorderOpening.delete(provider)
     }
   }
 }
 
 export async function processQueuedDownloads() {
-  if (processing) return
-  if (isRecorderBrowserOpen() || isEnvatoSyncBrowserOpen()) return
-  processing = true
+  const slots = MAX_CONCURRENT_DOWNLOADS - activeDownloadJobs.size
+  if (slots <= 0) return
+
+  const busyProviders = new Set<ResourceProviderId>([
+    ...providersBusyWithUi(),
+    ...activeDownloadProviders,
+  ])
+
+  const jobs = await prisma.downloadJob.findMany({
+    where: {
+      status: "QUEUED",
+      ...(busyProviders.size
+        ? { provider: { notIn: [...busyProviders] } }
+        : {}),
+      id: { notIn: [...activeDownloadJobs] },
+    },
+    orderBy: { createdAt: "asc" },
+    take: slots,
+  })
+
+  // Un job por proveedor para no bloquear el user-data-dir de Chromium
+  const picked = new Map<ResourceProviderId, (typeof jobs)[number]>()
+  for (const job of jobs) {
+    const provider = job.provider as ResourceProviderId
+    if (picked.has(provider) || busyProviders.has(provider)) continue
+    picked.set(provider, job)
+  }
+
+  for (const job of picked.values()) {
+    void runDownloadJob(job.id, job.provider as ResourceProviderId, job.url)
+  }
+}
+
+async function runDownloadJob(
+  jobId: string,
+  provider: ResourceProviderId,
+  url: string
+) {
+  if (activeDownloadJobs.has(jobId)) return
+  if (activeDownloadProviders.has(provider)) return
+  if (providersBusyWithUi().includes(provider)) return
+
+  activeDownloadJobs.add(jobId)
+  activeDownloadProviders.add(provider)
+  const def = getProvider(provider)
 
   try {
-    const job = await prisma.downloadJob.findFirst({
-      where: { status: "QUEUED", provider: "ENVATO" },
-      orderBy: { createdAt: "asc" },
-    })
-
-    if (!job) return
-
     await prisma.downloadJob.update({
-      where: { id: job.id },
+      where: { id: jobId },
       data: {
         status: "RUNNING",
         startedAt: new Date(),
@@ -137,43 +207,44 @@ export async function processQueuedDownloads() {
       },
     })
 
-    console.info(`[worker] Descargando job ${job.id}`)
+    console.info(
+      `[worker] Descargando ${def.shortLabel} job ${jobId} (${activeDownloadJobs.size}/${MAX_CONCURRENT_DOWNLOADS})`
+    )
 
-    try {
-      const result = await downloadEnvatoResource(job.id, job.url)
-      await prisma.downloadJob.update({
-        where: { id: job.id },
-        data: {
-          status: "DONE",
-          category: result.category,
-          filePath: result.filePath,
-          fileName: result.fileName,
-          finishedAt: new Date(),
-          error: null,
-        },
+    const result = await downloadProviderResource(provider, jobId, url)
+    await prisma.downloadJob.update({
+      where: { id: jobId },
+      data: {
+        status: "DONE",
+        category: result.category,
+        filePath: result.filePath,
+        fileName: result.fileName,
+        finishedAt: new Date(),
+        error: null,
+      },
+    })
+    console.info(`[worker] Job ${jobId} OK: ${result.fileName}`)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    await prisma.downloadJob.update({
+      where: { id: jobId },
+      data: {
+        status: "FAILED",
+        error: message,
+        finishedAt: new Date(),
+      },
+    })
+
+    if (/sesión|sincroniza|login|sign-in|log-in/i.test(message)) {
+      await prisma.providerSession.update({
+        where: { provider },
+        data: { status: "EXPIRED", lastError: message },
       })
-      console.info(`[worker] Job ${job.id} completado: ${result.fileName}`)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      await prisma.downloadJob.update({
-        where: { id: job.id },
-        data: {
-          status: "FAILED",
-          error: message,
-          finishedAt: new Date(),
-        },
-      })
-
-      if (/sesión|sincroniza|login|sign-in/i.test(message)) {
-        await prisma.providerSession.update({
-          where: { provider: "ENVATO" },
-          data: { status: "EXPIRED", lastError: message },
-        })
-      }
-
-      console.error(`[worker] Job ${job.id} falló`, message)
     }
+
+    console.error(`[worker] Job ${jobId} falló`, message)
   } finally {
-    processing = false
+    activeDownloadJobs.delete(jobId)
+    activeDownloadProviders.delete(provider)
   }
 }

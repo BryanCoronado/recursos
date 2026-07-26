@@ -7,6 +7,7 @@ import { z } from "zod"
 import { requirePermission } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
 import { automationStepsSchema } from "@/lib/automation/types"
+import { requireProviderId } from "@/lib/providers/catalog"
 import { prisma } from "@/lib/prisma"
 
 export type AutomationActionState = {
@@ -33,6 +34,13 @@ export async function createAutomationRule(
 ): Promise<AutomationActionState> {
   await requirePermission(PERMISSIONS.AUTOMATIONS_MANAGE)
 
+  let provider
+  try {
+    provider = requireProviderId(formData.get("provider") ?? "ENVATO")
+  } catch {
+    return { error: "Elige un proveedor válido" }
+  }
+
   const parsed = ruleSchema.safeParse({
     name: formData.get("name"),
     category: formData.get("category"),
@@ -51,7 +59,7 @@ export async function createAutomationRule(
     const steps = parseSteps(parsed.data.stepsJson)
     const rule = await prisma.automationRule.create({
       data: {
-        provider: "ENVATO",
+        provider,
         name: parsed.data.name,
         category: parsed.data.category,
         urlPattern: parsed.data.urlPattern ?? null,

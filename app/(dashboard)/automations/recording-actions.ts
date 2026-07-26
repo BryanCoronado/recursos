@@ -12,6 +12,12 @@ import {
   extractUrlPattern,
 } from "@/lib/automation/match"
 import { automationStepsSchema } from "@/lib/automation/types"
+import {
+  getProvider,
+  isUrlForProvider,
+  requireProviderId,
+  type ResourceProviderId,
+} from "@/lib/providers/catalog"
 import { prisma } from "@/lib/prisma"
 
 export type RecordingActionState = {
@@ -20,40 +26,32 @@ export type RecordingActionState = {
 }
 
 const startSchema = z.object({
+  provider: z.string(),
   name: z.string().trim().min(2).max(80),
-  sampleUrl: z
-    .string()
-    .trim()
-    .url()
-    .refine((value) => {
-      try {
-        return new URL(value).hostname.includes("elements.envato.com")
-      } catch {
-        return false
-      }
-    }, "Debe ser una URL de elements.envato.com"),
+  sampleUrl: z.string().trim().url(),
   urlPattern: z.string().trim().min(1).max(120).optional(),
   category: z.string().trim().min(2).max(40).default("default"),
   priority: z.coerce.number().int().min(1).max(999).default(50),
 })
 
-async function ensureRecordingRow() {
+async function ensureRecordingRow(provider: ResourceProviderId) {
   return prisma.automationRecording.upsert({
-    where: { provider: "ENVATO" },
+    where: { provider },
     update: {},
     create: {
-      provider: "ENVATO",
+      provider,
       status: "IDLE",
       steps: [],
     },
   })
 }
 
-export async function getAutomationRecording() {
+export async function getAutomationRecording(providerRaw?: string | null) {
   await requirePermission(PERMISSIONS.AUTOMATIONS_MANAGE)
-  await ensureRecordingRow()
+  const provider = requireProviderId(providerRaw ?? "ENVATO")
+  await ensureRecordingRow(provider)
   return prisma.automationRecording.findUnique({
-    where: { provider: "ENVATO" },
+    where: { provider },
   })
 }
 
@@ -64,6 +62,7 @@ export async function startAutomationRecording(
   await requirePermission(PERMISSIONS.AUTOMATIONS_MANAGE)
 
   const parsed = startSchema.safeParse({
+    provider: formData.get("provider"),
     name: formData.get("name"),
     sampleUrl: formData.get("sampleUrl"),
     urlPattern: formData.get("urlPattern") || undefined,
@@ -75,13 +74,26 @@ export async function startAutomationRecording(
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" }
   }
 
+  let provider: ResourceProviderId
+  try {
+    provider = requireProviderId(parsed.data.provider)
+  } catch {
+    return { error: "Elige un proveedor válido" }
+  }
+
+  const def = getProvider(provider)
+  if (!isUrlForProvider(provider, parsed.data.sampleUrl)) {
+    return {
+      error: `La URL debe ser de ${def.hosts.join(" / ")}`,
+    }
+  }
+
   const session = await prisma.providerSession.findUnique({
-    where: { provider: "ENVATO" },
+    where: { provider },
   })
   if (!session || session.status !== "READY") {
     return {
-      error:
-        "Envato debe estar sincronizado (estado Listo) antes de grabar una regla.",
+      error: `${def.shortLabel} debe estar sincronizado (Listo) antes de grabar.`,
     }
   }
 
@@ -89,9 +101,9 @@ export async function startAutomationRecording(
     parsed.data.urlPattern?.trim() ||
     extractUrlPattern(parsed.data.sampleUrl)
 
-  await ensureRecordingRow()
+  await ensureRecordingRow(provider)
   await prisma.automationRecording.update({
-    where: { provider: "ENVATO" },
+    where: { provider },
     data: {
       status: "RECORDING",
       name: parsed.data.name,
@@ -111,28 +123,31 @@ export async function startAutomationRecording(
   return { ok: true }
 }
 
-export async function markNextClickAsDownload() {
+export async function markNextClickAsDownload(formData?: FormData) {
   await requirePermission(PERMISSIONS.AUTOMATIONS_MANAGE)
+  const provider = requireProviderId(formData?.get("provider") ?? "ENVATO")
   await prisma.automationRecording.update({
-    where: { provider: "ENVATO" },
+    where: { provider },
     data: { nextClickIsDownload: true, lastError: null },
   })
   revalidatePath("/automations/record")
 }
 
-export async function stopAutomationRecording() {
+export async function stopAutomationRecording(formData?: FormData) {
   await requirePermission(PERMISSIONS.AUTOMATIONS_MANAGE)
+  const provider = requireProviderId(formData?.get("provider") ?? "ENVATO")
   await prisma.automationRecording.update({
-    where: { provider: "ENVATO" },
+    where: { provider },
     data: { status: "STOPPED", nextClickIsDownload: false },
   })
   revalidatePath("/automations/record")
 }
 
-export async function cancelAutomationRecording() {
+export async function cancelAutomationRecording(formData?: FormData) {
   await requirePermission(PERMISSIONS.AUTOMATIONS_MANAGE)
+  const provider = requireProviderId(formData?.get("provider") ?? "ENVATO")
   await prisma.automationRecording.update({
-    where: { provider: "ENVATO" },
+    where: { provider },
     data: {
       status: "IDLE",
       steps: [],
@@ -145,11 +160,14 @@ export async function cancelAutomationRecording() {
   revalidatePath("/automations/record")
 }
 
-export async function saveRecordingAsRule(): Promise<RecordingActionState> {
+export async function saveRecordingAsRule(
+  formData?: FormData
+): Promise<RecordingActionState> {
   await requirePermission(PERMISSIONS.AUTOMATIONS_MANAGE)
+  const provider = requireProviderId(formData?.get("provider") ?? "ENVATO")
 
   const recording = await prisma.automationRecording.findUnique({
-    where: { provider: "ENVATO" },
+    where: { provider },
   })
 
   if (!recording?.name || !recording.urlPattern) {
@@ -165,7 +183,7 @@ export async function saveRecordingAsRule(): Promise<RecordingActionState> {
 
   const rule = await prisma.automationRule.create({
     data: {
-      provider: "ENVATO",
+      provider,
       name: recording.name,
       category: recording.category,
       urlPattern: recording.urlPattern,
@@ -176,7 +194,7 @@ export async function saveRecordingAsRule(): Promise<RecordingActionState> {
   })
 
   await prisma.automationRecording.update({
-    where: { provider: "ENVATO" },
+    where: { provider },
     data: {
       status: "IDLE",
       steps: [],

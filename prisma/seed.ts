@@ -107,11 +107,31 @@ async function main() {
     },
   })
 
+  await prisma.providerSession.upsert({
+    where: { provider: "MAGNIFIC" },
+    update: {},
+    create: {
+      provider: "MAGNIFIC",
+      status: "DISCONNECTED",
+      profilePath: providerProfilePath("magnific"),
+    },
+  })
+
   await prisma.automationRecording.upsert({
     where: { provider: "ENVATO" },
     update: {},
     create: {
       provider: "ENVATO",
+      status: "IDLE",
+      steps: [],
+    },
+  })
+
+  await prisma.automationRecording.upsert({
+    where: { provider: "MAGNIFIC" },
+    update: {},
+    create: {
+      provider: "MAGNIFIC",
       status: "IDLE",
       steps: [],
     },
@@ -134,6 +154,36 @@ async function main() {
         priority: 100,
         isActive: true,
         steps: DEFAULT_ENVATO_STEPS,
+      },
+    })
+  }
+
+  const existingMagnificRule = await prisma.automationRule.findFirst({
+    where: {
+      provider: "MAGNIFIC",
+      category: "default",
+      name: "Magnific genérico",
+    },
+  })
+
+  if (!existingMagnificRule) {
+    await prisma.automationRule.create({
+      data: {
+        provider: "MAGNIFIC",
+        category: "default",
+        name: "Magnific genérico",
+        priority: 100,
+        isActive: true,
+        steps: [
+          { type: "wait", ms: 2500 },
+          {
+            type: "download",
+            by: "css",
+            selector:
+              'button:has-text("Download"), button:has-text("Descargar"), a:has-text("Download")',
+            timeoutMs: 120000,
+          },
+        ],
       },
     })
   }

@@ -16,8 +16,9 @@ async function tick() {
 }
 
 async function main() {
+  const max = process.env.WORKER_MAX_DOWNLOADS ?? "2"
   console.info(
-    "[worker] Iniciado. Sync, grabación de reglas y descargas Envato..."
+    `[worker] Iniciado. Providers: Envato + Magnific. Descargas paralelas: hasta ${max}.`
   )
   await tick()
   setInterval(() => {

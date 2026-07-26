@@ -1,20 +1,22 @@
 import "server-only"
 
 import {
-  ENVATO_FREE_DOWNLOAD_LIMIT,
-  ENVATO_MONTHLY_PRICE_SOLES,
+  FREE_DOWNLOAD_LIMIT,
+  MONTHLY_PRICE_SOLES,
   SUBSCRIPTION_PLANS,
   addMonths,
   type SubscriptionPlanKey,
-} from "@/lib/billing/envato"
+} from "@/lib/billing/plans"
+import { getProvider, type ResourceProviderId } from "@/lib/providers/catalog"
 import { prisma } from "@/lib/prisma"
 
-/** Marca como EXPIRED las membresías ACTIVE cuya fecha ya pasó. */
-export async function expireDueMemberships(provider: "ENVATO" | "MAGNIFIC" = "ENVATO") {
+export async function expireDueMemberships(
+  provider?: ResourceProviderId
+) {
   const now = new Date()
   await prisma.membership.updateMany({
     where: {
-      provider,
+      ...(provider ? { provider } : {}),
       status: "ACTIVE",
       endsAt: { lt: now },
     },
@@ -22,13 +24,16 @@ export async function expireDueMemberships(provider: "ENVATO" | "MAGNIFIC" = "EN
   })
 }
 
-export async function getActiveEnvatoMembership(userId: string) {
-  await expireDueMemberships("ENVATO")
+export async function getActiveMembership(
+  userId: string,
+  provider: ResourceProviderId
+) {
+  await expireDueMemberships(provider)
   const now = new Date()
   return prisma.membership.findFirst({
     where: {
       userId,
-      provider: "ENVATO",
+      provider,
       status: "ACTIVE",
       startsAt: { lte: now },
       endsAt: { gt: now },
@@ -37,17 +42,20 @@ export async function getActiveEnvatoMembership(userId: string) {
   })
 }
 
-export async function countEnvatoDownloadsUsed(userId: string) {
+export async function countProviderDownloadsUsed(
+  userId: string,
+  provider: ResourceProviderId
+) {
   return prisma.downloadJob.count({
     where: {
       requestedById: userId,
-      provider: "ENVATO",
+      provider,
       status: { in: ["QUEUED", "RUNNING", "DONE"] },
     },
   })
 }
 
-export type EnvatoAccessResult =
+export type DownloadAccessResult =
   | { allowed: true; unlimited: true; membershipEndsAt: Date }
   | {
       allowed: true
@@ -63,10 +71,12 @@ export type EnvatoAccessResult =
       reason: string
     }
 
-export async function checkEnvatoDownloadAccess(
-  userId: string
-): Promise<EnvatoAccessResult> {
-  const membership = await getActiveEnvatoMembership(userId)
+export async function checkProviderDownloadAccess(
+  userId: string,
+  provider: ResourceProviderId
+): Promise<DownloadAccessResult> {
+  const def = getProvider(provider)
+  const membership = await getActiveMembership(userId, provider)
   if (membership) {
     return {
       allowed: true,
@@ -75,15 +85,15 @@ export async function checkEnvatoDownloadAccess(
     }
   }
 
-  const used = await countEnvatoDownloadsUsed(userId)
-  const remaining = Math.max(0, ENVATO_FREE_DOWNLOAD_LIMIT - used)
+  const used = await countProviderDownloadsUsed(userId, provider)
+  const remaining = Math.max(0, FREE_DOWNLOAD_LIMIT - used)
   if (remaining <= 0) {
     return {
       allowed: false,
       unlimited: false,
       used,
       remaining: 0,
-      reason: `Ya usaste tus ${ENVATO_FREE_DOWNLOAD_LIMIT} descargas gratis. Activa una membresía Envato (S/ ${ENVATO_MONTHLY_PRICE_SOLES}/mes) desde Recarga o WhatsApp.`,
+      reason: `Ya usaste tus ${FREE_DOWNLOAD_LIMIT} descargas gratis de ${def.shortLabel}. Activa una membresía (S/ ${MONTHLY_PRICE_SOLES}/mes) desde Recarga o WhatsApp.`,
     }
   }
 
@@ -95,33 +105,30 @@ export async function checkEnvatoDownloadAccess(
   }
 }
 
-export async function createEnvatoMembership(input: {
+export async function createMembership(input: {
   userId: string
+  provider: ResourceProviderId
   plan: SubscriptionPlanKey
   createdById: string
   notes?: string
   startFrom?: Date
 }) {
-  await expireDueMemberships("ENVATO")
+  await expireDueMemberships(input.provider)
 
   const plan = SUBSCRIPTION_PLANS[input.plan]
   const now = input.startFrom ?? new Date()
-
-  const current = await getActiveEnvatoMembership(input.userId)
-  // Si ya tiene activa, la nueva empieza cuando termine la actual
+  const current = await getActiveMembership(input.userId, input.provider)
   const startsAt = current && current.endsAt > now ? current.endsAt : now
   const endsAt = addMonths(startsAt, plan.months)
-  const monthly = ENVATO_MONTHLY_PRICE_SOLES
-  const total = plan.totalSoles
 
   return prisma.membership.create({
     data: {
       userId: input.userId,
-      provider: "ENVATO",
+      provider: input.provider,
       plan: input.plan,
       months: plan.months,
-      monthlyPriceSoles: monthly,
-      totalPriceSoles: total,
+      monthlyPriceSoles: MONTHLY_PRICE_SOLES,
+      totalPriceSoles: plan.totalSoles,
       status: "ACTIVE",
       startsAt,
       endsAt,
@@ -131,14 +138,14 @@ export async function createEnvatoMembership(input: {
   })
 }
 
-export async function cancelEnvatoMembership(input: {
+export async function cancelMembership(input: {
   membershipId: string
   cancelledById: string
 }) {
   const membership = await prisma.membership.findUnique({
     where: { id: input.membershipId },
   })
-  if (!membership || membership.provider !== "ENVATO") {
+  if (!membership) {
     throw new Error("Membresía no encontrada")
   }
   if (membership.status !== "ACTIVE") {
@@ -151,8 +158,35 @@ export async function cancelEnvatoMembership(input: {
       status: "CANCELLED",
       cancelledAt: new Date(),
       cancelledById: input.cancelledById,
-      // Al cancelar manual, corta el acceso de inmediato
       endsAt: new Date(),
     },
   })
 }
+
+/** Compat Envato */
+export async function getActiveEnvatoMembership(userId: string) {
+  return getActiveMembership(userId, "ENVATO")
+}
+
+export async function checkEnvatoDownloadAccess(userId: string) {
+  return checkProviderDownloadAccess(userId, "ENVATO")
+}
+
+export async function createEnvatoMembership(input: {
+  userId: string
+  plan: SubscriptionPlanKey
+  createdById: string
+  notes?: string
+  startFrom?: Date
+}) {
+  return createMembership({ ...input, provider: "ENVATO" })
+}
+
+export async function cancelEnvatoMembership(input: {
+  membershipId: string
+  cancelledById: string
+}) {
+  return cancelMembership(input)
+}
+
+export type EnvatoAccessResult = DownloadAccessResult
