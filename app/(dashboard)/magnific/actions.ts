@@ -1,6 +1,7 @@
 "use server"
 
 import {
+  cancelProviderDownloadJob,
   createProviderDownloadJob,
   getProviderDownloadJob,
   listProviderDownloadHistory,
@@ -24,4 +25,8 @@ export async function getMagnificDownloadJob(jobId: string) {
 
 export async function listMagnificDownloadHistory() {
   return listProviderDownloadHistory("MAGNIFIC")
+}
+
+export async function cancelMagnificDownloadJob(jobId: string) {
+  return cancelProviderDownloadJob("MAGNIFIC", jobId)
 }

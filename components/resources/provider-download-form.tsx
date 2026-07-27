@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState, useTransition } from "react"
 import {
   AlertCircle,
   CheckCircle2,
+  CircleStop,
   Clock3,
   Download,
   ExternalLink,
@@ -49,6 +50,7 @@ type ProviderDownloadFormProps = {
     error: string | null
   } | null>
   listHistory: () => Promise<ProviderHistoryItem[]>
+  cancelJob: (jobId: string) => Promise<{ ok?: boolean; error?: string }>
 }
 
 type JobView = {
@@ -90,6 +92,7 @@ export function ProviderDownloadForm({
   createJob,
   getJob,
   listHistory,
+  cancelJob,
 }: ProviderDownloadFormProps) {
   const def = PROVIDERS[provider]
   const [state, formAction, pending] = useActionState(
@@ -98,6 +101,7 @@ export function ProviderDownloadForm({
   )
   const [job, setJob] = useState<JobView | null>(null)
   const [history, setHistory] = useState(initialHistory)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
   const statusCopy = {
@@ -110,6 +114,28 @@ export function ProviderDownloadForm({
   async function refreshHistory() {
     const next = await listHistory()
     setHistory(next)
+  }
+
+  async function handleCancel(jobId: string) {
+    setCancellingId(jobId)
+    try {
+      const result = await cancelJob(jobId)
+      if (result.error) {
+        return
+      }
+      setJob((current) =>
+        current?.id === jobId
+          ? {
+              ...current,
+              status: "FAILED",
+              error: "Cancelada por el usuario",
+            }
+          : current
+      )
+      await refreshHistory()
+    } finally {
+      setCancellingId(null)
+    }
   }
 
   useEffect(() => {
@@ -274,13 +300,36 @@ export function ProviderDownloadForm({
           {job ? (
             <div className="mx-auto mt-8 max-w-md rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-4 py-4 text-left text-sm">
               <p className="font-medium text-[var(--mich-text)]">
-                {statusCopy[job.status]}
+                {job.status === "FAILED" &&
+                job.error === "Cancelada por el usuario"
+                  ? "Descarga finalizada / cancelada."
+                  : statusCopy[job.status]}
               </p>
               {job.status === "QUEUED" || job.status === "RUNNING" ? (
-                <p className="mt-2 flex items-center gap-2 text-[var(--mich-muted)]">
-                  <Loader2 className="size-4 animate-spin" />
-                  Estado: {job.status}
-                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <p className="flex items-center gap-2 text-[var(--mich-muted)]">
+                    <Loader2 className="size-4 animate-spin" />
+                    Estado: {job.status}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={cancellingId === job.id}
+                    onClick={() =>
+                      startTransition(async () => {
+                        await handleCancel(job.id)
+                      })
+                    }
+                  >
+                    {cancellingId === job.id ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      <CircleStop />
+                    )}
+                    Finalizar descarga
+                  </Button>
+                </div>
               ) : null}
               {job.status === "FAILED" && job.error ? (
                 <p className="mt-2 text-destructive">{job.error}</p>
@@ -369,10 +418,30 @@ export function ProviderDownloadForm({
                       </Button>
                     </a>
                   ) : item.status === "QUEUED" || item.status === "RUNNING" ? (
-                    <span className="inline-flex items-center gap-2 text-xs text-[var(--mich-muted)]">
-                      <Loader2 className="size-3.5 animate-spin" />
-                      En proceso
-                    </span>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className="inline-flex items-center gap-2 text-xs text-[var(--mich-muted)]">
+                        <Loader2 className="size-3.5 animate-spin" />
+                        En proceso
+                      </span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={cancellingId === item.id}
+                        onClick={() =>
+                          startTransition(async () => {
+                            await handleCancel(item.id)
+                          })
+                        }
+                      >
+                        {cancellingId === item.id ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          <CircleStop />
+                        )}
+                        Finalizar
+                      </Button>
+                    </div>
                   ) : null}
                 </div>
               </li>

@@ -1,9 +1,16 @@
 import { AccessDenied } from "@/components/auth/access-denied"
-import { EnvatoDownloadForm } from "@/components/resources/envato-download-form"
+import { ProviderDownloadForm } from "@/components/resources/provider-download-form"
 import { requirePagePermission } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
-import { checkEnvatoDownloadAccess } from "@/lib/billing/membership"
+import { checkProviderDownloadAccess } from "@/lib/billing/membership"
 import { prisma } from "@/lib/prisma"
+
+import {
+  cancelEnvatoDownloadJob,
+  createEnvatoDownloadJob,
+  getEnvatoDownloadJob,
+  listEnvatoDownloadHistory,
+} from "./actions"
 
 export default async function EnvatoPage() {
   const access = await requirePagePermission(PERMISSIONS.ENVATO_ACCESS)
@@ -33,7 +40,7 @@ export default async function EnvatoPage() {
         finishedAt: true,
       },
     }),
-    checkEnvatoDownloadAccess(access.user.id),
+    checkProviderDownloadAccess(access.user.id, "ENVATO"),
   ])
 
   const quotaForClient =
@@ -46,7 +53,8 @@ export default async function EnvatoPage() {
       : quota
 
   return (
-    <EnvatoDownloadForm
+    <ProviderDownloadForm
+      provider="ENVATO"
       sessionReady={session?.status === "READY"}
       quota={quotaForClient}
       initialHistory={jobs.map((job) => ({
@@ -58,6 +66,10 @@ export default async function EnvatoPage() {
         createdAt: job.createdAt.toISOString(),
         finishedAt: job.finishedAt?.toISOString() ?? null,
       }))}
+      createJob={createEnvatoDownloadJob}
+      getJob={getEnvatoDownloadJob}
+      listHistory={listEnvatoDownloadHistory}
+      cancelJob={cancelEnvatoDownloadJob}
     />
   )
 }

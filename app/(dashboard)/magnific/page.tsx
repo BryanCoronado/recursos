@@ -6,6 +6,7 @@ import { checkProviderDownloadAccess } from "@/lib/billing/membership"
 import { prisma } from "@/lib/prisma"
 
 import {
+  cancelMagnificDownloadJob,
   createMagnificDownloadJob,
   getMagnificDownloadJob,
   listMagnificDownloadHistory,
@@ -68,6 +69,7 @@ export default async function MagnificPage() {
       createJob={createMagnificDownloadJob}
       getJob={getMagnificDownloadJob}
       listHistory={listMagnificDownloadHistory}
+      cancelJob={cancelMagnificDownloadJob}
     />
   )
 }

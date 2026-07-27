@@ -17,9 +17,16 @@ function detectCategory(provider: ResourceProviderId, url: string) {
   return "default"
 }
 
+class DownloadCancelledError extends Error {
+  constructor() {
+    super("Cancelada por el usuario")
+    this.name = "DownloadCancelledError"
+  }
+}
+
 /**
  * Descarga un recurso con el perfil y reglas del proveedor.
- * Cada job abre su propia ventana Playwright (concurrencia vía processor).
+ * Si el job pasa a FAILED (cancelación), cierra Chromium.
  */
 export async function downloadProviderResource(
   provider: ResourceProviderId,
@@ -58,20 +65,53 @@ export async function downloadProviderResource(
     downloadsPath: downloadDir,
   })
 
+  const cancelWatcher = setInterval(() => {
+    void prisma.downloadJob
+      .findUnique({
+        where: { id: jobId },
+        select: { status: true },
+      })
+      .then((job) => {
+        if (job && job.status !== "RUNNING" && job.status !== "QUEUED") {
+          void context.close().catch(() => undefined)
+        }
+      })
+      .catch(() => undefined)
+  }, 1200)
+
   try {
+    const stillRunning = await prisma.downloadJob.findUnique({
+      where: { id: jobId },
+      select: { status: true },
+    })
+    if (!stillRunning || stillRunning.status !== "RUNNING") {
+      throw new DownloadCancelledError()
+    }
+
     const page = context.pages()[0] ?? (await context.newPage())
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90_000 })
     const result = await runAutomationSteps(page, steps, downloadDir)
+
+    const after = await prisma.downloadJob.findUnique({
+      where: { id: jobId },
+      select: { status: true },
+    })
+    if (!after || after.status !== "RUNNING") {
+      throw new DownloadCancelledError()
+    }
 
     return {
       ...result,
       category: rule.urlPattern || rule.category,
     }
   } finally {
-    await context.close()
+    clearInterval(cancelWatcher)
+    await context.close().catch(() => undefined)
   }
 }
 
 export async function downloadEnvatoResource(jobId: string, url: string) {
   return downloadProviderResource("ENVATO", jobId, url)
 }
+
+export { DownloadCancelledError }

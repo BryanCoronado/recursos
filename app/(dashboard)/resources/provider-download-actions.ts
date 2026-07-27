@@ -140,3 +140,36 @@ export async function listProviderDownloadHistory(
     finishedAt: job.finishedAt?.toISOString() ?? null,
   }))
 }
+
+/** Cancela una descarga en cola o en curso. El worker cierra Chromium al ver FAILED. */
+export async function cancelProviderDownloadJob(
+  provider: ResourceProviderId,
+  jobId: string
+): Promise<{ ok?: boolean; error?: string }> {
+  const user = await requirePermission(ACCESS_PERMISSION[provider])
+
+  const job = await prisma.downloadJob.findFirst({
+    where: {
+      id: jobId,
+      provider,
+      requestedById: user.id,
+      status: { in: ["QUEUED", "RUNNING"] },
+    },
+    select: { id: true },
+  })
+
+  if (!job) {
+    return { error: "No hay una descarga activa para cancelar" }
+  }
+
+  await prisma.downloadJob.update({
+    where: { id: job.id },
+    data: {
+      status: "FAILED",
+      error: "Cancelada por el usuario",
+      finishedAt: new Date(),
+    },
+  })
+
+  return { ok: true }
+}
