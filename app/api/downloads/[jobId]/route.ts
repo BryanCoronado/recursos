@@ -11,6 +11,7 @@ import {
   hasPermission,
 } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
+import { isResourceProviderId } from "@/lib/providers/catalog"
 import { prisma } from "@/lib/prisma"
 import { DOWNLOADS_ROOT } from "@/lib/storage/paths"
 
@@ -18,14 +19,16 @@ type RouteContext = {
   params: Promise<{ jobId: string }>
 }
 
+const ACCESS_BY_PROVIDER = {
+  ENVATO: PERMISSIONS.ENVATO_ACCESS,
+  MAGNIFIC: PERMISSIONS.MAGNIFIC_ACCESS,
+} as const
+
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 })
-    }
-    if (!hasPermission(user.permissions, PERMISSIONS.ENVATO_ACCESS)) {
-      throw new AuthorizationError()
     }
 
     const { jobId } = await context.params
@@ -33,7 +36,6 @@ export async function GET(_request: Request, context: RouteContext) {
     const job = await prisma.downloadJob.findFirst({
       where: {
         id: jobId,
-        provider: "ENVATO",
         requestedById: user.id,
         status: "DONE",
       },
@@ -44,6 +46,15 @@ export async function GET(_request: Request, context: RouteContext) {
         { error: "Archivo no disponible" },
         { status: 404 }
       )
+    }
+
+    if (!isResourceProviderId(job.provider)) {
+      return NextResponse.json({ error: "Proveedor inválido" }, { status: 400 })
+    }
+
+    const permission = ACCESS_BY_PROVIDER[job.provider]
+    if (!hasPermission(user.permissions, permission)) {
+      throw new AuthorizationError()
     }
 
     const resolved = path.resolve(job.filePath)
