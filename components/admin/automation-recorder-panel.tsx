@@ -1,7 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { useActionState, useEffect, useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react"
 import {
   CircleStop,
   Download,
@@ -53,6 +60,7 @@ export function AutomationRecorderPanel({
   initial: RecordingView
   provider: ResourceProviderId
 }) {
+  const router = useRouter()
   const [provider, setProvider] = useState<ResourceProviderId>(initialProvider)
   const [recording, setRecording] = useState(initial)
   const [startState, startAction, startPending] = useActionState(
@@ -66,6 +74,46 @@ export function AutomationRecorderPanel({
   )
   const [, startTransition] = useTransition()
   const def = PROVIDERS[provider]
+  const statusRef = useRef(recording.status)
+  statusRef.current = recording.status
+
+  // Al refrescar, cerrar pestaña o salir de la página → IDLE + worker cierra Chromium
+  useEffect(() => {
+    let armed = false
+    const armTimer = window.setTimeout(() => {
+      armed = true
+    }, 800)
+
+    const abandon = () => {
+      if (!armed) return
+      const status = statusRef.current
+      if (status !== "RECORDING" && status !== "STOPPED") return
+
+      const body = new FormData()
+      body.set("provider", provider)
+      const sent = navigator.sendBeacon(
+        "/api/automations/recording/abandon",
+        body
+      )
+      if (!sent) {
+        void fetch("/api/automations/recording/abandon", {
+          method: "POST",
+          body,
+          keepalive: true,
+          credentials: "include",
+        })
+      }
+    }
+
+    const onPageHide = () => abandon()
+    window.addEventListener("pagehide", onPageHide)
+
+    return () => {
+      window.clearTimeout(armTimer)
+      window.removeEventListener("pagehide", onPageHide)
+      abandon()
+    }
+  }, [provider])
 
   useEffect(() => {
     if (recording.status !== "RECORDING" && recording.status !== "STOPPED") {
@@ -113,15 +161,24 @@ export function AutomationRecorderPanel({
   const isBusy =
     recording.status === "RECORDING" || recording.status === "STOPPED"
 
+  function switchProvider(next: ResourceProviderId) {
+    if (next === provider) return
+    setProvider(next)
+    router.push(`/automations/record?provider=${next}`)
+  }
+
   return (
     <div className="space-y-6">
+      <ProviderSelect
+        name="providerPicker"
+        value={provider}
+        onChange={switchProvider}
+        disabled={recording.status === "RECORDING"}
+      />
+
       {!isBusy ? (
         <form action={startAction} className="space-y-4">
-          <ProviderSelect
-            name="provider"
-            value={provider}
-            onChange={setProvider}
-          />
+          <input type="hidden" name="provider" value={provider} />
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
               label="Nombre de la regla"

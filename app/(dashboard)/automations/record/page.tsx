@@ -60,6 +60,7 @@ export default async function RecordAutomationPage({
           Controles de grabación
         </h2>
         <AutomationRecorderPanel
+          key={provider}
           provider={provider}
           initial={{
             status: recording.status,

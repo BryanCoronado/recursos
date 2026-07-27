@@ -45,13 +45,24 @@ export default async function AutomationsPage({
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
-            href="/automations/record"
+            href={
+              providerFilter
+                ? `/automations/record?provider=${providerFilter}`
+                : "/automations/record"
+            }
             className={cn(buttonVariants({ variant: "outline" }))}
           >
             <Video />
             Grabar con clics
           </Link>
-          <Link href="/automations/new" className={buttonVariants()}>
+          <Link
+            href={
+              providerFilter
+                ? `/automations/new?provider=${providerFilter}`
+                : "/automations/new"
+            }
+            className={buttonVariants()}
+          >
             <Plus />
             Nueva regla JSON
           </Link>
