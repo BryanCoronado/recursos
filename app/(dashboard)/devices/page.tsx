@@ -7,7 +7,7 @@ import { RevokeOwnDeviceButton } from "@/components/billing/revoke-own-device-bu
 import { buttonVariants } from "@/components/ui/button"
 import { hasPermission, requireUser } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
-import { listUserDevices } from "@/lib/billing/devices"
+import { listUserDevices, countDevicesForProvider } from "@/lib/billing/devices"
 import {
   EXTRA_DEVICE_MONTHLY_SOLES,
   whatsappExtraDeviceUrl,
@@ -38,7 +38,8 @@ export default async function DevicesPage() {
     providers.map(async (provider) => {
       const membership = await getActiveMembership(user.id, provider.id)
       const providerDevices = devices.filter((d) => d.provider === provider.id)
-      return { provider, membership, devices: providerDevices }
+      const used = await countDevicesForProvider(user.id, provider.id)
+      return { provider, membership, devices: providerDevices, used }
     })
   )
 
@@ -85,12 +86,9 @@ export default async function DevicesPage() {
         </div>
       ) : (
         <div className="grid gap-6">
-          {sections.map(({ provider, membership, devices: list }) => {
+          {sections.map(({ provider, membership, devices: list, used }) => {
             if (!membership && list.length === 0) return null
             const max = membership?.maxDevices ?? 0
-            const used = membership
-              ? list.filter((d) => d.membershipId === membership.id).length
-              : list.length
             const upgradeUrl = membership
               ? whatsappExtraDeviceUrl(
                   user.name,

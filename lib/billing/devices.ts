@@ -4,6 +4,7 @@ import { createHash } from "crypto"
 
 import { getActiveMembership } from "@/lib/billing/membership"
 import { getProvider, type ResourceProviderId } from "@/lib/providers/catalog"
+import { providerList } from "@/lib/providers/catalog"
 import { prisma } from "@/lib/prisma"
 
 function hashDeviceId(rawDeviceId: string) {
@@ -55,7 +56,18 @@ export type ClaimDeviceResult =
       message: string
       maxDevices: number
       used: number
+      provider?: ResourceProviderId
     }
+
+/** Cupos ocupados del usuario en ese proveedor (todas las membresías). */
+export async function countDevicesForProvider(
+  userId: string,
+  provider: ResourceProviderId
+) {
+  return prisma.membershipDevice.count({
+    where: { userId, provider },
+  })
+}
 
 export async function claimDevice(input: {
   userId: string
@@ -71,6 +83,7 @@ export async function claimDevice(input: {
       message: "Identificador de dispositivo inválido.",
       maxDevices: 1,
       used: 0,
+      provider: input.provider,
     }
   }
 
@@ -94,7 +107,6 @@ export async function claimDevice(input: {
   })
 
   if (existing) {
-    // Si el device quedó ligado a una membresía vieja, reasociar a la activa.
     await prisma.membershipDevice.update({
       where: { id: existing.id },
       data: {
@@ -104,9 +116,7 @@ export async function claimDevice(input: {
         userAgent: input.userAgent || existing.userAgent,
       },
     })
-    const used = await prisma.membershipDevice.count({
-      where: { membershipId: membership.id },
-    })
+    const used = await countDevicesForProvider(input.userId, input.provider)
     return {
       ok: true,
       skipped: false,
@@ -116,9 +126,7 @@ export async function claimDevice(input: {
     }
   }
 
-  const used = await prisma.membershipDevice.count({
-    where: { membershipId: membership.id },
-  })
+  const used = await countDevicesForProvider(input.userId, input.provider)
 
   if (used >= membership.maxDevices) {
     const def = getProvider(input.provider)
@@ -128,28 +136,116 @@ export async function claimDevice(input: {
       message: `Tu plan de ${def.shortLabel} permite ${membership.maxDevices} dispositivo(s). Quita uno en Mis dispositivos o pide ampliar el plan.`,
       maxDevices: membership.maxDevices,
       used,
+      provider: input.provider,
     }
   }
 
-  const created = await prisma.membershipDevice.create({
-    data: {
-      membershipId: membership.id,
-      userId: input.userId,
-      provider: input.provider,
-      deviceKey,
-      label,
-      userAgent: input.userAgent || null,
-      lastSeenAt: now,
-    },
-  })
+  try {
+    const created = await prisma.membershipDevice.create({
+      data: {
+        membershipId: membership.id,
+        userId: input.userId,
+        provider: input.provider,
+        deviceKey,
+        label,
+        userAgent: input.userAgent || null,
+        lastSeenAt: now,
+      },
+    })
 
-  return {
-    ok: true,
-    skipped: false,
-    deviceId: created.id,
-    maxDevices: membership.maxDevices,
-    used: used + 1,
+    return {
+      ok: true,
+      skipped: false,
+      deviceId: created.id,
+      maxDevices: membership.maxDevices,
+      used: used + 1,
+    }
+  } catch {
+    // Carrera: otro request ocupó el cupo o el mismo key.
+    const again = await prisma.membershipDevice.findUnique({
+      where: {
+        userId_provider_deviceKey: {
+          userId: input.userId,
+          provider: input.provider,
+          deviceKey,
+        },
+      },
+    })
+    if (again) {
+      await prisma.membershipDevice.update({
+        where: { id: again.id },
+        data: {
+          membershipId: membership.id,
+          lastSeenAt: now,
+          label,
+        },
+      })
+      return {
+        ok: true,
+        skipped: false,
+        deviceId: again.id,
+        maxDevices: membership.maxDevices,
+        used: await countDevicesForProvider(input.userId, input.provider),
+      }
+    }
+    const usedNow = await countDevicesForProvider(input.userId, input.provider)
+    const def = getProvider(input.provider)
+    return {
+      ok: false,
+      reason: "limit_reached",
+      message: `Tu plan de ${def.shortLabel} permite ${membership.maxDevices} dispositivo(s). Quita uno en Mis dispositivos o pide ampliar el plan.`,
+      maxDevices: membership.maxDevices,
+      used: usedNow,
+      provider: input.provider,
+    }
   }
+}
+
+export type SessionDeviceEnforcement =
+  | { blocked: false; hasMembership: boolean }
+  | {
+      blocked: true
+      message: string
+      maxDevices: number
+      used: number
+      provider: ResourceProviderId
+    }
+
+/**
+ * Reclama cupo en todos los proveedores con membresía activa.
+ * Si este dispositivo no cabe en alguno → bloqueado.
+ */
+export async function enforceSessionDevices(input: {
+  userId: string
+  rawDeviceId: string
+  userAgent?: string | null
+}): Promise<SessionDeviceEnforcement> {
+  let hasMembership = false
+
+  for (const provider of providerList()) {
+    const membership = await getActiveMembership(input.userId, provider.id)
+    if (!membership) continue
+    hasMembership = true
+
+    const result = await claimDevice({
+      userId: input.userId,
+      provider: provider.id,
+      rawDeviceId: input.rawDeviceId,
+      userAgent: input.userAgent,
+    })
+
+    if (!result.ok) {
+      return {
+        blocked: true,
+        message: result.message,
+        maxDevices: result.maxDevices,
+        used: result.used,
+        provider: provider.id,
+      }
+    }
+  }
+
+  return { blocked: false, hasMembership }
 }
 
 export async function assertDeviceAllowed(input: {
@@ -190,11 +286,8 @@ export async function assertDeviceAllowed(input: {
     return { allowed: true }
   }
 
-  const used = await prisma.membershipDevice.count({
-    where: { membershipId: membership.id },
-  })
+  const used = await countDevicesForProvider(input.userId, input.provider)
   if (used < membership.maxDevices) {
-    // Permitir claim implícito en descarga si hay cupo.
     const claim = await claimDevice({
       userId: input.userId,
       provider: input.provider,
@@ -238,7 +331,6 @@ export async function listMembershipDevices(membershipId: string) {
 
 export async function revokeDevice(input: {
   deviceId: string
-  /** Si se pasa, solo puede borrar sus propios dispositivos. */
   ownerUserId?: string
 }) {
   const device = await prisma.membershipDevice.findUnique({

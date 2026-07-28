@@ -17,7 +17,7 @@ import {
   expireDueMemberships,
   getActiveMembership,
 } from "@/lib/billing/membership"
-import { countDevicesForMembership } from "@/lib/billing/devices"
+import { countDevicesForProvider } from "@/lib/billing/devices"
 import {
   FREE_DOWNLOAD_LIMIT,
   EXTRA_DEVICE_MONTHLY_SOLES,
@@ -55,7 +55,7 @@ export default async function RechargePage() {
         checkProviderDownloadAccess(user.id, provider.id),
       ])
       const deviceUsed = membership
-        ? await countDevicesForMembership(membership.id)
+        ? await countDevicesForProvider(user.id, provider.id)
         : 0
       return { provider, membership, downloadAccess, deviceUsed }
     })

@@ -1,4 +1,5 @@
 import { AppShell, type ShellIconName } from "@/components/layout/app-shell"
+import { DeviceSessionGuard } from "@/components/billing/device-session-guard"
 import { hasPermission, requireUser } from "@/lib/auth/authorization"
 import { PERMISSIONS, type PermissionKey } from "@/lib/auth/permissions"
 
@@ -101,7 +102,7 @@ export default async function DashboardLayout({
       user={{ name: user.name, roleNames: user.roleNames }}
       navigation={visibleNavigation}
     >
-      {children}
+      <DeviceSessionGuard>{children}</DeviceSessionGuard>
     </AppShell>
   )
 }
