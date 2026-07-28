@@ -10,6 +10,7 @@ import {
   openAutomationRecorder,
 } from "../browser/automation-recorder"
 import { downloadProviderResource, DownloadCancelledError } from "../browser/provider-download"
+import { withJobLog } from "../browser/job-log"
 import {
   closeSyncBrowser,
   isSyncBrowserOpen,
@@ -204,6 +205,7 @@ async function runDownloadJob(
         status: "RUNNING",
         startedAt: new Date(),
         error: null,
+        logs: null,
       },
     })
 
@@ -211,14 +213,68 @@ async function runDownloadJob(
       `[worker] Descargando ${def.shortLabel} job ${jobId} (${activeDownloadJobs.size}/${MAX_CONCURRENT_DOWNLOADS})`
     )
 
-    const result = await downloadProviderResource(provider, jobId, url)
+    const outcome = await withJobLog(jobId, () =>
+      downloadProviderResource(provider, jobId, url)
+    )
+    const { logs } = outcome
 
+    if (outcome.error) {
+      const current = await prisma.downloadJob.findUnique({
+        where: { id: jobId },
+        select: { status: true },
+      })
+      if (current?.status === "FAILED") {
+        console.info(`[worker] Job ${jobId} ya finalizado/cancelado`)
+        await prisma.downloadJob.update({
+          where: { id: jobId },
+          data: { logs },
+        })
+        return
+      }
+
+      const err = outcome.error
+      const message =
+        err instanceof DownloadCancelledError
+          ? "Cancelada por el usuario"
+          : err instanceof Error
+            ? err.message
+            : String(err)
+
+      await prisma.downloadJob.update({
+        where: { id: jobId },
+        data: {
+          status: "FAILED",
+          error: message,
+          finishedAt: new Date(),
+          logs,
+        },
+      })
+
+      if (
+        !(err instanceof DownloadCancelledError) &&
+        /sesión|sincroniza|login|sign-in|log-in/i.test(message)
+      ) {
+        await prisma.providerSession.update({
+          where: { provider },
+          data: { status: "EXPIRED", lastError: message },
+        })
+      }
+
+      console.error(`[worker] Job ${jobId} falló`, message)
+      return
+    }
+
+    const result = outcome.result!
     const stillActive = await prisma.downloadJob.findUnique({
       where: { id: jobId },
       select: { status: true },
     })
     if (!stillActive || stillActive.status !== "RUNNING") {
       console.info(`[worker] Job ${jobId} cancelado; no se marca como OK`)
+      await prisma.downloadJob.update({
+        where: { id: jobId },
+        data: { logs },
+      })
       return
     }
 
@@ -231,26 +287,12 @@ async function runDownloadJob(
         fileName: result.fileName,
         finishedAt: new Date(),
         error: null,
+        logs,
       },
     })
     console.info(`[worker] Job ${jobId} OK: ${result.fileName}`)
   } catch (error) {
-    const current = await prisma.downloadJob.findUnique({
-      where: { id: jobId },
-      select: { status: true, error: true },
-    })
-    if (current?.status === "FAILED") {
-      console.info(`[worker] Job ${jobId} ya finalizado/cancelado`)
-      return
-    }
-
-    const message =
-      error instanceof DownloadCancelledError
-        ? "Cancelada por el usuario"
-        : error instanceof Error
-          ? error.message
-          : String(error)
-
+    const message = error instanceof Error ? error.message : String(error)
     await prisma.downloadJob.update({
       where: { id: jobId },
       data: {
@@ -259,17 +301,6 @@ async function runDownloadJob(
         finishedAt: new Date(),
       },
     })
-
-    if (
-      !(error instanceof DownloadCancelledError) &&
-      /sesión|sincroniza|login|sign-in|log-in/i.test(message)
-    ) {
-      await prisma.providerSession.update({
-        where: { provider },
-        data: { status: "EXPIRED", lastError: message },
-      })
-    }
-
     console.error(`[worker] Job ${jobId} falló`, message)
   } finally {
     activeDownloadJobs.delete(jobId)

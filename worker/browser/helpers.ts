@@ -1,9 +1,14 @@
 import fs from "node:fs"
 import path from "node:path"
 
-import type { Locator, Page } from "playwright"
+import type { Download, Locator, Page } from "playwright"
 
 import type { AutomationStep } from "../../lib/automation/types"
+import { jobLog } from "./job-log"
+
+function log(...parts: unknown[]) {
+  jobLog("[automation]", ...parts)
+}
 
 export function ensureDir(dir: string) {
   fs.mkdirSync(dir, { recursive: true })
@@ -60,7 +65,6 @@ function buildClickCandidates(step: {
     })
   }
 
-  // Modal de términos Envato free download
   if (
     isBrittleAbsoluteXPath(step.selector) ||
     /label|checkbox|terms|download/i.test(step.selector)
@@ -108,7 +112,6 @@ async function robustClick(locator: Locator, timeoutMs = 45_000) {
   )
   const htmlFor = await target.getAttribute("for")
 
-  // label[for=checkbox] → marcar el input asociado
   if (tagName === "label" && htmlFor) {
     const input = target.page().locator(`#${cssEscape(htmlFor)}`).first()
     if ((await input.count()) > 0) {
@@ -171,14 +174,14 @@ async function robustClick(locator: Locator, timeoutMs = 45_000) {
     await target.click({ timeout: Math.min(timeoutMs, 10_000) })
     return
   } catch {
-    // force / ancestro
+    // force
   }
 
   try {
     await target.click({ force: true, timeout: timeoutMs })
     return
   } catch {
-    // último recurso
+    // último
   }
 
   const clicked = await target.evaluate((el) => {
@@ -209,13 +212,24 @@ async function clickWithFallbacks(
 
   for (const candidate of candidates) {
     try {
+      log(`intento clic ${candidate.by}: ${candidate.selector.slice(0, 120)}`)
       const locator = locatorFor(page, candidate.by, candidate.selector)
-      // Esperar a que exista (modales tardan en abrir)
+      const count = await locator.count()
+      log(`  matches=${count}`)
+      if (count === 0) continue
       await locator.first().waitFor({ state: "attached", timeout: timeoutMs })
+      const visible = await locator.first().isVisible().catch(() => false)
+      const enabled = await locator.first().isEnabled().catch(() => false)
+      const text = (
+        await locator.first().innerText().catch(() => "")
+      ).replace(/\s+/g, " ").trim().slice(0, 80)
+      log(`  visible=${visible} enabled=${enabled} text="${text}"`)
       await robustClick(locator, timeoutMs)
+      log(`  clic OK con ${candidate.by}`)
       return
     } catch (error) {
       lastError = error
+      log(`  clic falló: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
@@ -224,17 +238,52 @@ async function clickWithFallbacks(
     : new Error(String(lastError ?? "Clic fallido"))
 }
 
+async function describePageState(page: Page, label: string) {
+  try {
+    const url = page.url()
+    const title = await page.title().catch(() => "")
+    const buttons = await page.evaluate(() => {
+      const nodes = Array.from(
+        document.querySelectorAll("button, a[role='button'], [role='button']")
+      )
+      return nodes
+        .slice(0, 40)
+        .map((el) => {
+          const text = (el.textContent || "").replace(/\s+/g, " ").trim()
+          if (!text) return null
+          const tag = el.tagName.toLowerCase()
+          const disabled =
+            el instanceof HTMLButtonElement ? el.disabled : false
+          return { tag, text: text.slice(0, 60), disabled }
+        })
+        .filter(Boolean)
+    })
+    log(`${label} url=${url}`)
+    log(`${label} title="${title}"`)
+    log(`${label} botones visibles (max 40):`, JSON.stringify(buttons))
+  } catch (error) {
+    log(
+      `${label} no se pudo leer estado:`,
+      error instanceof Error ? error.message : String(error)
+    )
+  }
+}
+
 export async function runAutomationSteps(
   page: Page,
   steps: AutomationStep[],
   downloadDir: string
 ) {
   ensureDir(downloadDir)
+  log(`inicio pasos count=${steps.length} downloadDir=${downloadDir}`)
+  await describePageState(page, "antes-de-pasos")
 
   for (let index = 0; index < steps.length; index++) {
     const step = steps[index]
+    log(`paso #${index + 1}/${steps.length} type=${step.type}`, JSON.stringify(step))
 
     if (step.type === "wait") {
+      log(`esperando ${step.ms}ms`)
       await page.waitForTimeout(step.ms)
       continue
     }
@@ -246,7 +295,9 @@ export async function runAutomationSteps(
           state: "attached",
           timeout: step.timeoutMs ?? 45_000,
         })
+        log(`waitFor OK`)
       } catch (error) {
+        await describePageState(page, "waitFor-falló")
         throw new Error(
           `No apareció el selector (${step.by}): ${step.selector}. ${String(error)}`
         )
@@ -257,10 +308,14 @@ export async function runAutomationSteps(
     if (step.type === "click") {
       try {
         await clickWithFallbacks(page, step, 45_000)
-        // Dar tiempo a modales / animaciones antes del siguiente paso
         await page.waitForTimeout(1800)
+        await describePageState(page, "después-click")
       } catch (error) {
-        if (step.optional) continue
+        if (step.optional) {
+          log(`click opcional omitido`)
+          continue
+        }
+        await describePageState(page, "click-falló")
         throw new Error(
           `No se pudo hacer click (${step.by}): ${step.selector}. ${String(error)}`
         )
@@ -269,28 +324,117 @@ export async function runAutomationSteps(
     }
 
     if (step.type === "download") {
-      const downloadPromise = page.waitForEvent("download", {
-        timeout: step.timeoutMs ?? 120_000,
-      })
-      try {
-        await clickWithFallbacks(page, step, 45_000)
-      } catch (error) {
-        throw new Error(
-          `No se pudo hacer click de descarga (${step.by}): ${step.selector}. ${String(error)}`
-        )
-      }
-      const download = await downloadPromise
-      const suggested = download.suggestedFilename() || `envato-${Date.now()}.bin`
-      const targetPath = path.join(downloadDir, suggested)
-      await download.saveAs(targetPath)
-      return {
-        filePath: targetPath,
-        fileName: suggested,
-      }
+      return await runDownloadStep(page, step, downloadDir)
     }
   }
 
   throw new Error("La automatización terminó sin paso de descarga")
+}
+
+async function runDownloadStep(
+  page: Page,
+  step: Extract<AutomationStep, { type: "download" }>,
+  downloadDir: string
+) {
+  const timeoutMs = step.timeoutMs ?? 120_000
+  const context = page.context()
+  log(`download: escuchando evento en context timeout=${timeoutMs}ms`)
+  await describePageState(page, "antes-download-click")
+
+  let resolved = false
+  const downloadWait = new Promise<Download>((resolve, reject) => {
+    const startedAt = Date.now()
+    const timer = setTimeout(() => {
+      if (resolved) return
+      resolved = true
+      cleanup()
+      reject(
+        new Error(
+          `Timeout ${timeoutMs}ms sin evento download (elapsed=${Date.now() - startedAt}ms)`
+        )
+      )
+    }, timeoutMs)
+
+    const onDownload = (download: Download) => {
+      if (resolved) return
+      resolved = true
+      cleanup()
+      log(
+        `download EVENTO recibido suggested=${download.suggestedFilename()} url=${download.url()}`
+      )
+      resolve(download)
+    }
+
+    const onPage = (newPage: Page) => {
+      log(`nueva pestaña abierta: ${newPage.url()}`)
+      newPage.on("download", onDownload)
+      void newPage.url()
+      void newPage
+        .waitForLoadState("domcontentloaded")
+        .then(() => describePageState(newPage, "nueva-pestaña"))
+        .catch(() => undefined)
+    }
+
+    function cleanup() {
+      clearTimeout(timer)
+      context.off("download", onDownload)
+      context.off("page", onPage)
+    }
+
+    context.on("download", onDownload)
+    context.on("page", onPage)
+  })
+
+  const navPromise = page
+    .waitForEvent("framenavigated", { timeout: timeoutMs })
+    .then((frame) => {
+      if (frame === page.mainFrame()) {
+        log(`navegación mainFrame → ${page.url()}`)
+      }
+    })
+    .catch(() => undefined)
+
+  try {
+    log(`download: haciendo clic en selector`)
+    await clickWithFallbacks(page, step, 45_000)
+    log(`download: clic disparado; esperando archivo…`)
+  } catch (error) {
+    await describePageState(page, "download-click-falló")
+    throw new Error(
+      `No se pudo hacer click de descarga (${step.by}): ${step.selector}. ${String(error)}`
+    )
+  }
+
+  // Estado 2s y 8s después del clic (sin asumir modal de licencia)
+  void (async () => {
+    await page.waitForTimeout(2000)
+    if (!resolved) await describePageState(page, "t+2s-post-click")
+    await page.waitForTimeout(6000)
+    if (!resolved) await describePageState(page, "t+8s-post-click")
+  })()
+
+  try {
+    const download = await downloadWait
+    await navPromise
+    const suggested =
+      download.suggestedFilename() || `download-${Date.now()}.bin`
+    const targetPath = path.join(downloadDir, suggested)
+    log(`guardando archivo → ${targetPath}`)
+    await download.saveAs(targetPath)
+    const size = fs.existsSync(targetPath) ? fs.statSync(targetPath).size : 0
+    log(`archivo OK name=${suggested} bytes=${size}`)
+    return {
+      filePath: targetPath,
+      fileName: suggested,
+    }
+  } catch (error) {
+    await describePageState(page, "download-timeout-o-error")
+    const files = fs.existsSync(downloadDir)
+      ? fs.readdirSync(downloadDir)
+      : []
+    log(`archivos en downloadDir:`, files)
+    throw error
+  }
 }
 
 export function detectEnvatoCategory(url: string) {

@@ -21,6 +21,7 @@ export type ProviderHistoryItem = {
   url: string
   fileName: string | null
   error: string | null
+  logs: string | null
   createdAt: string
   finishedAt: string | null
 }
@@ -101,6 +102,7 @@ export async function getProviderDownloadJob(
       url: true,
       fileName: true,
       error: true,
+      logs: true,
       createdAt: true,
       finishedAt: true,
     },
@@ -125,6 +127,7 @@ export async function listProviderDownloadHistory(
       url: true,
       fileName: true,
       error: true,
+      logs: true,
       createdAt: true,
       finishedAt: true,
     },
@@ -136,6 +139,7 @@ export async function listProviderDownloadHistory(
     url: job.url,
     fileName: job.fileName,
     error: job.error,
+    logs: job.logs,
     createdAt: job.createdAt.toISOString(),
     finishedAt: job.finishedAt?.toISOString() ?? null,
   }))

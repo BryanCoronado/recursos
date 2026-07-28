@@ -145,6 +145,8 @@ model DownloadJob {
   filePath         String?
   fileName         String?
   error            String?           @db.Text
+  /// Log detallado del worker para diagnosticar fallos
+  logs             String?           @db.LongText
   requestedById    String
   requestedBy      User              @relation(fields: [requestedById], references: [id], onDelete: Cascade)
   startedAt        DateTime?

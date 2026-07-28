@@ -12,8 +12,26 @@ export function extractUrlPattern(url: string): string {
 export function urlMatchesPattern(url: string, pattern: string | null | undefined) {
   if (!pattern?.trim()) return false
   try {
-    const pathname = new URL(url).pathname.toLowerCase()
     const needle = pattern.trim().toLowerCase()
+    const parsed = new URL(url)
+    const href = url.toLowerCase()
+
+    if (needle.startsWith("http://") || needle.startsWith("https://")) {
+      try {
+        const p = new URL(needle)
+        return (
+          parsed.hostname === p.hostname ||
+          parsed.hostname.endsWith(`.${p.hostname}`) ||
+          href.includes(needle) ||
+          (p.hostname.endsWith("envato.com") &&
+            parsed.hostname.endsWith("envato.com"))
+        )
+      } catch {
+        return href.includes(needle)
+      }
+    }
+
+    const pathname = parsed.pathname.toLowerCase()
     return pathname.includes(needle)
   } catch {
     return false

@@ -10,6 +10,7 @@ import {
 import { jobDownloadDir, providerProfilePath } from "../../lib/storage/paths"
 import { openEnvatoItemForDownload } from "./envato-open-item"
 import { detectEnvatoCategory, ensureDir, runAutomationSteps } from "./helpers"
+import { jobLog } from "./job-log"
 import { launchWorkerContext } from "./launch"
 import { prisma } from "../prisma"
 
@@ -49,6 +50,15 @@ export async function downloadProviderResource(
   const rules = await prisma.automationRule.findMany({
     where: { provider, isActive: true },
   })
+  jobLog(
+    `[download] job=${jobId} provider=${provider} url=${url} category=${category} reglasActivas=${rules.length}`
+  )
+  for (const r of rules) {
+    jobLog(
+      `[download]  regla id=${r.id} name="${r.name}" pattern="${r.urlPattern}" category=${r.category} priority=${r.priority}`
+    )
+  }
+
   const rule = pickAutomationRule(rules, url, category)
 
   if (!rule) {
@@ -57,14 +67,21 @@ export async function downloadProviderResource(
     )
   }
 
+  jobLog(
+    `[download] regla ELEGIDA id=${rule.id} name="${rule.name}" pattern="${rule.urlPattern}" category=${rule.category}`
+  )
+
   const steps = automationStepsSchema.parse(rule.steps) as AutomationStep[]
+  jobLog(`[download] steps=`, steps)
   const profilePath = session.profilePath || providerProfilePath(def.slug)
   const downloadDir = jobDownloadDir(jobId)
   ensureDir(downloadDir)
+  jobLog(`[download] profile=${profilePath} downloadDir=${downloadDir}`)
 
   const context = await launchWorkerContext(profilePath, {
     downloadsPath: downloadDir,
   })
+  jobLog(`[download] Chromium lanzado`)
 
   const cancelWatcher = setInterval(() => {
     void prisma.downloadJob
@@ -92,10 +109,11 @@ export async function downloadProviderResource(
     const page = context.pages()[0] ?? (await context.newPage())
 
     if (provider === "ENVATO") {
-      // Cliente pega elements…; con sesión llegamos a la UI Descargar (app)
       await openEnvatoItemForDownload(page, url)
     } else {
+      jobLog(`[download] goto ${url}`)
       await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90_000 })
+      jobLog(`[download] landed ${page.url()}`)
     }
 
     const result = await runAutomationSteps(page, steps, downloadDir)
@@ -115,6 +133,7 @@ export async function downloadProviderResource(
   } finally {
     clearInterval(cancelWatcher)
     await context.close().catch(() => undefined)
+    jobLog(`[download] Chromium cerrado`)
   }
 }
 

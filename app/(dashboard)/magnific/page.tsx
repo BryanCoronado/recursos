@@ -36,6 +36,7 @@ export default async function MagnificPage() {
         url: true,
         fileName: true,
         error: true,
+        logs: true,
         createdAt: true,
         finishedAt: true,
       },
@@ -63,6 +64,7 @@ export default async function MagnificPage() {
         url: job.url,
         fileName: job.fileName,
         error: job.error,
+        logs: job.logs,
         createdAt: job.createdAt.toISOString(),
         finishedAt: job.finishedAt?.toISOString() ?? null,
       }))}

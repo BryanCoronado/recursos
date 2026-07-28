@@ -8,6 +8,7 @@ import {
   Clock3,
   Download,
   ExternalLink,
+  FileText,
   Loader2,
 } from "lucide-react"
 import Image from "next/image"
@@ -48,6 +49,7 @@ type ProviderDownloadFormProps = {
     status: ProviderHistoryItem["status"]
     fileName: string | null
     error: string | null
+    logs?: string | null
   } | null>
   listHistory: () => Promise<ProviderHistoryItem[]>
   cancelJob: (jobId: string) => Promise<{ ok?: boolean; error?: string }>
@@ -58,6 +60,7 @@ type JobView = {
   status: ProviderHistoryItem["status"]
   fileName: string | null
   error: string | null
+  logs?: string | null
 }
 
 const statusLabel = {
@@ -102,6 +105,7 @@ export function ProviderDownloadForm({
   const [job, setJob] = useState<JobView | null>(null)
   const [history, setHistory] = useState(initialHistory)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
+  const [logOpenId, setLogOpenId] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
   const statusCopy = {
@@ -138,6 +142,16 @@ export function ProviderDownloadForm({
     }
   }
 
+  function downloadLogFile(jobId: string, logs: string) {
+    const blob = new Blob([logs], { type: "text/plain;charset=utf-8" })
+    const href = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = href
+    a.download = `download-log-${jobId}.txt`
+    a.click()
+    URL.revokeObjectURL(href)
+  }
+
   useEffect(() => {
     if (!state.jobId) return
     setJob({
@@ -163,6 +177,7 @@ export function ProviderDownloadForm({
           status: next.status,
           fileName: next.fileName,
           error: next.error,
+          logs: "logs" in next ? (next.logs as string | null) : null,
         })
         if (next.status === "DONE" || next.status === "FAILED") {
           await refreshHistory()
@@ -334,6 +349,37 @@ export function ProviderDownloadForm({
               {job.status === "FAILED" && job.error ? (
                 <p className="mt-2 text-destructive">{job.error}</p>
               ) : null}
+              {job.status === "FAILED" && job.logs ? (
+                <div className="mt-3 space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setLogOpenId((id) => (id === job.id ? null : job.id))
+                      }
+                    >
+                      <FileText />
+                      {logOpenId === job.id ? "Ocultar log" : "Ver log"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => downloadLogFile(job.id, job.logs!)}
+                    >
+                      <Download />
+                      Descargar log
+                    </Button>
+                  </div>
+                  {logOpenId === job.id ? (
+                    <pre className="max-h-64 overflow-auto rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-3 text-left text-[11px] leading-relaxed text-[var(--mich-muted)] whitespace-pre-wrap">
+                      {job.logs}
+                    </pre>
+                  ) : null}
+                </div>
+              ) : null}
               {job.status === "DONE" ? (
                 <a
                   href={`/api/downloads/${job.id}`}
@@ -406,6 +452,39 @@ export function ProviderDownloadForm({
                     <p className="text-xs text-destructive line-clamp-2">
                       {item.error}
                     </p>
+                  ) : null}
+                  {item.status === "FAILED" && item.logs ? (
+                    <div className="space-y-2 pt-1">
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setLogOpenId((id) =>
+                              id === item.id ? null : item.id
+                            )
+                          }
+                        >
+                          <FileText />
+                          {logOpenId === item.id ? "Ocultar log" : "Ver log"}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => downloadLogFile(item.id, item.logs!)}
+                        >
+                          <Download />
+                          Descargar log
+                        </Button>
+                      </div>
+                      {logOpenId === item.id ? (
+                        <pre className="max-h-56 overflow-auto rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] p-3 text-[11px] leading-relaxed text-[var(--mich-muted)] whitespace-pre-wrap">
+                          {item.logs}
+                        </pre>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
 

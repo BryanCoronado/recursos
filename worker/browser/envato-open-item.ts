@@ -1,25 +1,32 @@
 import type { Page } from "playwright"
 
+import { jobLog } from "./job-log"
+
 const DOWNLOAD_BTN =
   'button:has-text("Descargar"), button:has-text("Download"), a:has-text("Descargar"), a:has-text("Download")'
 
+function log(...parts: unknown[]) {
+  jobLog("[envato-open]", ...parts)
+}
+
 /**
- * El cliente pega elements.envato.com/… (link público).
- * Con sesión logueada, Envato muestra la UI de app (botón verde Descargar)
- * tras redirect o tras un clic intermedio. Aquí unificamos ese camino.
+ * Abre el link del cliente (elements…) y espera el botón Descargar.
+ * No pulsa Descargar: eso lo hace la regla (paso download).
  */
 export async function openEnvatoItemForDownload(page: Page, clientUrl: string) {
+  log(`goto ${clientUrl}`)
   await page.goto(clientUrl, {
     waitUntil: "domcontentloaded",
     timeout: 90_000,
   })
+  log(`después goto url=${page.url()}`)
 
-  // Cookies / banners
   try {
     const accept = page
       .locator('button:has-text("Accept"), button:has-text("Aceptar")')
       .first()
     if (await accept.isVisible({ timeout: 2500 }).catch(() => false)) {
+      log("clic Accept/Aceptar cookies")
       await accept.click({ timeout: 5000 })
       await page.waitForTimeout(800)
     }
@@ -27,42 +34,32 @@ export async function openEnvatoItemForDownload(page: Page, clientUrl: string) {
     // ignore
   }
 
-  // Si ya está el Descargar de la app (modal o página), listo
-  if (await hasPrimaryDownload(page)) return
-
-  // A veces Elements pide un clic previo que abre app.envato.com / modal
   try {
-    const entry = page.locator(DOWNLOAD_BTN).first()
-    if (await entry.isVisible({ timeout: 8000 }).catch(() => false)) {
-      await entry.click({ timeout: 10_000 })
-      await page.waitForTimeout(2000)
-    }
+    await page.waitForURL(/app\.envato\.com|elements\.envato\.com/, {
+      timeout: 30_000,
+    })
+    log(`URL estable url=${page.url()}`)
   } catch {
-    // ignore
+    log(`waitForURL timeout, url actual=${page.url()}`)
   }
 
-  // Esperar UI de descarga (app o modal sobre elements)
+  await page.waitForTimeout(2000)
+
   try {
     await page
       .locator(DOWNLOAD_BTN)
       .first()
-      .waitFor({ state: "visible", timeout: 45_000 })
+      .waitFor({ state: "visible", timeout: 60_000 })
+    const count = await page.locator(DOWNLOAD_BTN).count()
+    log(`botón Descargar visible count=${count} url=${page.url()}`)
   } catch {
+    log(`NO apareció Descargar url=${page.url()}`)
     throw new Error(
       "No apareció el botón Descargar tras abrir el link de Elements. " +
-        "Revisa la sesión Envato (Sync Listo) o vuelve a grabar la regla " +
-        "empezando desde un link elements.envato.com/…"
+        "Revisa Sync Envato (Listo) en noVNC."
     )
   }
-}
 
-async function hasPrimaryDownload(page: Page) {
-  try {
-    return await page
-      .locator(DOWNLOAD_BTN)
-      .first()
-      .isVisible({ timeout: 6_000 })
-  } catch {
-    return false
-  }
+  await page.waitForTimeout(1200)
+  log(`listo para regla de automatización url=${page.url()}`)
 }
