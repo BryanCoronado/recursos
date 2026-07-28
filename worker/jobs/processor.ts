@@ -275,9 +275,11 @@ async function runDownloadJob(
         where: { id: jobId },
         data: { logs },
       })
+      await result.closeBrowser()
       return
     }
 
+    // Primero DONE en DB (la web deja de “esperar”), luego cerrar Chromium/VNC
     await prisma.downloadJob.update({
       where: { id: jobId },
       data: {
@@ -291,6 +293,7 @@ async function runDownloadJob(
       },
     })
     console.info(`[worker] Job ${jobId} OK: ${result.fileName}`)
+    await result.closeBrowser()
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     await prisma.downloadJob.update({

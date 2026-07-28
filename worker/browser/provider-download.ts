@@ -97,12 +97,19 @@ export async function downloadProviderResource(
       .catch(() => undefined)
   }, 1200)
 
+  const closeBrowser = async () => {
+    clearInterval(cancelWatcher)
+    await context.close().catch(() => undefined)
+    jobLog(`[download] Chromium cerrado`)
+  }
+
   try {
     const stillRunning = await prisma.downloadJob.findUnique({
       where: { id: jobId },
       select: { status: true },
     })
     if (!stillRunning || stillRunning.status !== "RUNNING") {
+      await closeBrowser()
       throw new DownloadCancelledError()
     }
 
@@ -123,17 +130,19 @@ export async function downloadProviderResource(
       select: { status: true },
     })
     if (!after || after.status !== "RUNNING") {
+      await closeBrowser()
       throw new DownloadCancelledError()
     }
 
+    // Devolvemos close para marcar DONE en DB ANTES de cerrar el VNC
     return {
       ...result,
       category: rule.urlPattern || rule.category,
+      closeBrowser,
     }
-  } finally {
-    clearInterval(cancelWatcher)
-    await context.close().catch(() => undefined)
-    jobLog(`[download] Chromium cerrado`)
+  } catch (error) {
+    await closeBrowser()
+    throw error
   }
 }
 

@@ -159,47 +159,61 @@ export function ProviderDownloadForm({
       status: "QUEUED",
       fileName: null,
       error: null,
+      logs: null,
     })
-    startTransition(() => {
-      void refreshHistory()
-    })
+    void refreshHistory()
   }, [state.jobId])
 
-  useEffect(() => {
-    if (!job || job.status === "DONE" || job.status === "FAILED") return
+  // Poll estable: solo depende del id + si sigue activo (no reinicia en cada RUNNING)
+  const jobId = job?.id
+  const jobActive =
+    job?.status === "QUEUED" || job?.status === "RUNNING"
 
-    const timer = window.setInterval(() => {
-      startTransition(async () => {
-        const next = await getJob(job.id)
-        if (!next) return
-        setJob({
-          id: next.id,
-          status: next.status,
-          fileName: next.fileName,
-          error: next.error,
-          logs: "logs" in next ? (next.logs as string | null) : null,
+  useEffect(() => {
+    if (!jobId || !jobActive) return
+
+    let cancelled = false
+
+    const tick = async () => {
+      try {
+        const next = await getJob(jobId)
+        if (cancelled || !next) return
+        setJob((prev) => {
+          if (!prev || prev.id !== next.id) return prev
+          if (
+            prev.status === next.status &&
+            prev.fileName === next.fileName &&
+            prev.error === next.error &&
+            prev.logs === (next.logs ?? null)
+          ) {
+            return prev
+          }
+          return {
+            id: next.id,
+            status: next.status,
+            fileName: next.fileName,
+            error: next.error,
+            logs: next.logs ?? null,
+          }
         })
         if (next.status === "DONE" || next.status === "FAILED") {
           await refreshHistory()
-        } else {
-          setHistory((current) =>
-            current.map((item) =>
-              item.id === next.id
-                ? {
-                    ...item,
-                    status: next.status,
-                    fileName: next.fileName,
-                    error: next.error,
-                  }
-                : item
-            )
-          )
         }
-      })
-    }, 2000)
+      } catch {
+        // ignore poll errors
+      }
+    }
 
-    return () => window.clearInterval(timer)
-  }, [job])
+    void tick()
+    const timer = window.setInterval(() => {
+      void tick()
+    }, 1500)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+    }
+  }, [jobId, jobActive, getJob])
 
   return (
     <div className="space-y-8">
