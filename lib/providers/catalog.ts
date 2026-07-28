@@ -28,7 +28,8 @@ export const PROVIDERS: Record<ResourceProviderId, ProviderDefinition> = {
     label: "Envato Elements",
     shortLabel: "Envato",
     loginUrl: "https://elements.envato.com/es/sign-in",
-    hosts: ["elements.envato.com"],
+    // Cualquier subdominio envato.com (elements, app, etc.)
+    hosts: ["envato.com"],
     sampleUrlPlaceholder: "https://elements.envato.com/es/free-files",
     logoSrc: "/envato.png",
     dashboardPath: "/envato",
