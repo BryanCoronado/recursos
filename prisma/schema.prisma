@@ -148,6 +148,10 @@ model DownloadJob {
   error            String?           @db.Text
   /// Log detallado del worker para diagnosticar fallos
   logs             String?           @db.LongText
+  /// Huella del navegador (anti multi-cuenta en plan gratis)
+  deviceKey        String?
+  /// IP del cliente al encolar (tope suave anti abuso)
+  clientIp         String?
   requestedById    String
   requestedBy      User              @relation(fields: [requestedById], references: [id], onDelete: Cascade)
   startedAt        DateTime?
@@ -158,6 +162,8 @@ model DownloadJob {
   @@index([status, createdAt])
   @@index([provider, status])
   @@index([requestedById])
+  @@index([provider, deviceKey])
+  @@index([provider, clientIp])
 }
 
 model AutomationRule {

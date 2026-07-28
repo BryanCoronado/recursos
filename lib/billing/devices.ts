@@ -1,14 +1,13 @@
 import "server-only"
 
-import { createHash } from "crypto"
-
 import { getActiveMembership } from "@/lib/billing/membership"
+import { hashDeviceFingerprint } from "@/lib/billing/fingerprint"
 import { getProvider, type ResourceProviderId } from "@/lib/providers/catalog"
 import { providerList } from "@/lib/providers/catalog"
 import { prisma } from "@/lib/prisma"
 
 function hashDeviceId(rawDeviceId: string) {
-  return createHash("sha256").update(rawDeviceId.trim()).digest("hex").slice(0, 64)
+  return hashDeviceFingerprint(rawDeviceId)
 }
 
 export function labelFromUserAgent(ua: string | null | undefined) {

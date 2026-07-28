@@ -2,6 +2,7 @@ import "server-only"
 
 import {
   FREE_DOWNLOAD_LIMIT,
+  FREE_DOWNLOAD_PER_IP_LIMIT,
   MONTHLY_PRICE_SOLES,
   SUBSCRIPTION_PLANS,
   addMonths,
@@ -9,6 +10,7 @@ import {
   membershipTotalSoles,
   type SubscriptionPlanKey,
 } from "@/lib/billing/plans"
+import { hashDeviceFingerprint } from "@/lib/billing/fingerprint"
 import { getProvider, type ResourceProviderId } from "@/lib/providers/catalog"
 import { prisma } from "@/lib/prisma"
 
@@ -44,6 +46,8 @@ export async function getActiveMembership(
   })
 }
 
+const FREE_STATUSES = ["QUEUED", "RUNNING", "DONE"] as const
+
 export async function countProviderDownloadsUsed(
   userId: string,
   provider: ResourceProviderId
@@ -52,9 +56,40 @@ export async function countProviderDownloadsUsed(
     where: {
       requestedById: userId,
       provider,
-      status: { in: ["QUEUED", "RUNNING", "DONE"] },
+      status: { in: [...FREE_STATUSES] },
     },
   })
+}
+
+async function countFreeDownloadsByDevice(
+  provider: ResourceProviderId,
+  deviceKey: string
+) {
+  return prisma.downloadJob.count({
+    where: {
+      provider,
+      deviceKey,
+      status: { in: [...FREE_STATUSES] },
+    },
+  })
+}
+
+async function countFreeDownloadsByIp(
+  provider: ResourceProviderId,
+  clientIp: string
+) {
+  return prisma.downloadJob.count({
+    where: {
+      provider,
+      clientIp,
+      status: { in: [...FREE_STATUSES] },
+    },
+  })
+}
+
+export type FreeDownloadContext = {
+  rawDeviceId?: string | null
+  clientIp?: string | null
 }
 
 export type DownloadAccessResult =
@@ -75,7 +110,8 @@ export type DownloadAccessResult =
 
 export async function checkProviderDownloadAccess(
   userId: string,
-  provider: ResourceProviderId
+  provider: ResourceProviderId,
+  ctx: FreeDownloadContext = {}
 ): Promise<DownloadAccessResult> {
   const def = getProvider(provider)
   const membership = await getActiveMembership(userId, provider)
@@ -87,7 +123,29 @@ export async function checkProviderDownloadAccess(
     }
   }
 
-  const used = await countProviderDownloadsUsed(userId, provider)
+  const usedByUser = await countProviderDownloadsUsed(userId, provider)
+  let used = usedByUser
+
+  const rawDevice = ctx.rawDeviceId?.trim()
+  if (rawDevice && rawDevice.length >= 8) {
+    const deviceKey = hashDeviceFingerprint(rawDevice)
+    const usedByDevice = await countFreeDownloadsByDevice(provider, deviceKey)
+    used = Math.max(used, usedByDevice)
+  }
+
+  if (ctx.clientIp) {
+    const usedByIp = await countFreeDownloadsByIp(provider, ctx.clientIp)
+    if (usedByIp >= FREE_DOWNLOAD_PER_IP_LIMIT) {
+      return {
+        allowed: false,
+        unlimited: false,
+        used: Math.max(used, FREE_DOWNLOAD_LIMIT),
+        remaining: 0,
+        reason: `Se alcanzó el límite de pruebas gratis desde esta red para ${def.shortLabel}. Activa una membresía (S/ ${MONTHLY_PRICE_SOLES}/mes) o escríbenos por WhatsApp.`,
+      }
+    }
+  }
+
   const remaining = Math.max(0, FREE_DOWNLOAD_LIMIT - used)
   if (remaining <= 0) {
     return {
@@ -95,7 +153,7 @@ export async function checkProviderDownloadAccess(
       unlimited: false,
       used,
       remaining: 0,
-      reason: `Ya usaste tus ${FREE_DOWNLOAD_LIMIT} descargas gratis de ${def.shortLabel}. Activa una membresía (S/ ${MONTHLY_PRICE_SOLES}/mes) desde Recarga o WhatsApp.`,
+      reason: `Ya usaste las ${FREE_DOWNLOAD_LIMIT} descargas gratis de ${def.shortLabel} en esta cuenta o dispositivo. Activa una membresía (S/ ${MONTHLY_PRICE_SOLES}/mes) desde Recarga o WhatsApp.`,
     }
   }
 
@@ -160,7 +218,10 @@ export async function updateMembershipMaxDevices(input: {
 
   const maxDevices = clampDevices(input.maxDevices)
   const deviceCount = await prisma.membershipDevice.count({
-    where: { membershipId: membership.id },
+    where: {
+      userId: membership.userId,
+      provider: membership.provider,
+    },
   })
   if (maxDevices < deviceCount) {
     throw new Error(
@@ -204,8 +265,11 @@ export async function getActiveEnvatoMembership(userId: string) {
   return getActiveMembership(userId, "ENVATO")
 }
 
-export async function checkEnvatoDownloadAccess(userId: string) {
-  return checkProviderDownloadAccess(userId, "ENVATO")
+export async function checkEnvatoDownloadAccess(
+  userId: string,
+  ctx?: FreeDownloadContext
+) {
+  return checkProviderDownloadAccess(userId, "ENVATO", ctx)
 }
 
 export async function createEnvatoMembership(input: {

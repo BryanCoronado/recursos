@@ -8,6 +8,7 @@ import {
   checkProviderDownloadAccess,
   getActiveMembership,
 } from "@/lib/billing/membership"
+import { freeDownloadContextFromRequest } from "@/lib/billing/free-download-context"
 import { prisma } from "@/lib/prisma"
 
 import {
@@ -24,6 +25,7 @@ export default async function MagnificPage() {
   }
 
   const user = access.user
+  const freeCtx = await freeDownloadContextFromRequest()
   const [session, jobs, quota, membership] = await Promise.all([
     prisma.providerSession.findUnique({
       where: { provider: "MAGNIFIC" },
@@ -47,7 +49,7 @@ export default async function MagnificPage() {
         finishedAt: true,
       },
     }),
-    checkProviderDownloadAccess(user.id, "MAGNIFIC"),
+    checkProviderDownloadAccess(user.id, "MAGNIFIC", freeCtx),
     getActiveMembership(user.id, "MAGNIFIC"),
   ])
 

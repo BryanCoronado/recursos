@@ -18,6 +18,7 @@ import {
   getActiveMembership,
 } from "@/lib/billing/membership"
 import { countDevicesForProvider } from "@/lib/billing/devices"
+import { freeDownloadContextFromRequest } from "@/lib/billing/free-download-context"
 import {
   FREE_DOWNLOAD_LIMIT,
   EXTRA_DEVICE_MONTHLY_SOLES,
@@ -47,12 +48,13 @@ export default async function RechargePage() {
 
   await expireDueMemberships()
   const user = access.user
+  const freeCtx = await freeDownloadContextFromRequest()
 
   const providerStates = await Promise.all(
     providerList().map(async (provider) => {
       const [membership, downloadAccess] = await Promise.all([
         getActiveMembership(user.id, provider.id),
-        checkProviderDownloadAccess(user.id, provider.id),
+        checkProviderDownloadAccess(user.id, provider.id, freeCtx),
       ])
       const deviceUsed = membership
         ? await countDevicesForProvider(user.id, provider.id)

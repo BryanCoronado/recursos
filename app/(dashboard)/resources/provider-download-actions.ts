@@ -1,8 +1,14 @@
 "use server"
 
+import { headers } from "next/headers"
+
 import { requirePermission } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
 import { assertDeviceAllowed } from "@/lib/billing/devices"
+import {
+  clientIpFromHeaders,
+  hashDeviceFingerprint,
+} from "@/lib/billing/fingerprint"
 import { checkProviderDownloadAccess } from "@/lib/billing/membership"
 import {
   getProvider,
@@ -40,6 +46,9 @@ export async function createProviderDownloadJob(
   const user = await requirePermission(ACCESS_PERMISSION[provider])
   const def = getProvider(provider)
   const rawUrl = formData.get("url")
+  const rawDeviceId = String(formData.get("deviceId") ?? "").trim()
+  const hdrs = await headers()
+  const clientIp = clientIpFromHeaders(hdrs)
 
   if (typeof rawUrl !== "string" || !rawUrl.trim()) {
     return { error: "Introduce una URL válida" }
@@ -58,7 +67,10 @@ export async function createProviderDownloadJob(
     }
   }
 
-  const access = await checkProviderDownloadAccess(user.id, provider)
+  const access = await checkProviderDownloadAccess(user.id, provider, {
+    rawDeviceId,
+    clientIp,
+  })
   if (!access.allowed) {
     return { error: access.reason }
   }
@@ -66,7 +78,7 @@ export async function createProviderDownloadJob(
   const deviceCheck = await assertDeviceAllowed({
     userId: user.id,
     provider,
-    rawDeviceId: String(formData.get("deviceId") ?? ""),
+    rawDeviceId,
   })
   if (!deviceCheck.allowed) {
     return { error: deviceCheck.reason }
@@ -82,12 +94,17 @@ export async function createProviderDownloadJob(
     }
   }
 
+  const deviceKey =
+    rawDeviceId.length >= 8 ? hashDeviceFingerprint(rawDeviceId) : null
+
   const job = await prisma.downloadJob.create({
     data: {
       provider,
       url,
       status: "QUEUED",
       requestedById: user.id,
+      deviceKey,
+      clientIp,
     },
   })
 

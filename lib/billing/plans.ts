@@ -10,6 +10,11 @@ import {
 
 export const MONTHLY_PRICE_SOLES = 20
 export const FREE_DOWNLOAD_LIMIT = 2
+/**
+ * Tope suave por IP en plan gratis (misma red / móvil).
+ * Evita crear muchas cuentas desde la misma conexión.
+ */
+export const FREE_DOWNLOAD_PER_IP_LIMIT = 4
 /** Precio mensual por cada dispositivo adicional (el 1.º va incluido). */
 export const EXTRA_DEVICE_MONTHLY_SOLES = 10
 export const MIN_DEVICES = 1
