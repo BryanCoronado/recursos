@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Los perfiles Chromium en storage/ (miles de archivos) no deben entrar al bundle/trace.
+  outputFileTracingExcludes: {
+    "*": [
+      "./storage/**/*",
+      "./storage/browser/**/*",
+      "./storage/downloads/**/*",
+    ],
+  },
 }
 
 export default nextConfig

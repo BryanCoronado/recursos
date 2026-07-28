@@ -19,6 +19,8 @@ module.exports = {
         NODE_ENV: "production",
         // Obligatoria para Chromium headed + Xvfb
         DISPLAY: ":99",
+        // 1 descarga a la vez = menos RAM en VPS pequeños
+        WORKER_MAX_DOWNLOADS: "1",
       },
     },
   ],
