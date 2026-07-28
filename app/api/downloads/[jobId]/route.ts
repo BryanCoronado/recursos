@@ -33,11 +33,16 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const { jobId } = await context.params
 
+    const canSeeAll =
+      user.isSuperAdmin ||
+      hasPermission(user.permissions, PERMISSIONS.DOWNLOADS_READ) ||
+      hasPermission(user.permissions, PERMISSIONS.SYNC_ACCESS)
+
     const job = await prisma.downloadJob.findFirst({
       where: {
         id: jobId,
-        requestedById: user.id,
         status: "DONE",
+        ...(canSeeAll ? {} : { requestedById: user.id }),
       },
     })
 
@@ -52,9 +57,11 @@ export async function GET(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Proveedor inválido" }, { status: 400 })
     }
 
-    const permission = ACCESS_BY_PROVIDER[job.provider]
-    if (!hasPermission(user.permissions, permission)) {
-      throw new AuthorizationError()
+    if (!canSeeAll) {
+      const permission = ACCESS_BY_PROVIDER[job.provider]
+      if (!hasPermission(user.permissions, permission)) {
+        throw new AuthorizationError()
+      }
     }
 
     const resolved = path.resolve(job.filePath)

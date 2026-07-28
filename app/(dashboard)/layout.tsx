@@ -51,6 +51,12 @@ const navigation = [
     ],
   },
   {
+    href: "/downloads",
+    label: "Descargas",
+    icon: "downloads",
+    anyOf: [PERMISSIONS.DOWNLOADS_READ, PERMISSIONS.SYNC_ACCESS],
+  },
+  {
     href: "/subscriptions",
     label: "Membresías",
     icon: "subscriptions",
