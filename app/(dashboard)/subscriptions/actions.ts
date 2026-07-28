@@ -5,11 +5,17 @@ import { z } from "zod"
 
 import { requirePermission } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
-import { SUBSCRIPTION_PLANS } from "@/lib/billing/plans"
+import {
+  MAX_DEVICES,
+  MIN_DEVICES,
+  SUBSCRIPTION_PLANS,
+} from "@/lib/billing/plans"
 import {
   cancelMembership,
   createMembership,
+  updateMembershipMaxDevices,
 } from "@/lib/billing/membership"
+import { revokeDevice } from "@/lib/billing/devices"
 import {
   getProvider,
   requireProviderId,
@@ -23,6 +29,7 @@ export type MembershipActionState = {
 const createSchema = z.object({
   userId: z.string().min(1),
   plan: z.enum(["MONTHLY", "QUARTERLY", "YEARLY"]),
+  maxDevices: z.coerce.number().int().min(MIN_DEVICES).max(MAX_DEVICES),
   notes: z.string().trim().max(500).optional(),
 })
 
@@ -42,6 +49,7 @@ export async function activateMembership(
   const parsed = createSchema.safeParse({
     userId: formData.get("userId"),
     plan: formData.get("plan"),
+    maxDevices: formData.get("maxDevices") || "1",
     notes: String(formData.get("notes") ?? "").trim() || undefined,
   })
 
@@ -54,15 +62,17 @@ export async function activateMembership(
       userId: parsed.data.userId,
       provider,
       plan: parsed.data.plan,
+      maxDevices: parsed.data.maxDevices,
       createdById: admin.id,
       notes: parsed.data.notes,
     })
     revalidatePath("/subscriptions")
     revalidatePath("/recharge")
+    revalidatePath("/devices")
     revalidatePath(getProvider(provider).dashboardPath)
     const label = SUBSCRIPTION_PLANS[parsed.data.plan].label
     return {
-      ok: `${getProvider(provider).shortLabel} · ${label} hasta ${membership.endsAt.toLocaleString("es")}`,
+      ok: `${getProvider(provider).shortLabel} · ${label} · ${membership.maxDevices} disp. · S/ ${Number(membership.totalPriceSoles)} · hasta ${membership.endsAt.toLocaleString("es")}`,
     }
   } catch (error) {
     return {
@@ -80,6 +90,25 @@ export async function cancelMembershipAction(formData: FormData) {
   })
   revalidatePath("/subscriptions")
   revalidatePath("/recharge")
+  revalidatePath("/devices")
   revalidatePath("/envato")
   revalidatePath("/magnific")
+}
+
+export async function updateMaxDevicesAction(formData: FormData) {
+  await requirePermission(PERMISSIONS.SUBSCRIPTIONS_MANAGE)
+  const membershipId = String(formData.get("membershipId") ?? "")
+  const maxDevices = Number(formData.get("maxDevices") ?? 1)
+  await updateMembershipMaxDevices({ membershipId, maxDevices })
+  revalidatePath("/subscriptions")
+  revalidatePath("/devices")
+  revalidatePath("/recharge")
+}
+
+export async function adminRevokeDeviceAction(formData: FormData) {
+  await requirePermission(PERMISSIONS.SUBSCRIPTIONS_MANAGE)
+  const deviceId = String(formData.get("deviceId") ?? "")
+  await revokeDevice({ deviceId })
+  revalidatePath("/subscriptions")
+  revalidatePath("/devices")
 }

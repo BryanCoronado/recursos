@@ -10,6 +10,10 @@ import {
 
 export const MONTHLY_PRICE_SOLES = 20
 export const FREE_DOWNLOAD_LIMIT = 2
+/** Precio mensual por cada dispositivo adicional (el 1.º va incluido). */
+export const EXTRA_DEVICE_MONTHLY_SOLES = 10
+export const MIN_DEVICES = 1
+export const MAX_DEVICES = 10
 
 /** @deprecated usar MONTHLY_PRICE_SOLES */
 export const ENVATO_MONTHLY_PRICE_SOLES = MONTHLY_PRICE_SOLES
@@ -42,12 +46,32 @@ export const SUBSCRIPTION_PLANS = {
 
 export type SubscriptionPlanKey = keyof typeof SUBSCRIPTION_PLANS
 
+export function clampDevices(n: number) {
+  return Math.min(MAX_DEVICES, Math.max(MIN_DEVICES, Math.floor(n)))
+}
+
 export function planListSoles(plan: SubscriptionPlanKey) {
   return MONTHLY_PRICE_SOLES * SUBSCRIPTION_PLANS[plan].months
 }
 
 export function planTotalSoles(plan: SubscriptionPlanKey) {
   return SUBSCRIPTION_PLANS[plan].totalSoles
+}
+
+/** Extra por dispositivos adicionales (sin descuento de pack). */
+export function extraDevicesSoles(maxDevices: number, months: number) {
+  const extras = Math.max(0, clampDevices(maxDevices) - 1)
+  return extras * EXTRA_DEVICE_MONTHLY_SOLES * months
+}
+
+/** Total plan + dispositivos. */
+export function membershipTotalSoles(
+  plan: SubscriptionPlanKey,
+  maxDevices: number = 1
+) {
+  const base = planTotalSoles(plan)
+  const months = SUBSCRIPTION_PLANS[plan].months
+  return base + extraDevicesSoles(maxDevices, months)
 }
 
 export function planSavingsSoles(plan: SubscriptionPlanKey) {
@@ -73,15 +97,22 @@ export function whatsappRechargeUrl(
   options?: {
     plan?: SubscriptionPlanKey
     provider?: ResourceProviderId
+    maxDevices?: number
   }
 ) {
   const provider = options?.provider
   const providerLabel = provider
     ? getProvider(provider).shortLabel
     : "Envato / Magnific"
+  const devices = clampDevices(options?.maxDevices ?? 1)
+  const devicesLine =
+    devices > 1
+      ? ` con ${devices} dispositivos (+S/ ${EXTRA_DEVICE_MONTHLY_SOLES}/mes c/u extra)`
+      : " (1 dispositivo incluido)"
+
   const planLine = options?.plan
-    ? ` Quiero el plan ${SUBSCRIPTION_PLANS[options.plan].label} de ${providerLabel} por S/ ${planTotalSoles(options.plan)}.`
-    : ` Quiero activar una membresía ${providerLabel} (desde S/ ${MONTHLY_PRICE_SOLES}/mes).`
+    ? ` Quiero el plan ${SUBSCRIPTION_PLANS[options.plan].label} de ${providerLabel} por S/ ${membershipTotalSoles(options.plan, devices)}${devicesLine}.`
+    : ` Quiero activar una membresía ${providerLabel} (desde S/ ${MONTHLY_PRICE_SOLES}/mes, 1 dispositivo; +S/ ${EXTRA_DEVICE_MONTHLY_SOLES}/mes por dispositivo extra).`
 
   const text = encodeURIComponent(
     `Hola, soy ${userName} (${userEmail}).${planLine} MICHITECH Recursos.`
@@ -92,6 +123,20 @@ export function whatsappRechargeUrl(
 export function whatsappSupportUrl(userName: string, userEmail: string) {
   const text = encodeURIComponent(
     `Hola, soy ${userName} (${userEmail}). Necesito soporte con MICHITECH Recursos.`
+  )
+  return `https://wa.me/${WHATSAPP.phone}?text=${text}`
+}
+
+export function whatsappExtraDeviceUrl(
+  userName: string,
+  userEmail: string,
+  provider: ResourceProviderId,
+  currentMax: number
+) {
+  const label = getProvider(provider).shortLabel
+  const next = currentMax + 1
+  const text = encodeURIComponent(
+    `Hola, soy ${userName} (${userEmail}). Quiero ampliar mi membresía ${label} a ${next} dispositivos (+S/ ${EXTRA_DEVICE_MONTHLY_SOLES}/mes por dispositivo extra). MICHITECH Recursos.`
   )
   return `https://wa.me/${WHATSAPP.phone}?text=${text}`
 }

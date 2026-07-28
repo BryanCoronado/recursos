@@ -17,8 +17,10 @@ import {
   expireDueMemberships,
   getActiveMembership,
 } from "@/lib/billing/membership"
+import { countDevicesForMembership } from "@/lib/billing/devices"
 import {
   FREE_DOWNLOAD_LIMIT,
+  EXTRA_DEVICE_MONTHLY_SOLES,
   MONTHLY_PRICE_SOLES,
   SUBSCRIPTION_PLANS,
   WHATSAPP,
@@ -52,7 +54,10 @@ export default async function RechargePage() {
         getActiveMembership(user.id, provider.id),
         checkProviderDownloadAccess(user.id, provider.id),
       ])
-      return { provider, membership, downloadAccess }
+      const deviceUsed = membership
+        ? await countDevicesForMembership(membership.id)
+        : 0
+      return { provider, membership, downloadAccess, deviceUsed }
     })
   )
 
@@ -79,8 +84,9 @@ export default async function RechargePage() {
               Recarga tu acceso
             </h1>
             <p className="mt-4 text-[15px] leading-7 text-[var(--mich-muted)]">
-              Planes para Envato y Magnific. Elige proveedor y paquete, escribe
-              por WhatsApp y lo activamos.
+              Planes para Envato y Magnific. 1 dispositivo incluido; +S/{" "}
+              {EXTRA_DEVICE_MONTHLY_SOLES}/mes por cada extra. Elige proveedor y
+              paquete, escribe por WhatsApp y lo activamos.
             </p>
             <div className="mt-5 flex items-center gap-2">
               {providerList().map((p) => (
@@ -105,15 +111,18 @@ export default async function RechargePage() {
           </div>
 
           <div className="grid min-w-[260px] gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            {providerStates.map(({ provider, membership, downloadAccess }) => (
+            {providerStates.map(
+              ({ provider, membership, downloadAccess, deviceUsed }) => (
               <ProviderStatusCard
                 key={provider.id}
                 logoSrc={provider.logoSrc}
                 label={provider.shortLabel}
                 membership={membership}
                 downloadAccess={downloadAccess}
+                deviceUsed={deviceUsed}
               />
-            ))}
+            )
+            )}
           </div>
         </div>
       </section>
@@ -137,7 +146,8 @@ export default async function RechargePage() {
                   Planes {provider.shortLabel}
                 </h2>
                 <p className="mt-1 text-sm text-[var(--mich-muted)]">
-                  Base S/ {MONTHLY_PRICE_SOLES}/mes · packs con descuento
+                  Base S/ {MONTHLY_PRICE_SOLES}/mes · 1 dispositivo incluido ·
+                  +S/ {EXTRA_DEVICE_MONTHLY_SOLES}/mes extra
                 </p>
               </div>
             </div>
@@ -209,8 +219,12 @@ export default async function RechargePage() {
                       Descargas {provider.shortLabel} ilimitadas
                     </li>
                     <li className="flex items-center gap-2">
+                      <Check className="size-4 text-[var(--mich-blue)]" />
+                      1 dispositivo incluido
+                    </li>
+                    <li className="flex items-center gap-2">
                       <Zap className="size-4 text-[var(--mich-blue)]" />
-                      Activación por WhatsApp
+                      +S/ {EXTRA_DEVICE_MONTHLY_SOLES}/mes por dispositivo extra
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="size-4 text-[var(--mich-blue)]" />
@@ -280,11 +294,13 @@ function ProviderStatusCard({
   label,
   membership,
   downloadAccess,
+  deviceUsed,
 }: {
   logoSrc: string
   label: string
   membership: Awaited<ReturnType<typeof getActiveMembership>>
   downloadAccess: Awaited<ReturnType<typeof checkProviderDownloadAccess>>
+  deviceUsed: number
 }) {
   return (
     <div className="rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)]/85 px-4 py-3 backdrop-blur">
@@ -308,6 +324,9 @@ function ProviderStatusCard({
           </p>
           <p className="text-[var(--mich-muted)]">
             {SUBSCRIPTION_PLANS[membership.plan].label} · ilimitado
+          </p>
+          <p className="text-[var(--mich-muted)]">
+            Dispositivos {deviceUsed}/{membership.maxDevices}
           </p>
           <p className="text-xs text-[var(--mich-muted)]">
             Hasta{" "}

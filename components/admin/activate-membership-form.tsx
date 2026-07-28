@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useMemo, useState } from "react"
 import { CheckCircle2, Loader2 } from "lucide-react"
 
 import {
@@ -11,9 +11,13 @@ import { ProviderSelect } from "@/components/providers/provider-select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
+  EXTRA_DEVICE_MONTHLY_SOLES,
+  MAX_DEVICES,
+  MIN_DEVICES,
   MONTHLY_PRICE_SOLES,
   SUBSCRIPTION_PLANS,
-  planTotalSoles,
+  membershipTotalSoles,
+  type SubscriptionPlanKey,
 } from "@/lib/billing/plans"
 
 type UserOption = { id: string; name: string; email: string }
@@ -23,6 +27,16 @@ export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
     activateMembership,
     {} as MembershipActionState
   )
+  const [plan, setPlan] = useState<SubscriptionPlanKey>("MONTHLY")
+  const [maxDevices, setMaxDevices] = useState(1)
+
+  const total = useMemo(
+    () => membershipTotalSoles(plan, maxDevices),
+    [plan, maxDevices]
+  )
+  const months = SUBSCRIPTION_PLANS[plan].months
+  const extras = Math.max(0, maxDevices - 1)
+  const extraTotal = extras * EXTRA_DEVICE_MONTHLY_SOLES * months
 
   return (
     <form action={action} className="space-y-4">
@@ -49,28 +63,62 @@ export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
 
       <div className="space-y-1.5">
         <label htmlFor="plan" className="text-sm font-medium">
-          Plan (S/ {MONTHLY_PRICE_SOLES}/mes)
+          Plan (S/ {MONTHLY_PRICE_SOLES}/mes base)
         </label>
         <select
           id="plan"
           name="plan"
           required
-          defaultValue="MONTHLY"
+          value={plan}
+          onChange={(e) => setPlan(e.target.value as SubscriptionPlanKey)}
           className="h-10 w-full rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-3 text-sm"
         >
           {(
             Object.keys(SUBSCRIPTION_PLANS) as Array<keyof typeof SUBSCRIPTION_PLANS>
           ).map((key) => {
-            const plan = SUBSCRIPTION_PLANS[key]
-            const total = planTotalSoles(key)
+            const p = SUBSCRIPTION_PLANS[key]
             return (
               <option key={key} value={key}>
-                {plan.label} — S/ {total}
+                {p.label} — base S/ {p.totalSoles}
                 {key !== "MONTHLY" ? " (descuento)" : ""}
               </option>
             )
           })}
         </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <label htmlFor="maxDevices" className="text-sm font-medium">
+          Dispositivos
+        </label>
+        <select
+          id="maxDevices"
+          name="maxDevices"
+          value={maxDevices}
+          onChange={(e) => setMaxDevices(Number(e.target.value))}
+          className="h-10 w-full rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-3 text-sm"
+        >
+          {Array.from(
+            { length: MAX_DEVICES - MIN_DEVICES + 1 },
+            (_, i) => MIN_DEVICES + i
+          ).map((n) => (
+            <option key={n} value={n}>
+              {n} dispositivo{n === 1 ? "" : "s"}
+              {n === 1
+                ? " (incluido)"
+                : ` (+S/ ${EXTRA_DEVICE_MONTHLY_SOLES}/mes × ${n - 1})`}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-[var(--mich-muted)]">
+          Total a cobrar:{" "}
+          <span className="font-semibold text-[var(--mich-text)]">
+            S/ {total}
+          </span>
+          {extraTotal > 0
+            ? ` (plan S/ ${SUBSCRIPTION_PLANS[plan].totalSoles} + dispositivos S/ ${extraTotal})`
+            : null}
+        </p>
       </div>
 
       <div className="space-y-1.5">
@@ -101,7 +149,7 @@ export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
             Activando…
           </>
         ) : (
-          "Activar membresía"
+          `Activar · S/ ${total}`
         )}
       </Button>
     </form>

@@ -1,8 +1,13 @@
 import { AccessDenied } from "@/components/auth/access-denied"
+import { DeviceGate } from "@/components/billing/device-gate"
 import { ProviderDownloadForm } from "@/components/resources/provider-download-form"
 import { requirePagePermission } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
-import { checkProviderDownloadAccess } from "@/lib/billing/membership"
+import { whatsappExtraDeviceUrl } from "@/lib/billing/plans"
+import {
+  checkProviderDownloadAccess,
+  getActiveMembership,
+} from "@/lib/billing/membership"
 import { prisma } from "@/lib/prisma"
 
 import {
@@ -18,7 +23,8 @@ export default async function EnvatoPage() {
     return <AccessDenied moduleName="Envato" />
   }
 
-  const [session, jobs, quota] = await Promise.all([
+  const user = access.user
+  const [session, jobs, quota, membership] = await Promise.all([
     prisma.providerSession.findUnique({
       where: { provider: "ENVATO" },
       select: { status: true },
@@ -26,7 +32,7 @@ export default async function EnvatoPage() {
     prisma.downloadJob.findMany({
       where: {
         provider: "ENVATO",
-        requestedById: access.user.id,
+        requestedById: user.id,
       },
       orderBy: { createdAt: "desc" },
       take: 30,
@@ -41,7 +47,8 @@ export default async function EnvatoPage() {
         finishedAt: true,
       },
     }),
-    checkProviderDownloadAccess(access.user.id, "ENVATO"),
+    checkProviderDownloadAccess(user.id, "ENVATO"),
+    getActiveMembership(user.id, "ENVATO"),
   ])
 
   const quotaForClient =
@@ -53,25 +60,41 @@ export default async function EnvatoPage() {
         }
       : quota
 
+  const upgradeUrl = membership
+    ? whatsappExtraDeviceUrl(
+        user.name,
+        user.email,
+        "ENVATO",
+        membership.maxDevices
+      )
+    : undefined
+
   return (
-    <ProviderDownloadForm
-      provider="ENVATO"
-      sessionReady={session?.status === "READY"}
-      quota={quotaForClient}
-      initialHistory={jobs.map((job) => ({
-        id: job.id,
-        status: job.status,
-        url: job.url,
-        fileName: job.fileName,
-        error: job.error,
-        logs: job.logs,
-        createdAt: job.createdAt.toISOString(),
-        finishedAt: job.finishedAt?.toISOString() ?? null,
-      }))}
-      createJob={createEnvatoDownloadJob}
-      getJob={getEnvatoDownloadJob}
-      listHistory={listEnvatoDownloadHistory}
-      cancelJob={cancelEnvatoDownloadJob}
-    />
+    <DeviceGate provider="ENVATO" upgradeWhatsAppUrl={upgradeUrl}>
+      <ProviderDownloadForm
+        provider="ENVATO"
+        sessionReady={session?.status === "READY"}
+        quota={quotaForClient}
+        initialHistory={jobs.map((job) => ({
+          id: job.id,
+          status: job.status,
+          url: job.url,
+          fileName: job.fileName,
+          error: job.error,
+          logs: job.logs,
+          createdAt: job.createdAt.toISOString(),
+          finishedAt: job.finishedAt?.toISOString() ?? null,
+        }))}
+        createJob={createEnvatoDownloadJob}
+        getJob={getEnvatoDownloadJob}
+        listHistory={listEnvatoDownloadHistory}
+        cancelJob={cancelEnvatoDownloadJob}
+        help={{
+          tutorialYoutubeUrl: "https://youtu.be/7Gjz5ax5J9U",
+          browseUrl: "https://elements.envato.com/es/",
+          browseLabel: "Abrir Elements",
+        }}
+      />
+    </DeviceGate>
   )
 }

@@ -1,68 +1,38 @@
 import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth/next"
 
+import { AuthShell } from "@/components/auth/auth-shell"
 import { LoginForm } from "@/components/auth/login-form"
-import { BrandLogo } from "@/components/brand/brand-logo"
-import { ThemeToggle } from "@/components/theme/theme-toggle"
 import { authOptions } from "@/lib/auth/config"
 
 type LoginPageProps = {
-  searchParams: Promise<{ callbackUrl?: string }>
+  searchParams: Promise<{ callbackUrl?: string; registered?: string }>
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await getServerSession(authOptions)
   if (session) redirect("/dashboard")
 
-  const { callbackUrl: requestedCallback } = await searchParams
+  const params = await searchParams
   const callbackUrl =
-    requestedCallback?.startsWith("/") && !requestedCallback.startsWith("//")
-      ? requestedCallback
+    params.callbackUrl?.startsWith("/") && !params.callbackUrl.startsWith("//")
+      ? params.callbackUrl
       : "/dashboard"
+  const justRegistered = params.registered === "1"
 
   return (
-    <main className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-[var(--mich-surface-muted)] p-4">
-      <div className="absolute right-4 top-4 z-20">
-        <ThemeToggle />
-      </div>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-50"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(93,156,236,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(93,156,236,0.08) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-          maskImage:
-            "radial-gradient(ellipse at center, black 20%, transparent 72%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="absolute left-[18%] top-[18%] -z-10 size-[26rem] rounded-full bg-[var(--mich-blue)]/20 blur-[110px]"
-      />
-      <div
-        aria-hidden
-        className="absolute bottom-[10%] right-[14%] -z-10 size-[22rem] rounded-full bg-[var(--mich-indigo)]/15 blur-[120px]"
-      />
-
-      <section className="relative w-full max-w-[420px]">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <BrandLogo
-            width={280}
-            height={280}
-            priority
-            className="w-[220px] sm:w-[260px]"
-          />
-          <p className="mt-6 max-w-sm text-[15px] leading-6 text-[var(--mich-muted)]">
-            Inicia sesión en tu panel de recursos.
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-6 shadow-[0_24px_60px_-36px_rgba(11,18,32,0.35)] sm:p-7">
-         
-          <LoginForm callbackUrl={callbackUrl} />
-        </div>
-      </section>
-    </main>
+    <AuthShell
+      headline="Tu panel de recursos, listo."
+      subline="Descargas Envato y herramientas MICHITECH en un solo lugar."
+      formTitle="Iniciar sesión"
+      formSubtitle="Entra con tu correo y contraseña."
+    >
+      {justRegistered ? (
+        <p className="mich-auth-rise mb-5 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-3 text-[13px] leading-5 text-emerald-800 dark:text-emerald-200">
+          Cuenta creada correctamente. Ya puedes entrar.
+        </p>
+      ) : null}
+      <LoginForm callbackUrl={callbackUrl} />
+    </AuthShell>
   )
 }

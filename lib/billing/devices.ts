@@ -1,0 +1,259 @@
+import "server-only"
+
+import { createHash } from "crypto"
+
+import { getActiveMembership } from "@/lib/billing/membership"
+import { getProvider, type ResourceProviderId } from "@/lib/providers/catalog"
+import { prisma } from "@/lib/prisma"
+
+function hashDeviceId(rawDeviceId: string) {
+  return createHash("sha256").update(rawDeviceId.trim()).digest("hex").slice(0, 64)
+}
+
+export function labelFromUserAgent(ua: string | null | undefined) {
+  if (!ua) return "Dispositivo"
+  const browser =
+    /Edg\//.test(ua)
+      ? "Edge"
+      : /Chrome\//.test(ua) && !/Chromium/.test(ua)
+        ? "Chrome"
+        : /Firefox\//.test(ua)
+          ? "Firefox"
+          : /Safari\//.test(ua)
+            ? "Safari"
+            : "Navegador"
+  const os = /Windows/.test(ua)
+    ? "Windows"
+    : /Mac OS X|Macintosh/.test(ua)
+      ? "macOS"
+      : /Android/.test(ua)
+        ? "Android"
+        : /iPhone|iPad/.test(ua)
+          ? "iOS"
+          : /Linux/.test(ua)
+            ? "Linux"
+            : "Otro"
+  return `${browser} · ${os}`
+}
+
+export type ClaimDeviceResult =
+  | {
+      ok: true
+      skipped: true
+      reason: "no_membership"
+    }
+  | {
+      ok: true
+      skipped: false
+      deviceId: string
+      maxDevices: number
+      used: number
+    }
+  | {
+      ok: false
+      reason: "limit_reached" | "invalid_device"
+      message: string
+      maxDevices: number
+      used: number
+    }
+
+export async function claimDevice(input: {
+  userId: string
+  provider: ResourceProviderId
+  rawDeviceId: string
+  userAgent?: string | null
+}): Promise<ClaimDeviceResult> {
+  const raw = input.rawDeviceId?.trim()
+  if (!raw || raw.length < 8 || raw.length > 128) {
+    return {
+      ok: false,
+      reason: "invalid_device",
+      message: "Identificador de dispositivo inválido.",
+      maxDevices: 1,
+      used: 0,
+    }
+  }
+
+  const membership = await getActiveMembership(input.userId, input.provider)
+  if (!membership) {
+    return { ok: true, skipped: true, reason: "no_membership" }
+  }
+
+  const deviceKey = hashDeviceId(raw)
+  const label = labelFromUserAgent(input.userAgent)
+  const now = new Date()
+
+  const existing = await prisma.membershipDevice.findUnique({
+    where: {
+      userId_provider_deviceKey: {
+        userId: input.userId,
+        provider: input.provider,
+        deviceKey,
+      },
+    },
+  })
+
+  if (existing) {
+    // Si el device quedó ligado a una membresía vieja, reasociar a la activa.
+    await prisma.membershipDevice.update({
+      where: { id: existing.id },
+      data: {
+        membershipId: membership.id,
+        lastSeenAt: now,
+        label,
+        userAgent: input.userAgent || existing.userAgent,
+      },
+    })
+    const used = await prisma.membershipDevice.count({
+      where: { membershipId: membership.id },
+    })
+    return {
+      ok: true,
+      skipped: false,
+      deviceId: existing.id,
+      maxDevices: membership.maxDevices,
+      used,
+    }
+  }
+
+  const used = await prisma.membershipDevice.count({
+    where: { membershipId: membership.id },
+  })
+
+  if (used >= membership.maxDevices) {
+    const def = getProvider(input.provider)
+    return {
+      ok: false,
+      reason: "limit_reached",
+      message: `Tu plan de ${def.shortLabel} permite ${membership.maxDevices} dispositivo(s). Quita uno en Mis dispositivos o pide ampliar el plan.`,
+      maxDevices: membership.maxDevices,
+      used,
+    }
+  }
+
+  const created = await prisma.membershipDevice.create({
+    data: {
+      membershipId: membership.id,
+      userId: input.userId,
+      provider: input.provider,
+      deviceKey,
+      label,
+      userAgent: input.userAgent || null,
+      lastSeenAt: now,
+    },
+  })
+
+  return {
+    ok: true,
+    skipped: false,
+    deviceId: created.id,
+    maxDevices: membership.maxDevices,
+    used: used + 1,
+  }
+}
+
+export async function assertDeviceAllowed(input: {
+  userId: string
+  provider: ResourceProviderId
+  rawDeviceId: string
+}): Promise<{ allowed: true } | { allowed: false; reason: string }> {
+  const membership = await getActiveMembership(input.userId, input.provider)
+  if (!membership) {
+    return { allowed: true }
+  }
+
+  const raw = input.rawDeviceId?.trim()
+  if (!raw) {
+    return {
+      allowed: false,
+      reason:
+        "No se pudo identificar este dispositivo. Recarga la página e inténtalo de nuevo.",
+    }
+  }
+
+  const deviceKey = hashDeviceId(raw)
+  const existing = await prisma.membershipDevice.findUnique({
+    where: {
+      userId_provider_deviceKey: {
+        userId: input.userId,
+        provider: input.provider,
+        deviceKey,
+      },
+    },
+  })
+
+  if (existing) {
+    await prisma.membershipDevice.update({
+      where: { id: existing.id },
+      data: { lastSeenAt: new Date(), membershipId: membership.id },
+    })
+    return { allowed: true }
+  }
+
+  const used = await prisma.membershipDevice.count({
+    where: { membershipId: membership.id },
+  })
+  if (used < membership.maxDevices) {
+    // Permitir claim implícito en descarga si hay cupo.
+    const claim = await claimDevice({
+      userId: input.userId,
+      provider: input.provider,
+      rawDeviceId: raw,
+    })
+    if (claim.ok) return { allowed: true }
+    return { allowed: false, reason: claim.message }
+  }
+
+  const def = getProvider(input.provider)
+  return {
+    allowed: false,
+    reason: `Tu plan de ${def.shortLabel} permite ${membership.maxDevices} dispositivo(s). Este dispositivo no está registrado.`,
+  }
+}
+
+export async function listUserDevices(userId: string) {
+  return prisma.membershipDevice.findMany({
+    where: { userId },
+    orderBy: { lastSeenAt: "desc" },
+    include: {
+      membership: {
+        select: {
+          id: true,
+          status: true,
+          maxDevices: true,
+          endsAt: true,
+          plan: true,
+        },
+      },
+    },
+  })
+}
+
+export async function listMembershipDevices(membershipId: string) {
+  return prisma.membershipDevice.findMany({
+    where: { membershipId },
+    orderBy: { lastSeenAt: "desc" },
+  })
+}
+
+export async function revokeDevice(input: {
+  deviceId: string
+  /** Si se pasa, solo puede borrar sus propios dispositivos. */
+  ownerUserId?: string
+}) {
+  const device = await prisma.membershipDevice.findUnique({
+    where: { id: input.deviceId },
+  })
+  if (!device) {
+    throw new Error("Dispositivo no encontrado")
+  }
+  if (input.ownerUserId && device.userId !== input.ownerUserId) {
+    throw new Error("No puedes quitar este dispositivo")
+  }
+  await prisma.membershipDevice.delete({ where: { id: device.id } })
+  return device
+}
+
+export async function countDevicesForMembership(membershipId: string) {
+  return prisma.membershipDevice.count({ where: { membershipId } })
+}

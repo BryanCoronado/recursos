@@ -38,6 +38,7 @@ model User {
   memberships         Membership[]
   cancelledMemberships Membership[] @relation("MembershipCancelledBy")
   createdMemberships  Membership[]  @relation("MembershipCreatedBy")
+  membershipDevices   MembershipDevice[]
 
   @@index([status])
   @@index([createdById])
@@ -223,8 +224,10 @@ model Membership {
   months            Int
   /// Precio mensual en soles al momento de contratar.
   monthlyPriceSoles Decimal            @db.Decimal(10, 2)
-  /// Total cobrado (months * monthlyPriceSoles).
+  /// Total cobrado (plan + dispositivos extra).
   totalPriceSoles   Decimal            @db.Decimal(10, 2)
+  /// Cupos de dispositivos permitidos (1 incluido en el plan base).
+  maxDevices        Int                @default(1)
   status            SubscriptionStatus @default(ACTIVE)
   startsAt          DateTime
   endsAt            DateTime
@@ -237,8 +240,29 @@ model Membership {
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   cancelledBy       User?              @relation("MembershipCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
   createdBy         User?              @relation("MembershipCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  devices           MembershipDevice[]
 
   @@index([userId, provider, status])
   @@index([provider, status, endsAt])
   @@index([endsAt])
+}
+
+/// Dispositivo registrado contra una membresía (por proveedor).
+model MembershipDevice {
+  id           String           @id @default(cuid())
+  membershipId String
+  userId       String
+  provider     ResourceProvider
+  /// Hash estable del id de dispositivo del navegador.
+  deviceKey    String
+  label        String?
+  userAgent    String?          @db.Text
+  lastSeenAt   DateTime         @default(now())
+  createdAt    DateTime         @default(now())
+  membership   Membership       @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider, deviceKey])
+  @@index([membershipId])
+  @@index([userId, provider])
 }

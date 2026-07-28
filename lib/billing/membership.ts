@@ -5,6 +5,8 @@ import {
   MONTHLY_PRICE_SOLES,
   SUBSCRIPTION_PLANS,
   addMonths,
+  clampDevices,
+  membershipTotalSoles,
   type SubscriptionPlanKey,
 } from "@/lib/billing/plans"
 import { getProvider, type ResourceProviderId } from "@/lib/providers/catalog"
@@ -112,10 +114,13 @@ export async function createMembership(input: {
   createdById: string
   notes?: string
   startFrom?: Date
+  maxDevices?: number
 }) {
   await expireDueMemberships(input.provider)
 
   const plan = SUBSCRIPTION_PLANS[input.plan]
+  const maxDevices = clampDevices(input.maxDevices ?? 1)
+  const totalPriceSoles = membershipTotalSoles(input.plan, maxDevices)
   const now = input.startFrom ?? new Date()
   const current = await getActiveMembership(input.userId, input.provider)
   const startsAt = current && current.endsAt > now ? current.endsAt : now
@@ -128,13 +133,44 @@ export async function createMembership(input: {
       plan: input.plan,
       months: plan.months,
       monthlyPriceSoles: MONTHLY_PRICE_SOLES,
-      totalPriceSoles: plan.totalSoles,
+      totalPriceSoles,
+      maxDevices,
       status: "ACTIVE",
       startsAt,
       endsAt,
       createdById: input.createdById,
       notes: input.notes || null,
     },
+  })
+}
+
+export async function updateMembershipMaxDevices(input: {
+  membershipId: string
+  maxDevices: number
+}) {
+  const membership = await prisma.membership.findUnique({
+    where: { id: input.membershipId },
+  })
+  if (!membership) {
+    throw new Error("Membresía no encontrada")
+  }
+  if (membership.status !== "ACTIVE") {
+    throw new Error("Solo se pueden editar membresías activas")
+  }
+
+  const maxDevices = clampDevices(input.maxDevices)
+  const deviceCount = await prisma.membershipDevice.count({
+    where: { membershipId: membership.id },
+  })
+  if (maxDevices < deviceCount) {
+    throw new Error(
+      `Hay ${deviceCount} dispositivo(s) registrados. Quita alguno antes de bajar el cupo a ${maxDevices}.`
+    )
+  }
+
+  return prisma.membership.update({
+    where: { id: membership.id },
+    data: { maxDevices },
   })
 }
 
@@ -178,6 +214,7 @@ export async function createEnvatoMembership(input: {
   createdById: string
   notes?: string
   startFrom?: Date
+  maxDevices?: number
 }) {
   return createMembership({ ...input, provider: "ENVATO" })
 }

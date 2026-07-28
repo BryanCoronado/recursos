@@ -2,6 +2,7 @@
 
 import { requirePermission } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
+import { assertDeviceAllowed } from "@/lib/billing/devices"
 import { checkProviderDownloadAccess } from "@/lib/billing/membership"
 import {
   getProvider,
@@ -60,6 +61,15 @@ export async function createProviderDownloadJob(
   const access = await checkProviderDownloadAccess(user.id, provider)
   if (!access.allowed) {
     return { error: access.reason }
+  }
+
+  const deviceCheck = await assertDeviceAllowed({
+    userId: user.id,
+    provider,
+    rawDeviceId: String(formData.get("deviceId") ?? ""),
+  })
+  if (!deviceCheck.allowed) {
+    return { error: deviceCheck.reason }
   }
 
   const session = await prisma.providerSession.findUnique({

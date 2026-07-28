@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { JetBrains_Mono, Manrope, Outfit } from "next/font/google"
+import { cookies } from "next/headers"
 
 import { ThemeProvider } from "@/components/theme/theme-provider"
 
@@ -31,22 +32,21 @@ export const metadata: Metadata = {
   description: "Panel de recursos MICHITECH",
 }
 
-const themeInitScript = `(function(){try{var t=localStorage.getItem('mich-theme');var d=t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const jar = await cookies()
+  const themeCookie = jar.get("mich-theme")?.value
+  const dark = themeCookie === "dark"
+
   return (
     <html
       lang="es"
       suppressHydrationWarning
-      className={`${manrope.variable} ${outfit.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${manrope.variable} ${outfit.variable} ${jetbrainsMono.variable} h-full antialiased${dark ? " dark" : ""}`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
       <body className="flex min-h-full flex-col font-sans">
         <ThemeProvider>{children}</ThemeProvider>
       </body>

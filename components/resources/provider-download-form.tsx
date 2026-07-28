@@ -17,8 +17,10 @@ import type {
   ProviderDownloadState,
   ProviderHistoryItem,
 } from "@/app/(dashboard)/resources/provider-download-actions"
+import { ProviderHelpPanel } from "@/components/resources/provider-help-panel"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { getOrCreateDeviceId } from "@/lib/billing/device-client"
 import {
   PROVIDERS,
   type ResourceProviderId,
@@ -53,6 +55,12 @@ type ProviderDownloadFormProps = {
   } | null>
   listHistory: () => Promise<ProviderHistoryItem[]>
   cancelJob: (jobId: string) => Promise<{ ok?: boolean; error?: string }>
+  /** Ayuda opcional (tutorial + enlace externo), p. ej. solo Envato */
+  help?: {
+    tutorialYoutubeUrl: string
+    browseUrl: string
+    browseLabel: string
+  }
 }
 
 type JobView = {
@@ -96,6 +104,7 @@ export function ProviderDownloadForm({
   getJob,
   listHistory,
   cancelJob,
+  help,
 }: ProviderDownloadFormProps) {
   const def = PROVIDERS[provider]
   const [state, formAction, pending] = useActionState(
@@ -106,7 +115,12 @@ export function ProviderDownloadForm({
   const [history, setHistory] = useState(initialHistory)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [logOpenId, setLogOpenId] = useState<string | null>(null)
+  const [deviceId, setDeviceId] = useState("")
   const [, startTransition] = useTransition()
+
+  useEffect(() => {
+    setDeviceId(getOrCreateDeviceId())
+  }, [])
 
   const statusCopy = {
     QUEUED: "En cola… el worker tomará el trabajo en breve.",
@@ -254,6 +268,14 @@ export function ProviderDownloadForm({
             sincronizada.
           </p>
 
+          {help ? (
+            <ProviderHelpPanel
+              tutorialYoutubeUrl={help.tutorialYoutubeUrl}
+              browseUrl={help.browseUrl}
+              browseLabel={help.browseLabel}
+            />
+          ) : null}
+
           <div className="mx-auto mt-4 max-w-md rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-4 py-3 text-sm text-[var(--mich-muted)]">
             {quota.unlimited ? (
               <p>
@@ -300,6 +322,7 @@ export function ProviderDownloadForm({
           ) : null}
 
           <form action={formAction} className="mt-10 space-y-4">
+            <input type="hidden" name="deviceId" value={deviceId} />
             <Input
               name="url"
               type="url"

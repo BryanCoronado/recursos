@@ -1,8 +1,13 @@
 import { AccessDenied } from "@/components/auth/access-denied"
+import { DeviceGate } from "@/components/billing/device-gate"
 import { ProviderDownloadForm } from "@/components/resources/provider-download-form"
 import { requirePagePermission } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
-import { checkProviderDownloadAccess } from "@/lib/billing/membership"
+import { whatsappExtraDeviceUrl } from "@/lib/billing/plans"
+import {
+  checkProviderDownloadAccess,
+  getActiveMembership,
+} from "@/lib/billing/membership"
 import { prisma } from "@/lib/prisma"
 
 import {
@@ -18,7 +23,8 @@ export default async function MagnificPage() {
     return <AccessDenied moduleName="Magnific" />
   }
 
-  const [session, jobs, quota] = await Promise.all([
+  const user = access.user
+  const [session, jobs, quota, membership] = await Promise.all([
     prisma.providerSession.findUnique({
       where: { provider: "MAGNIFIC" },
       select: { status: true },
@@ -26,7 +32,7 @@ export default async function MagnificPage() {
     prisma.downloadJob.findMany({
       where: {
         provider: "MAGNIFIC",
-        requestedById: access.user.id,
+        requestedById: user.id,
       },
       orderBy: { createdAt: "desc" },
       take: 30,
@@ -41,7 +47,8 @@ export default async function MagnificPage() {
         finishedAt: true,
       },
     }),
-    checkProviderDownloadAccess(access.user.id, "MAGNIFIC"),
+    checkProviderDownloadAccess(user.id, "MAGNIFIC"),
+    getActiveMembership(user.id, "MAGNIFIC"),
   ])
 
   const quotaForClient =
@@ -53,25 +60,36 @@ export default async function MagnificPage() {
         }
       : quota
 
+  const upgradeUrl = membership
+    ? whatsappExtraDeviceUrl(
+        user.name,
+        user.email,
+        "MAGNIFIC",
+        membership.maxDevices
+      )
+    : undefined
+
   return (
-    <ProviderDownloadForm
-      provider="MAGNIFIC"
-      sessionReady={session?.status === "READY"}
-      quota={quotaForClient}
-      initialHistory={jobs.map((job) => ({
-        id: job.id,
-        status: job.status,
-        url: job.url,
-        fileName: job.fileName,
-        error: job.error,
-        logs: job.logs,
-        createdAt: job.createdAt.toISOString(),
-        finishedAt: job.finishedAt?.toISOString() ?? null,
-      }))}
-      createJob={createMagnificDownloadJob}
-      getJob={getMagnificDownloadJob}
-      listHistory={listMagnificDownloadHistory}
-      cancelJob={cancelMagnificDownloadJob}
-    />
+    <DeviceGate provider="MAGNIFIC" upgradeWhatsAppUrl={upgradeUrl}>
+      <ProviderDownloadForm
+        provider="MAGNIFIC"
+        sessionReady={session?.status === "READY"}
+        quota={quotaForClient}
+        initialHistory={jobs.map((job) => ({
+          id: job.id,
+          status: job.status,
+          url: job.url,
+          fileName: job.fileName,
+          error: job.error,
+          logs: job.logs,
+          createdAt: job.createdAt.toISOString(),
+          finishedAt: job.finishedAt?.toISOString() ?? null,
+        }))}
+        createJob={createMagnificDownloadJob}
+        getJob={getMagnificDownloadJob}
+        listHistory={listMagnificDownloadHistory}
+        cancelJob={cancelMagnificDownloadJob}
+      />
+    </DeviceGate>
   )
 }

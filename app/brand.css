@@ -25,3 +25,140 @@
   --mich-text: #e8eef8;
   --mich-muted: #93a4bc;
 }
+
+@keyframes mich-auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mich-auth-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mich-auth-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(12px, -18px, 0) scale(1.06);
+  }
+}
+
+@keyframes mich-auth-float-alt {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-16px, 14px, 0) scale(1.08);
+  }
+}
+
+@keyframes mich-auth-grid {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: 56px 56px, 56px 56px;
+  }
+}
+
+@keyframes mich-auth-line {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes mich-auth-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.mich-auth-rise {
+  animation: mich-auth-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mich-auth-fade {
+  animation: mich-auth-fade 0.8s ease both;
+}
+
+.mich-auth-float {
+  animation: mich-auth-float 14s ease-in-out infinite;
+}
+
+.mich-auth-float-alt {
+  animation: mich-auth-float-alt 18s ease-in-out infinite;
+}
+
+.mich-auth-grid-drift {
+  animation: mich-auth-grid 28s linear infinite;
+}
+
+.mich-auth-line {
+  transform-origin: left center;
+  animation: mich-auth-line 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+}
+
+.mich-auth-pulse {
+  animation: mich-auth-pulse 5s ease-in-out infinite;
+}
+
+.mich-auth-stagger > * {
+  animation: mich-auth-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mich-auth-stagger > *:nth-child(1) {
+  animation-delay: 0.08s;
+}
+.mich-auth-stagger > *:nth-child(2) {
+  animation-delay: 0.16s;
+}
+.mich-auth-stagger > *:nth-child(3) {
+  animation-delay: 0.24s;
+}
+.mich-auth-stagger > *:nth-child(4) {
+  animation-delay: 0.32s;
+}
+.mich-auth-stagger > *:nth-child(5) {
+  animation-delay: 0.4s;
+}
+.mich-auth-stagger > *:nth-child(6) {
+  animation-delay: 0.48s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mich-auth-rise,
+  .mich-auth-fade,
+  .mich-auth-float,
+  .mich-auth-float-alt,
+  .mich-auth-grid-drift,
+  .mich-auth-line,
+  .mich-auth-pulse,
+  .mich-auth-stagger > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

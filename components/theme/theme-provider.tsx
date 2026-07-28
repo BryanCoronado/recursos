@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useState,
   type ReactNode,
 } from "react"
@@ -26,24 +27,33 @@ function getSystemDark() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches
 }
 
+function persistTheme(theme: ThemeMode) {
+  window.localStorage.setItem(STORAGE_KEY, theme)
+  // Cookie para que el layout del servidor pinte dark sin <script>
+  document.cookie = `${STORAGE_KEY}=${encodeURIComponent(theme)};path=/;max-age=31536000;samesite=lax`
+}
+
 function applyTheme(theme: ThemeMode) {
   const dark = theme === "dark" || (theme === "system" && getSystemDark())
   document.documentElement.classList.toggle("dark", dark)
   return dark ? "dark" : "light"
 }
 
+function readStoredTheme(): ThemeMode {
+  const saved = window.localStorage.getItem(STORAGE_KEY) as ThemeMode | null
+  if (saved === "light" || saved === "dark" || saved === "system") return saved
+  return "system"
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>("system")
   const [resolved, setResolved] = useState<"light" | "dark">("light")
 
-  useEffect(() => {
-    const saved = window.localStorage.getItem(STORAGE_KEY) as ThemeMode | null
-    const initial =
-      saved === "light" || saved === "dark" || saved === "system"
-        ? saved
-        : "system"
+  useLayoutEffect(() => {
+    const initial = readStoredTheme()
     setThemeState(initial)
     setResolved(applyTheme(initial) as "light" | "dark")
+    persistTheme(initial)
   }, [])
 
   useEffect(() => {
@@ -59,7 +69,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setTheme = useCallback((next: ThemeMode) => {
     setThemeState(next)
-    window.localStorage.setItem(STORAGE_KEY, next)
+    persistTheme(next)
     setResolved(applyTheme(next) as "light" | "dark")
   }, [])
 

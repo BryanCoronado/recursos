@@ -40,6 +40,16 @@ const navigation = [
     permission: PERMISSIONS.RECHARGE_ACCESS,
   },
   {
+    href: "/devices",
+    label: "Dispositivos",
+    icon: "devices",
+    anyOf: [
+      PERMISSIONS.RECHARGE_ACCESS,
+      PERMISSIONS.ENVATO_ACCESS,
+      PERMISSIONS.MAGNIFIC_ACCESS,
+    ],
+  },
+  {
     href: "/subscriptions",
     label: "Membresías",
     icon: "subscriptions",
@@ -67,7 +77,8 @@ const navigation = [
   href: string
   label: string
   icon: ShellIconName
-  permission: PermissionKey
+  permission?: PermissionKey
+  anyOf?: PermissionKey[]
 }>
 
 export default async function DashboardLayout({
@@ -75,7 +86,14 @@ export default async function DashboardLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const user = await requireUser()
   const visibleNavigation = navigation
-    .filter((item) => hasPermission(user.permissions, item.permission))
+    .filter((item) => {
+      if (item.anyOf) {
+        return item.anyOf.some((p) => hasPermission(user.permissions, p))
+      }
+      return item.permission
+        ? hasPermission(user.permissions, item.permission)
+        : false
+    })
     .map(({ href, label, icon }) => ({ href, label, icon }))
 
   return (

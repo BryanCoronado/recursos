@@ -8,17 +8,19 @@ export async function proxy(request: NextRequest) {
   })
   const { pathname, search } = request.nextUrl
   const isLogin = pathname === "/login"
+  const isRegister = pathname === "/register"
+  const isPublicAuth = isLogin || isRegister
   const isAuthApi = pathname.startsWith("/api/auth")
 
   if (isAuthApi) return NextResponse.next()
 
-  if (!token && !isLogin) {
+  if (!token && !isPublicAuth) {
     const loginUrl = new URL("/login", request.url)
     loginUrl.searchParams.set("callbackUrl", `${pathname}${search}`)
     return NextResponse.redirect(loginUrl)
   }
 
-  if (token && isLogin) {
+  if (token && isPublicAuth) {
     return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
