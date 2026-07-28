@@ -30,7 +30,7 @@ export type AutomationStep = z.infer<typeof automationStepSchema>
 export const automationStepsSchema = z.array(automationStepSchema).min(1)
 
 export const DEFAULT_ENVATO_STEPS: AutomationStep[] = [
-  { type: "wait", ms: 2500 },
+  { type: "wait", ms: 1500 },
   {
     type: "click",
     by: "css",
@@ -38,10 +38,17 @@ export const DEFAULT_ENVATO_STEPS: AutomationStep[] = [
     optional: true,
   },
   {
+    type: "waitFor",
+    by: "css",
+    selector:
+      'button:has-text("Descargar"), button:has-text("Download"), a:has-text("Descargar"), a:has-text("Download")',
+    timeoutMs: 60_000,
+  },
+  {
     type: "download",
     by: "css",
     selector:
-      'button:has-text("Download"), a:has-text("Download"), button:has-text("Descargar"), a:has-text("Descargar")',
+      'button:has-text("Descargar"), button:has-text("Download"), a:has-text("Descargar"), a:has-text("Download")',
     timeoutMs: 120_000,
   },
 ]

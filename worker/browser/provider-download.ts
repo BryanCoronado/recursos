@@ -8,6 +8,7 @@ import {
   type ResourceProviderId,
 } from "../../lib/providers/catalog"
 import { jobDownloadDir, providerProfilePath } from "../../lib/storage/paths"
+import { openEnvatoItemForDownload } from "./envato-open-item"
 import { detectEnvatoCategory, ensureDir, runAutomationSteps } from "./helpers"
 import { launchWorkerContext } from "./launch"
 import { prisma } from "../prisma"
@@ -89,7 +90,14 @@ export async function downloadProviderResource(
     }
 
     const page = context.pages()[0] ?? (await context.newPage())
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90_000 })
+
+    if (provider === "ENVATO") {
+      // Cliente pega elements…; con sesión llegamos a la UI Descargar (app)
+      await openEnvatoItemForDownload(page, url)
+    } else {
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90_000 })
+    }
+
     const result = await runAutomationSteps(page, steps, downloadDir)
 
     const after = await prisma.downloadJob.findUnique({
