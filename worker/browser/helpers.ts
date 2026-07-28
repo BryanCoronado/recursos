@@ -368,7 +368,6 @@ async function runDownloadStep(
     const onPage = (newPage: Page) => {
       log(`nueva pestaña abierta: ${newPage.url()}`)
       newPage.on("download", onDownload)
-      void newPage.url()
       void newPage
         .waitForLoadState("domcontentloaded")
         .then(() => describePageState(newPage, "nueva-pestaña"))
@@ -385,15 +384,6 @@ async function runDownloadStep(
     context.on("page", onPage)
   })
 
-  const navPromise = page
-    .waitForEvent("framenavigated", { timeout: timeoutMs })
-    .then((frame) => {
-      if (frame === page.mainFrame()) {
-        log(`navegación mainFrame → ${page.url()}`)
-      }
-    })
-    .catch(() => undefined)
-
   try {
     log(`download: haciendo clic en selector`)
     await clickWithFallbacks(page, step, 45_000)
@@ -405,7 +395,7 @@ async function runDownloadStep(
     )
   }
 
-  // Estado 2s y 8s después del clic (sin asumir modal de licencia)
+  // Estado 2s y 8s después del clic (diagnóstico si tarda)
   void (async () => {
     await page.waitForTimeout(2000)
     if (!resolved) await describePageState(page, "t+2s-post-click")
@@ -415,14 +405,16 @@ async function runDownloadStep(
 
   try {
     const download = await downloadWait
-    await navPromise
     const suggested =
       download.suggestedFilename() || `download-${Date.now()}.bin`
     const targetPath = path.join(downloadDir, suggested)
     log(`guardando archivo → ${targetPath}`)
+    const saveStarted = Date.now()
     await download.saveAs(targetPath)
     const size = fs.existsSync(targetPath) ? fs.statSync(targetPath).size : 0
-    log(`archivo OK name=${suggested} bytes=${size}`)
+    log(
+      `archivo OK name=${suggested} bytes=${size} saveMs=${Date.now() - saveStarted}`
+    )
     return {
       filePath: targetPath,
       fileName: suggested,
