@@ -11,13 +11,13 @@ type LoginPageProps = {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await getServerSession(authOptions)
-  if (session) redirect("/dashboard")
+  if (session) redirect("/")
 
   const params = await searchParams
   const callbackUrl =
     params.callbackUrl?.startsWith("/") && !params.callbackUrl.startsWith("//")
       ? params.callbackUrl
-      : "/dashboard"
+      : "/"
   const justRegistered = params.registered === "1"
 
   return (

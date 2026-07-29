@@ -1,6 +1,7 @@
 import { AppShell, type ShellIconName } from "@/components/layout/app-shell"
 import { DeviceSessionGuard } from "@/components/billing/device-session-guard"
 import { hasPermission, requireUser } from "@/lib/auth/authorization"
+import { resolveHomePath } from "@/lib/auth/home-path"
 import { PERMISSIONS, type PermissionKey } from "@/lib/auth/permissions"
 
 const navigation = [
@@ -107,6 +108,7 @@ export default async function DashboardLayout({
     <AppShell
       user={{ name: user.name, roleNames: user.roleNames }}
       navigation={visibleNavigation}
+      homeHref={resolveHomePath(user.permissions)}
     >
       <DeviceSessionGuard>{children}</DeviceSessionGuard>
     </AppShell>

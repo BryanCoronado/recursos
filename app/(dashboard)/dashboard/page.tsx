@@ -1,16 +1,29 @@
 import Image from "next/image"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { ArrowUpRight, Shield, UserCheck, Users } from "lucide-react"
 
 import { AccessDenied } from "@/components/auth/access-denied"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { hasPermission, requirePagePermission } from "@/lib/auth/authorization"
+import {
+  getCurrentUser,
+  hasPermission,
+  requirePagePermission,
+} from "@/lib/auth/authorization"
+import { resolveHomePath } from "@/lib/auth/home-path"
 import { PERMISSIONS } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/prisma"
 
 export default async function DashboardPage() {
   const access = await requirePagePermission(PERMISSIONS.DASHBOARD_ACCESS)
-  if (!access.allowed) return <AccessDenied moduleName="Panel" />
+  if (!access.allowed || !access.user) {
+    const user = await getCurrentUser()
+    if (user) {
+      const home = resolveHomePath(user.permissions)
+      if (home !== "/dashboard") redirect(home)
+    }
+    return <AccessDenied moduleName="Panel" />
+  }
 
   const user = access.user
   const [users, activeUsers, roles] = await Promise.all([

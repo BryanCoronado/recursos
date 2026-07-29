@@ -7,7 +7,7 @@ import { authOptions } from "@/lib/auth/config"
 
 export default async function RegisterPage() {
   const session = await getServerSession(authOptions)
-  if (session) redirect("/dashboard")
+  if (session) redirect("/")
 
   return (
     <AuthShell

@@ -65,12 +65,18 @@ type AppShellProps = {
     roleNames: string[]
   }
   navigation: ShellNavItem[]
+  homeHref?: string
   children: ReactNode
 }
 
 const STORAGE_KEY = "mich-sidebar-collapsed"
 
-export function AppShell({ user, navigation, children }: AppShellProps) {
+export function AppShell({
+  user,
+  navigation,
+  homeHref = "/dashboard",
+  children,
+}: AppShellProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -118,7 +124,7 @@ export function AppShell({ user, navigation, children }: AppShellProps) {
           )}
         >
           <Link
-            href="/dashboard"
+            href={homeHref}
             className={cn(
               "flex min-w-0 items-center gap-3 rounded-xl px-1 py-1",
               collapsed && "md:justify-center"

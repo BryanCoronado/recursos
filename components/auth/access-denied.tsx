@@ -49,10 +49,10 @@ export function AccessDenied({ moduleName }: AccessDeniedProps) {
           Pedir acceso
         </a>
         <Link
-          href="/dashboard"
+          href="/"
           className={buttonVariants({ variant: "outline", size: "lg" })}
         >
-          Volver al panel
+          Ir al inicio
         </Link>
       </div>
       <p className="text-xs text-[var(--mich-muted)]">

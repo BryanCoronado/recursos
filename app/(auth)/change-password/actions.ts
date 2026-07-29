@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 import { z } from "zod"
 
 import { requireUser } from "@/lib/auth/authorization"
+import { resolveHomePath } from "@/lib/auth/home-path"
 import { prisma } from "@/lib/prisma"
 
 export type PasswordActionState = {
@@ -69,5 +70,5 @@ export async function changePassword(
     }),
   ])
 
-  redirect("/dashboard")
+  redirect(resolveHomePath(actor.permissions))
 }
