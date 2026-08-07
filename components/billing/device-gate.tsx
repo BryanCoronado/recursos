@@ -93,29 +93,29 @@ export function DeviceGate({
           +S/ {EXTRA_DEVICE_MONTHLY_SOLES}/mes por dispositivo extra
         </p>
         <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
-          <Link
-            href="/devices"
-            className={cn(
-              buttonVariants({ variant: "default" }),
-              "rounded-xl"
-            )}
-          >
-            Mis dispositivos
-          </Link>
           {upgradeWhatsAppUrl ? (
             <a
               href={upgradeWhatsAppUrl}
               target="_blank"
               rel="noreferrer"
               className={cn(
-                buttonVariants({ variant: "outline" }),
+                buttonVariants({ variant: "default" }),
                 "rounded-xl"
               )}
             >
               <MessageCircle className="size-4" />
-              Pedir más cupos
+              Pedir liberar / más cupos
             </a>
           ) : null}
+          <Link
+            href="/devices"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "rounded-xl"
+            )}
+          >
+            Ver mis dispositivos
+          </Link>
         </div>
       </div>
     )

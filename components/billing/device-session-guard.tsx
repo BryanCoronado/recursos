@@ -98,17 +98,17 @@ export function DeviceSessionGuard({ children }: { children: ReactNode }) {
         </p>
         <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
           <Link
-            href="/devices"
+            href="/recharge"
             className={cn(buttonVariants({ variant: "default" }), "rounded-xl")}
           >
-            Mis dispositivos
+            <MessageCircle className="size-4" />
+            Ampliar plan / soporte
           </Link>
           <Link
-            href="/recharge"
+            href="/devices"
             className={cn(buttonVariants({ variant: "outline" }), "rounded-xl")}
           >
-            <MessageCircle className="size-4" />
-            Ampliar plan
+            Ver dispositivos
           </Link>
         </div>
       </div>

@@ -3,7 +3,6 @@ import Link from "next/link"
 import { MonitorSmartphone, MessageCircle } from "lucide-react"
 
 import { AccessDenied } from "@/components/auth/access-denied"
-import { RevokeOwnDeviceButton } from "@/components/billing/revoke-own-device-button"
 import { buttonVariants } from "@/components/ui/button"
 import { hasPermission, requireUser } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
@@ -11,6 +10,7 @@ import { listUserDevices, countDevicesForProvider } from "@/lib/billing/devices"
 import {
   EXTRA_DEVICE_MONTHLY_SOLES,
   whatsappExtraDeviceUrl,
+  whatsappSupportUrl,
 } from "@/lib/billing/plans"
 import {
   getActiveMembership,
@@ -33,6 +33,7 @@ export default async function DevicesPage() {
 
   const devices = await listUserDevices(user.id)
   const providers = providerList()
+  const supportUrl = whatsappSupportUrl(user.name, user.email)
 
   const sections = await Promise.all(
     providers.map(async (provider) => {
@@ -63,9 +64,22 @@ export default async function DevicesPage() {
           </h1>
           <p className="mt-3 max-w-2xl text-[15px] leading-6 text-[var(--mich-muted)]">
             Cada membresía incluye 1 dispositivo. Extra: +S/{" "}
-            {EXTRA_DEVICE_MONTHLY_SOLES}/mes. Si cambias de PC o navegador,
-            quita el anterior para liberar cupo.
+            {EXTRA_DEVICE_MONTHLY_SOLES}/mes. No puedes quitar dispositivos tú
+            mismo: si cambias de equipo, escríbenos por WhatsApp para liberar el
+            cupo o ampliar el plan.
           </p>
+          <a
+            href={supportUrl}
+            target="_blank"
+            rel="noreferrer"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "mt-4 rounded-xl"
+            )}
+          >
+            <MessageCircle className="size-3.5" />
+            Solicitar cambio de dispositivo
+          </a>
         </div>
       </div>
 
@@ -159,7 +173,7 @@ export default async function DevicesPage() {
                     {list.map((device) => (
                       <li
                         key={device.id}
-                        className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                        className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div className="min-w-0">
                           <p className="font-medium text-[var(--mich-text)]">
@@ -171,7 +185,9 @@ export default async function DevicesPage() {
                             {device.createdAt.toLocaleString("es")}
                           </p>
                         </div>
-                        <RevokeOwnDeviceButton deviceId={device.id} />
+                        <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--mich-muted)]">
+                          Solo admin puede liberar
+                        </span>
                       </li>
                     ))}
                   </ul>

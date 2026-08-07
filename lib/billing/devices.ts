@@ -132,7 +132,7 @@ export async function claimDevice(input: {
     return {
       ok: false,
       reason: "limit_reached",
-      message: `Tu plan de ${def.shortLabel} permite ${membership.maxDevices} dispositivo(s). Quita uno en Mis dispositivos o pide ampliar el plan.`,
+      message: `Tu plan de ${def.shortLabel} permite ${membership.maxDevices} dispositivo(s). Este equipo no está autorizado. Escribe por WhatsApp para liberar un cupo o ampliar el plan.`,
       maxDevices: membership.maxDevices,
       used,
       provider: input.provider,
@@ -192,7 +192,7 @@ export async function claimDevice(input: {
     return {
       ok: false,
       reason: "limit_reached",
-      message: `Tu plan de ${def.shortLabel} permite ${membership.maxDevices} dispositivo(s). Quita uno en Mis dispositivos o pide ampliar el plan.`,
+      message: `Tu plan de ${def.shortLabel} permite ${membership.maxDevices} dispositivo(s). Este equipo no está autorizado. Escribe por WhatsApp para liberar un cupo o ampliar el plan.`,
       maxDevices: membership.maxDevices,
       used: usedNow,
       provider: input.provider,
@@ -299,7 +299,7 @@ export async function assertDeviceAllowed(input: {
   const def = getProvider(input.provider)
   return {
     allowed: false,
-    reason: `Tu plan de ${def.shortLabel} permite ${membership.maxDevices} dispositivo(s). Este dispositivo no está registrado.`,
+    reason: `Tu plan de ${def.shortLabel} permite ${membership.maxDevices} dispositivo(s). Este dispositivo no está autorizado. Contacta soporte por WhatsApp.`,
   }
 }
 

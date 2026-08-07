@@ -27,7 +27,10 @@ export async function changePassword(
   _state: PasswordActionState,
   formData: FormData
 ): Promise<PasswordActionState> {
-  const actor = await requireUser({ allowPasswordChange: true })
+  const actor = await requireUser({
+    allowPasswordChange: true,
+    allowIncompleteProfile: true,
+  })
   const parsed = passwordSchema.safeParse(Object.fromEntries(formData))
 
   if (!parsed.success) {
@@ -36,7 +39,7 @@ export async function changePassword(
 
   const user = await prisma.user.findUnique({
     where: { id: actor.id },
-    select: { passwordHash: true },
+    select: { passwordHash: true, phone: true, country: true },
   })
 
   if (!user || !(await compare(parsed.data.currentPassword, user.passwordHash))) {
@@ -69,6 +72,10 @@ export async function changePassword(
       },
     }),
   ])
+
+  if (!user.phone?.trim() || !user.country?.trim()) {
+    redirect("/complete-profile")
+  }
 
   redirect(resolveHomePath(actor.permissions))
 }

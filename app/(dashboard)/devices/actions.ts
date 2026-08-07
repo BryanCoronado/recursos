@@ -1,13 +1,10 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
-
 import { requirePermission, requireUser } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
 import {
   claimDevice,
   enforceSessionDevices,
-  revokeDevice,
   type ClaimDeviceResult,
   type SessionDeviceEnforcement,
 } from "@/lib/billing/devices"
@@ -51,13 +48,9 @@ export async function enforceSessionDevicesAction(input: {
   })
 }
 
-export async function revokeOwnDeviceAction(formData: FormData) {
-  const user = await requireUser()
-  const deviceId = String(formData.get("deviceId") ?? "")
-  await revokeDevice({ deviceId, ownerUserId: user.id })
-  revalidatePath("/devices")
-  revalidatePath("/envato")
-  revalidatePath("/magnific")
-  revalidatePath("/subscriptions")
-  revalidatePath("/dashboard")
+export async function revokeOwnDeviceAction(_formData: FormData) {
+  // Los clientes no pueden liberar cupos solos (evita saltarse el límite).
+  throw new Error(
+    "No puedes quitar dispositivos desde tu cuenta. Escribe por WhatsApp para solicitar un cambio."
+  )
 }

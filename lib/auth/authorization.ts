@@ -21,6 +21,8 @@ export type CurrentUser = {
   id: string
   email: string
   name: string
+  country: string | null
+  phone: string | null
   mustChangePassword: boolean
   roleIds: string[]
   roleNames: string[]
@@ -38,6 +40,8 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
       id: true,
       email: true,
       name: true,
+      country: true,
+      phone: true,
       status: true,
       mustChangePassword: true,
       roles: {
@@ -71,6 +75,8 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     id: user.id,
     email: user.email,
     name: user.name,
+    country: user.country,
+    phone: user.phone,
     mustChangePassword: user.mustChangePassword,
     roleIds: user.roles.map(({ role }) => role.id),
     roleNames: user.roles.map(({ role }) => role.name),
@@ -79,11 +85,18 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   }
 })
 
-export async function requireUser(options?: { allowPasswordChange?: boolean }) {
+export async function requireUser(options?: {
+  allowPasswordChange?: boolean
+  allowIncompleteProfile?: boolean
+}) {
   const user = await getCurrentUser()
   if (!user) redirect("/login")
   if (user.mustChangePassword && !options?.allowPasswordChange) {
     redirect("/change-password")
+  }
+  const needsProfile = !user.phone?.trim() || !user.country?.trim()
+  if (needsProfile && !options?.allowIncompleteProfile) {
+    redirect("/complete-profile")
   }
   return user
 }
