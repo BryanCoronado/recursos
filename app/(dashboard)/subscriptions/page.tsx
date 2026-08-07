@@ -41,7 +41,7 @@ export default async function SubscriptionsPage() {
     prisma.user.findMany({
       where: { status: "ACTIVE" },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true, email: true, phone: true },
     }),
     prisma.membership.findMany({
       orderBy: { createdAt: "desc" },

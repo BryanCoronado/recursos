@@ -1,7 +1,6 @@
 import Image from "next/image"
 import {
   Check,
-  CheckCircle2,
   Headphones,
   MessageCircle,
   Sparkles,
@@ -9,8 +8,9 @@ import {
 } from "lucide-react"
 
 import { AccessDenied } from "@/components/auth/access-denied"
+import { QuotaMeter } from "@/components/billing/quota-meter"
 import { buttonVariants } from "@/components/ui/button"
-import { requirePagePermission } from "@/lib/auth/authorization"
+import { hasPermission, requirePagePermission } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
 import {
   checkProviderDownloadAccess,
@@ -20,7 +20,6 @@ import {
 import { countDevicesForProvider } from "@/lib/billing/devices"
 import { freeDownloadContextFromRequest } from "@/lib/billing/free-download-context"
 import {
-  FREE_DOWNLOAD_LIMIT,
   EXTRA_DEVICE_MONTHLY_SOLES,
   MONTHLY_PRICE_SOLES,
   SUBSCRIPTION_PLANS,
@@ -50,18 +49,26 @@ export default async function RechargePage() {
   const user = access.user
   const freeCtx = await freeDownloadContextFromRequest()
 
-  const providerStates = await Promise.all(
-    providerList().map(async (provider) => {
-      const [membership, downloadAccess] = await Promise.all([
-        getActiveMembership(user.id, provider.id),
-        checkProviderDownloadAccess(user.id, provider.id, freeCtx),
-      ])
-      const deviceUsed = membership
-        ? await countDevicesForProvider(user.id, provider.id)
-        : 0
-      return { provider, membership, downloadAccess, deviceUsed }
-    })
-  )
+  const providerStates = (
+    await Promise.all(
+      providerList().map(async (provider) => {
+        const canAccess =
+          provider.id === "ENVATO"
+            ? hasPermission(user.permissions, PERMISSIONS.ENVATO_ACCESS)
+            : hasPermission(user.permissions, PERMISSIONS.MAGNIFIC_ACCESS)
+        if (!canAccess) return null
+
+        const [membership, downloadAccess] = await Promise.all([
+          getActiveMembership(user.id, provider.id),
+          checkProviderDownloadAccess(user.id, provider.id, freeCtx),
+        ])
+        const deviceUsed = membership
+          ? await countDevicesForProvider(user.id, provider.id)
+          : 0
+        return { provider, membership, downloadAccess, deviceUsed }
+      })
+    )
+  ).filter((s): s is NonNullable<typeof s> => s !== null)
 
   const supportUrl = whatsappSupportUrl(user.name, user.email)
   const readyCount = providerStates.filter((s) => s.membership).length
@@ -78,12 +85,15 @@ export default async function RechargePage() {
               Recarga tu acceso
             </h1>
             <p className="mt-4 text-[15px] leading-7 text-[var(--mich-muted)]">
-              Planes para Envato y Magnific. 1 dispositivo incluido; +S/{" "}
-              {EXTRA_DEVICE_MONTHLY_SOLES}/mes por cada extra. Elige proveedor y
-              paquete, escribe por WhatsApp y lo activamos.
+              Planes según tus proveedores activos
+              {providerStates.length === 1
+                ? ` (${providerStates[0].provider.shortLabel})`
+                : ""}
+              . 1 dispositivo incluido; +S/ {EXTRA_DEVICE_MONTHLY_SOLES}/mes por
+              cada extra. Escribe por WhatsApp y lo activamos.
             </p>
             <div className="mt-5 flex items-center gap-2">
-              {providerList().map((p) => (
+              {providerStates.map(({ provider: p }) => (
                 <span
                   key={p.id}
                   className="flex size-10 items-center justify-center rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)]/80 p-1.5"
@@ -99,7 +109,8 @@ export default async function RechargePage() {
                 </span>
               ))}
               <span className="ml-1 text-xs text-[var(--mich-muted)]">
-                {readyCount}/{providerList().length} con membresía activa
+                {readyCount}/{Math.max(providerStates.length, 1)} con membresía
+                activa
               </span>
             </div>
           </div>
@@ -310,42 +321,27 @@ function ProviderStatusCard({
         <Sparkles className="ml-auto size-3.5 text-[var(--mich-blue-bright)]" />
       </div>
       {membership ? (
-        <div className="space-y-1.5 text-sm">
-          <span className="mich-chip mich-chip-ok">
-            <CheckCircle2 className="size-3" />
-            Activa
-          </span>
+        <div className="space-y-2 text-sm">
+          <QuotaMeter
+            mode="unlimited"
+            endsAt={membership.endsAt.toISOString()}
+          />
           <p className="text-[var(--mich-muted)]">
-            {SUBSCRIPTION_PLANS[membership.plan].label} · ilimitado
-          </p>
-          <p className="text-[var(--mich-muted)]">
-            Dispositivos {deviceUsed}/{membership.maxDevices}
-          </p>
-          <p className="text-xs text-[var(--mich-muted)]">
-            Hasta{" "}
-            {membership.endsAt.toLocaleString("es", { dateStyle: "medium" })}
+            {SUBSCRIPTION_PLANS[membership.plan].label} · dispositivos{" "}
+            {deviceUsed}/{membership.maxDevices}
           </p>
         </div>
       ) : downloadAccess.allowed && !downloadAccess.unlimited ? (
-        <div className="space-y-2 text-sm">
-          <span className="mich-chip mich-chip-warn">Plan gratis</span>
-          <div className="h-2 overflow-hidden rounded-full bg-[var(--mich-surface)] ring-1 ring-[var(--mich-border)]">
-            <div
-              className="h-full rounded-full bg-[linear-gradient(90deg,var(--mich-blue),var(--mich-indigo))]"
-              style={{
-                width: `${(downloadAccess.used / FREE_DOWNLOAD_LIMIT) * 100}%`,
-              }}
-            />
-          </div>
-          <p className="text-[var(--mich-muted)]">
-            {downloadAccess.remaining} de {FREE_DOWNLOAD_LIMIT} gratis
-          </p>
-        </div>
+        <QuotaMeter
+          mode="free"
+          used={downloadAccess.used}
+          remaining={downloadAccess.remaining}
+        />
       ) : (
-        <div className="space-y-1.5 text-sm">
-          <span className="mich-chip mich-chip-danger">Sin cupo</span>
-          <p className="text-[var(--mich-muted)]">Activa un plan para seguir.</p>
-        </div>
+        <QuotaMeter
+          mode="empty"
+          reason="Activa un plan para seguir descargando."
+        />
       )}
     </div>
   )

@@ -35,14 +35,22 @@ export default async function DevicesPage() {
   const providers = providerList()
   const supportUrl = whatsappSupportUrl(user.name, user.email)
 
-  const sections = await Promise.all(
-    providers.map(async (provider) => {
-      const membership = await getActiveMembership(user.id, provider.id)
-      const providerDevices = devices.filter((d) => d.provider === provider.id)
-      const used = await countDevicesForProvider(user.id, provider.id)
-      return { provider, membership, devices: providerDevices, used }
-    })
-  )
+  const sections = (
+    await Promise.all(
+      providers.map(async (provider) => {
+        const canAccess =
+          provider.id === "ENVATO"
+            ? hasPermission(user.permissions, PERMISSIONS.ENVATO_ACCESS)
+            : hasPermission(user.permissions, PERMISSIONS.MAGNIFIC_ACCESS)
+        if (!canAccess) return null
+
+        const membership = await getActiveMembership(user.id, provider.id)
+        const providerDevices = devices.filter((d) => d.provider === provider.id)
+        const used = await countDevicesForProvider(user.id, provider.id)
+        return { provider, membership, devices: providerDevices, used }
+      })
+    )
+  ).filter((s): s is NonNullable<typeof s> => s !== null)
 
   const hasAny =
     sections.some((s) => s.membership || s.devices.length > 0)

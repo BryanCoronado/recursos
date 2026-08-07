@@ -27,6 +27,10 @@ import {
 import { signOut } from "next-auth/react"
 
 import { BrandLogo } from "@/components/brand/brand-logo"
+import {
+  MembershipWelcomeBanner,
+  type MembershipWelcomeItem,
+} from "@/components/billing/membership-welcome"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -59,6 +63,15 @@ export type ShellNavItem = {
   icon: ShellIconName
 }
 
+export type ShellQuotaChip = {
+  href: string
+  label: string
+  logoSrc?: string
+  unlimited: boolean
+  remaining?: number
+  total?: number
+}
+
 type AppShellProps = {
   user: {
     name: string
@@ -66,15 +79,55 @@ type AppShellProps = {
   }
   navigation: ShellNavItem[]
   homeHref?: string
+  quotaChips?: ShellQuotaChip[]
+  membershipWelcome?: MembershipWelcomeItem[]
   children: ReactNode
 }
 
 const STORAGE_KEY = "mich-sidebar-collapsed"
 
+function QuotaChipLink({ chip }: { chip: ShellQuotaChip }) {
+  return (
+    <Link
+      href={chip.href}
+      title={
+        chip.unlimited
+          ? `${chip.label}: ilimitado`
+          : `${chip.label}: ${chip.remaining ?? 0} gratis`
+      }
+      className={cn(
+        "mich-shell-quota inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition hover:-translate-y-0.5",
+        chip.unlimited
+          ? "border-[color-mix(in_srgb,var(--mich-success)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_12%,transparent)] text-[var(--mich-success)]"
+          : (chip.remaining ?? 0) <= 0
+            ? "border-[color-mix(in_srgb,var(--mich-danger)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-danger)_10%,transparent)] text-[var(--mich-danger)]"
+            : "border-[var(--mich-border)] bg-[var(--mich-surface-muted)]/90 text-[var(--mich-muted)]"
+      )}
+    >
+      {chip.logoSrc ? (
+        <Image
+          src={chip.logoSrc}
+          alt=""
+          width={14}
+          height={14}
+          unoptimized
+          className="size-3.5 object-contain"
+        />
+      ) : null}
+      <span className="hidden xs:inline sm:inline">{chip.label}</span>
+      <span className="tabular-nums">
+        {chip.unlimited ? "∞" : `${chip.remaining ?? 0}/${chip.total ?? 0}`}
+      </span>
+    </Link>
+  )
+}
+
 export function AppShell({
   user,
   navigation,
   homeHref = "/dashboard",
+  quotaChips = [],
+  membershipWelcome = [],
   children,
 }: AppShellProps) {
   const pathname = usePathname()
@@ -312,6 +365,13 @@ export function AppShell({
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
+              {quotaChips.length > 0 ? (
+                <div className="hidden items-center gap-1.5 lg:flex">
+                  {quotaChips.map((chip) => (
+                    <QuotaChipLink key={chip.href} chip={chip} />
+                  ))}
+                </div>
+              ) : null}
               <ThemeToggle />
               <div className="hidden rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)]/80 px-3 py-1.5 text-right text-xs sm:block">
                 <p className="font-medium text-[var(--mich-text)]">{user.name}</p>
@@ -321,9 +381,21 @@ export function AppShell({
               </div>
             </div>
           </div>
+          {quotaChips.length > 0 ? (
+            <div className="flex gap-1.5 overflow-x-auto border-t border-[var(--mich-border)] px-4 py-2 lg:hidden">
+              {quotaChips.map((chip) => (
+                <QuotaChipLink key={chip.href} chip={chip} />
+              ))}
+            </div>
+          ) : null}
         </header>
 
-        <main className="mich-auth-rise min-w-0 p-4 md:p-8">{children}</main>
+        <main className="mich-auth-rise min-w-0 p-4 md:p-8">
+          {membershipWelcome.length > 0 ? (
+            <MembershipWelcomeBanner items={membershipWelcome} />
+          ) : null}
+          {children}
+        </main>
       </div>
     </div>
   )

@@ -102,6 +102,18 @@
   color: var(--mich-danger);
 }
 
+.mich-quota-fill {
+  box-shadow: 0 0 16px -2px var(--mich-glow);
+}
+
+.mich-shell-quota {
+  backdrop-filter: blur(8px);
+}
+
+.mich-welcome-banner {
+  animation: mich-auth-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @keyframes mich-auth-rise {
   from {
     opacity: 0;

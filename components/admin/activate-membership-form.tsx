@@ -1,14 +1,15 @@
 "use client"
 
-import { useActionState, useMemo, useState } from "react"
-import { CheckCircle2, Loader2 } from "lucide-react"
+import { useActionState, useEffect, useMemo, useState } from "react"
+import { CheckCircle2, Loader2, MessageCircle } from "lucide-react"
+import { toast } from "sonner"
 
 import {
   activateMembership,
   type MembershipActionState,
 } from "@/app/(dashboard)/subscriptions/actions"
 import { ProviderSelect } from "@/components/providers/provider-select"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   EXTRA_DEVICE_MONTHLY_SOLES,
@@ -19,8 +20,14 @@ import {
   membershipTotalSoles,
   type SubscriptionPlanKey,
 } from "@/lib/billing/plans"
+import { cn } from "@/lib/utils"
 
-type UserOption = { id: string; name: string; email: string }
+type UserOption = {
+  id: string
+  name: string
+  email: string
+  phone?: string | null
+}
 
 export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
   const [state, action, pending] = useActionState(
@@ -29,6 +36,7 @@ export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
   )
   const [plan, setPlan] = useState<SubscriptionPlanKey>("MONTHLY")
   const [maxDevices, setMaxDevices] = useState(1)
+  const [userId, setUserId] = useState("")
 
   const total = useMemo(
     () => membershipTotalSoles(plan, maxDevices),
@@ -37,6 +45,18 @@ export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
   const months = SUBSCRIPTION_PLANS[plan].months
   const extras = Math.max(0, maxDevices - 1)
   const extraTotal = extras * EXTRA_DEVICE_MONTHLY_SOLES * months
+  const selected = users.find((u) => u.id === userId)
+
+  useEffect(() => {
+    if (state.ok) {
+      toast.success("Membresía activada", {
+        description: state.ok,
+      })
+    }
+    if (state.error) {
+      toast.error("No se pudo activar", { description: state.error })
+    }
+  }, [state.ok, state.error, state.membershipId])
 
   return (
     <form action={action} className="space-y-4">
@@ -50,15 +70,24 @@ export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
           id="userId"
           name="userId"
           required
+          value={userId}
+          onChange={(e) => setUserId(e.target.value)}
           className="h-10 w-full rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-3 text-sm"
         >
           <option value="">Selecciona un usuario</option>
           {users.map((user) => (
             <option key={user.id} value={user.id}>
               {user.name} — {user.email}
+              {user.phone ? ` · ${user.phone}` : ""}
             </option>
           ))}
         </select>
+        {selected && !selected.phone ? (
+          <p className="text-xs text-[var(--mich-warning)]">
+            Este usuario no tiene celular: no podrás avisar por WhatsApp
+            automáticamente.
+          </p>
+        ) : null}
       </div>
 
       <div className="space-y-1.5">
@@ -136,13 +165,34 @@ export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
         <p className="text-sm text-destructive">{state.error}</p>
       ) : null}
       {state.ok ? (
-        <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300">
-          <CheckCircle2 className="size-4" />
-          {state.ok}
-        </p>
+        <div className="space-y-3 rounded-2xl border border-[color-mix(in_srgb,var(--mich-success)_30%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_10%,transparent)] px-4 py-3">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+            <CheckCircle2 className="size-4" />
+            {state.ok}
+          </p>
+          {state.notifyWhatsAppUrl ? (
+            <a
+              href={state.notifyWhatsAppUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={cn(
+                buttonVariants({ size: "sm" }),
+                "rounded-xl bg-emerald-600 hover:bg-emerald-700"
+              )}
+            >
+              <MessageCircle />
+              Avisar al cliente por WhatsApp
+            </a>
+          ) : (
+            <p className="text-xs text-[var(--mich-muted)]">
+              Sin celular en el perfil: avísale manualmente que su plan está
+              listo.
+            </p>
+          )}
+        </div>
       ) : null}
 
-      <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+      <Button type="submit" disabled={pending} className="w-full rounded-xl sm:w-auto">
         {pending ? (
           <>
             <Loader2 className="animate-spin" />

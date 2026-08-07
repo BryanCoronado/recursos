@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect, useState, useTransition } from "react"
+import { useActionState, useEffect, useRef, useState, useTransition } from "react"
 import {
   AlertCircle,
   CheckCircle2,
@@ -12,16 +12,22 @@ import {
   Loader2,
 } from "lucide-react"
 import Image from "next/image"
+import { toast } from "sonner"
 
 import type {
   ProviderDownloadState,
   ProviderHistoryItem,
 } from "@/app/(dashboard)/resources/provider-download-actions"
+import { QuotaMeter } from "@/components/billing/quota-meter"
 import { ProviderHelpPanel } from "@/components/resources/provider-help-panel"
 import { DownloadProgressCard } from "@/components/resources/download-progress-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getOrCreateDeviceId } from "@/lib/billing/device-client"
+import {
+  notifyDownloadBrowser,
+  setDownloadTabTitle,
+} from "@/lib/feedback/download-notify"
 import {
   PROVIDERS,
   type ResourceProviderId,
@@ -118,10 +124,52 @@ export function ProviderDownloadForm({
   const [logOpenId, setLogOpenId] = useState<string | null>(null)
   const [deviceId, setDeviceId] = useState("")
   const [, startTransition] = useTransition()
+  const lastNotifiedStatus = useRef<string | null>(null)
 
   useEffect(() => {
     setDeviceId(getOrCreateDeviceId())
   }, [])
+
+  useEffect(() => {
+    if (!job) {
+      setDownloadTabTitle("IDLE", def.shortLabel)
+      return
+    }
+    setDownloadTabTitle(job.status, def.shortLabel)
+
+    const key = `${job.id}:${job.status}`
+    if (
+      (job.status === "DONE" || job.status === "FAILED") &&
+      lastNotifiedStatus.current !== key
+    ) {
+      lastNotifiedStatus.current = key
+      if (job.status === "DONE") {
+        toast.success(`Descarga lista · ${def.shortLabel}`, {
+          description: job.fileName ?? "El archivo ya está en el historial.",
+          action: {
+            label: "Abrir",
+            onClick: () => {
+              window.location.href = `/api/downloads/${job.id}`
+            },
+          },
+        })
+        notifyDownloadBrowser(
+          `${def.shortLabel}: descarga completa`,
+          job.fileName ?? "Tu recurso está listo",
+          job.id
+        )
+      } else {
+        toast.error(`Descarga fallida · ${def.shortLabel}`, {
+          description: job.error ?? "Revisa el historial o inténtalo de nuevo.",
+        })
+        notifyDownloadBrowser(
+          `${def.shortLabel}: descarga fallida`,
+          job.error ?? "Hubo un error",
+          job.id
+        )
+      }
+    }
+  }, [job, def.shortLabel])
 
   async function refreshHistory() {
     const next = await listHistory()
@@ -278,43 +326,24 @@ export function ProviderDownloadForm({
             </div>
           ) : null}
 
-          <div className="mich-soft-card mt-5 px-4 py-3 text-sm">
+          <div className="mt-5">
             {quota.unlimited ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="mich-chip mich-chip-ok">Membresía</span>
-                <p className="text-[var(--mich-muted)]">
-                  Descargas ilimitadas
-                  {"membershipEndsAt" in quota
-                    ? ` · hasta ${new Date(quota.membershipEndsAt).toLocaleDateString("es")}`
-                    : ""}
-                </p>
-              </div>
+              <QuotaMeter
+                mode="unlimited"
+                endsAt={
+                  "membershipEndsAt" in quota
+                    ? quota.membershipEndsAt
+                    : undefined
+                }
+              />
             ) : quota.allowed ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="mich-chip mich-chip-warn">Plan gratis</span>
-                <p className="text-[var(--mich-muted)]">
-                  {quota.remaining} de {quota.used + quota.remaining} restantes.{" "}
-                  <a
-                    href="/recharge"
-                    className="font-medium text-[var(--mich-blue-bright)] underline-offset-2 hover:underline"
-                  >
-                    Recargar
-                  </a>
-                </p>
-              </div>
+              <QuotaMeter
+                mode="free"
+                used={quota.used}
+                remaining={quota.remaining}
+              />
             ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="mich-chip mich-chip-danger">Sin cupo</span>
-                <p className="text-[var(--mich-muted)]">
-                  {quota.reason}{" "}
-                  <a
-                    href="/recharge"
-                    className="font-medium text-[var(--mich-blue-bright)] underline-offset-2 hover:underline"
-                  >
-                    Ir a Recarga
-                  </a>
-                </p>
-              </div>
+              <QuotaMeter mode="empty" reason={quota.reason} />
             )}
           </div>
 

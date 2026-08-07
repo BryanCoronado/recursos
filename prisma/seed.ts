@@ -5,6 +5,7 @@ import { config } from "dotenv"
 import { PrismaClient } from "../lib/generated/prisma/client"
 import { DEFAULT_ENVATO_STEPS } from "../lib/automation/types"
 import { PERMISSION_DEFINITIONS } from "../lib/auth/permissions"
+import { CLIENT_ROLE } from "../lib/auth/client-role-defs"
 import { providerProfilePath } from "../lib/storage/paths"
 
 config({ path: ".env" })
@@ -73,28 +74,77 @@ async function main() {
     skipDuplicates: true,
   })
 
-  // Clientes con Envato también ven Recarga / WhatsApp
-  const rechargePermission = await prisma.permission.findUnique({
-    where: { key: "recharge:access" },
-    select: { id: true },
-  })
-  const envatoPermission = await prisma.permission.findUnique({
-    where: { key: "envato:access" },
-    select: { id: true },
-  })
-
-  if (rechargePermission && envatoPermission) {
-    const rolesWithEnvato = await prisma.rolePermission.findMany({
-      where: { permissionId: envatoPermission.id },
-      select: { roleId: true },
+  // Roles de cliente por proveedor (independientes; un usuario puede tener ambos)
+  for (const def of [CLIENT_ROLE.ENVATO, CLIENT_ROLE.MAGNIFIC]) {
+    let role = await prisma.role.findUnique({
+      where: { systemKey: def.systemKey },
     })
+
+    if (!role) {
+      const byName = await prisma.role.findFirst({
+        where: { name: def.name },
+      })
+      if (byName) {
+        role = await prisma.role.update({
+          where: { id: byName.id },
+          data: {
+            systemKey: def.systemKey,
+            description: def.description,
+            isSystem: true,
+          },
+        })
+      } else {
+        role = await prisma.role.create({
+          data: {
+            name: def.name,
+            description: def.description,
+            systemKey: def.systemKey,
+            isSystem: true,
+          },
+        })
+      }
+    } else {
+      role = await prisma.role.update({
+        where: { id: role.id },
+        data: {
+          name: def.name,
+          description: def.description,
+          isSystem: true,
+        },
+      })
+    }
+
+    const wanted = await prisma.permission.findMany({
+      where: { key: { in: [...def.permissions] } },
+      select: { id: true },
+    })
+    const wantedIds = new Set(wanted.map((p) => p.id))
+
+    const current = await prisma.rolePermission.findMany({
+      where: { roleId: role.id },
+      select: { permissionId: true },
+    })
+    const toRemove = current
+      .filter((rp) => !wantedIds.has(rp.permissionId))
+      .map((rp) => rp.permissionId)
+    if (toRemove.length > 0) {
+      await prisma.rolePermission.deleteMany({
+        where: {
+          roleId: role.id,
+          permissionId: { in: toRemove },
+        },
+      })
+    }
+
     await prisma.rolePermission.createMany({
-      data: rolesWithEnvato.map(({ roleId }) => ({
-        roleId,
-        permissionId: rechargePermission.id,
+      data: wanted.map(({ id }) => ({
+        roleId: role.id,
+        permissionId: id,
       })),
       skipDuplicates: true,
     })
+
+    console.info(`Rol cliente listo: ${def.name} (${def.systemKey})`)
   }
 
   await prisma.providerSession.upsert({

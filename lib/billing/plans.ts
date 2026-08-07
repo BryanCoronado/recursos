@@ -145,3 +145,33 @@ export function whatsappExtraDeviceUrl(
   )
   return `https://wa.me/${WHATSAPP.phone}?text=${text}`
 }
+
+/** Normaliza celular PE a wa.me (519…) */
+export function normalizeWhatsAppPhone(phone: string | null | undefined) {
+  if (!phone) return null
+  const digits = phone.replace(/\D/g, "")
+  if (!digits) return null
+  if (digits.startsWith("51") && digits.length >= 11) return digits
+  if (digits.length === 9) return `51${digits}`
+  if (digits.length >= 10) return digits
+  return null
+}
+
+/** Aviso al cliente: tu membresía ya está activa. */
+export function whatsappMembershipReadyUrl(options: {
+  phone: string
+  userName: string
+  provider: ResourceProviderId
+  plan: SubscriptionPlanKey
+  endsAt: Date
+}) {
+  const phone = normalizeWhatsAppPhone(options.phone)
+  if (!phone) return null
+  const label = getProvider(options.provider).shortLabel
+  const planLabel = SUBSCRIPTION_PLANS[options.plan].label
+  const ends = options.endsAt.toLocaleDateString("es")
+  const text = encodeURIComponent(
+    `Hola ${options.userName} 👋\n\nTu membresía *${label}* (${planLabel}) en MICHITECH ya está *activa* hasta el ${ends}.\n\nEntra a https://michitech.digital e inicia sesión para descargar.\n\n¡Listo para usar!`
+  )
+  return `https://wa.me/${phone}?text=${text}`
+}

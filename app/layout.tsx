@@ -3,6 +3,7 @@ import { JetBrains_Mono, Manrope, Outfit } from "next/font/google"
 import { cookies } from "next/headers"
 
 import { ThemeProvider } from "@/components/theme/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
 import { SITE, absoluteUrl } from "@/lib/site"
 
 import "./globals.css"
@@ -75,7 +76,10 @@ export default async function RootLayout({
       className={`${manrope.variable} ${outfit.variable} ${jetbrainsMono.variable} h-full antialiased${dark ? " dark" : ""}`}
     >
       <body className="flex min-h-full flex-col font-sans">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   )

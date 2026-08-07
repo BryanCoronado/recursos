@@ -12,6 +12,7 @@ import {
 import { resolveHomePath } from "@/lib/auth/home-path"
 import { PERMISSIONS } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/prisma"
+import { cn } from "@/lib/utils"
 
 export default async function DashboardPage() {
   const access = await requirePagePermission(PERMISSIONS.DASHBOARD_ACCESS)
@@ -42,7 +43,7 @@ export default async function DashboardPage() {
             Hola, {user.name}
           </h1>
           <p className="mt-2 max-w-xl text-[15px] leading-6 text-[var(--mich-muted)]">
-            Tus recursos y accesos en un solo lugar.
+            Cupo, descargas y avisos en vivo desde la barra superior.
           </p>
         </div>
       </section>
@@ -52,7 +53,7 @@ export default async function DashboardPage() {
           <ResourceCard
             href="/envato"
             title="Envato"
-            description="Accede al módulo de recursos de Envato."
+            description="Panel separado · historial y cupo propios."
             logoSrc="/envato.png"
           />
         ) : null}
@@ -60,7 +61,7 @@ export default async function DashboardPage() {
           <ResourceCard
             href="/magnific"
             title="Magnific"
-            description="Accede al módulo de recursos de Magnific."
+            description="Panel separado · historial y cupo propios."
             logoSrc="/magnific.png"
           />
         ) : null}
@@ -68,7 +69,11 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         <MetricCard title="Usuarios" value={users} icon={Users} />
-        <MetricCard title="Usuarios activos" value={activeUsers} icon={UserCheck} />
+        <MetricCard
+          title="Usuarios activos"
+          value={activeUsers}
+          icon={UserCheck}
+        />
         <MetricCard title="Roles" value={roles} icon={Shield} />
       </div>
     </div>
@@ -89,27 +94,25 @@ function ResourceCard({
   return (
     <Link
       href={href}
-      className="group mich-soft-card relative overflow-hidden p-6 transition-all hover:-translate-y-0.5 hover:border-[var(--mich-blue)]/45 hover:shadow-[0_20px_50px_-28px_var(--mich-glow)]"
+      className="mich-page-card mich-lp-hover-lift group relative flex items-center gap-4 p-5 transition sm:p-6"
     >
-      <div className="flex items-start justify-between">
-        <span className="flex size-12 items-center justify-center overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-1.5 shadow-sm">
-          <Image
-            src={logoSrc}
-            alt={title}
-            width={40}
-            height={40}
-            unoptimized
-            className="size-9 object-contain"
-          />
-        </span>
-        <ArrowUpRight className="size-5 text-[var(--mich-muted)]/40 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--mich-blue-bright)]" />
+      <span className="relative z-10 flex size-14 shrink-0 items-center justify-center rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] p-2.5 shadow-[var(--mich-shadow-soft)]">
+        <Image
+          src={logoSrc}
+          alt=""
+          width={40}
+          height={40}
+          unoptimized
+          className="size-10 object-contain"
+        />
+      </span>
+      <div className="relative z-10 min-w-0 flex-1">
+        <h2 className="font-heading text-xl font-semibold tracking-[-0.03em]">
+          {title}
+        </h2>
+        <p className="mt-1 text-sm text-[var(--mich-muted)]">{description}</p>
       </div>
-      <h2 className="font-heading mt-8 text-xl font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
-        {title}
-      </h2>
-      <p className="mt-1.5 text-sm leading-6 text-[var(--mich-muted)]">
-        {description}
-      </p>
+      <ArrowUpRight className="relative z-10 size-5 shrink-0 text-[var(--mich-muted)] transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--mich-blue-bright)]" />
     </Link>
   )
 }
@@ -124,12 +127,18 @@ function MetricCard({
   icon: typeof Users
 }) {
   return (
-    <div className="mich-soft-card p-5">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-[var(--mich-muted)]">{title}</p>
+    <div className="mich-soft-card mich-lp-hover-lift px-5 py-5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--mich-muted)]">
+          {title}
+        </p>
         <Icon className="size-4 text-[var(--mich-blue)]" />
       </div>
-      <p className="font-heading mt-3 text-3xl font-semibold tracking-[-0.04em] text-[var(--mich-text)]">
+      <p
+        className={cn(
+          "font-heading mt-3 text-3xl font-semibold tracking-[-0.04em] text-[var(--mich-text)]"
+        )}
+      >
         {value}
       </p>
     </div>

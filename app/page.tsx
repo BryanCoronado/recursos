@@ -108,7 +108,7 @@ export const metadata: Metadata = {
 const FAQ = [
   {
     q: "¿Envato y Magnific son el mismo servicio?",
-    a: "No. Son proveedores distintos. En MICHITECH cada uno tiene su propio panel, historial y flujo de descarga.",
+    a: "No. Son proveedores distintos con roles separados (Clientes Envato y Clientes Magnific). Puedes tener uno o ambos; cada uno tiene su panel y cupo gratis independiente.",
   },
   {
     q: "¿Cómo descargo Envato Elements?",

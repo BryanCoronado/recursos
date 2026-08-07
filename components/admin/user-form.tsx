@@ -49,11 +49,22 @@ export function UserForm({ action, roles, user }: UserFormProps) {
       ) : null}
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">Roles</legend>
+        <p className="text-xs text-[var(--mich-muted)]">
+          Puedes marcar varios. Ejemplo:{" "}
+          <strong className="font-medium text-[var(--mich-text)]">
+            Clientes Envato
+          </strong>{" "}
+          +{" "}
+          <strong className="font-medium text-[var(--mich-text)]">
+            Clientes Magnific
+          </strong>{" "}
+          = acceso a ambos paneles y cupos gratis por separado.
+        </p>
         <div className="grid gap-2 sm:grid-cols-2">
           {roles.map((role) => (
             <label
               key={role.id}
-              className="flex cursor-pointer gap-3 rounded-lg border bg-background p-3"
+              className="flex cursor-pointer gap-3 rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)]/80 p-3 transition hover:border-[var(--mich-blue)]/30"
             >
               <input
                 type="checkbox"

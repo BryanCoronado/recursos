@@ -4,17 +4,17 @@ import { hash } from "bcryptjs"
 import { redirect } from "next/navigation"
 import { z } from "zod"
 
+import { resolveClientRoleId } from "@/lib/auth/client-roles"
 import { buildE164Phone, COUNTRIES } from "@/lib/geo/countries"
+import {
+  RESOURCE_PROVIDERS,
+  type ResourceProviderId,
+} from "@/lib/providers/catalog"
 import { prisma } from "@/lib/prisma"
 
 export type RegisterActionState = {
   error?: string
 }
-
-/** Rol fijo de clientes Envato (prod). También se busca por nombre. */
-const CLIENT_ENVATO_ROLE_ID =
-  process.env.CLIENT_ENVATO_ROLE_ID ?? "cms22f2n50002i9wgsp8bae7d"
-const CLIENT_ENVATO_ROLE_NAME = "Clientes Envato"
 
 const countryCodes = COUNTRIES.map((c) => c.code) as [string, ...string[]]
 
@@ -37,6 +37,9 @@ const registerSchema = z
       .min(8, "La contraseña debe tener al menos 8 caracteres")
       .max(100),
     confirmPassword: z.string(),
+    providers: z
+      .array(z.enum(["ENVATO", "MAGNIFIC"]))
+      .min(1, "Elige al menos Envato o Magnific"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Las contraseñas no coinciden",
@@ -53,24 +56,17 @@ const registerSchema = z
     }
   })
 
-async function resolveClientEnvatoRoleId() {
-  const byId = await prisma.role.findUnique({
-    where: { id: CLIENT_ENVATO_ROLE_ID },
-    select: { id: true },
-  })
-  if (byId) return byId.id
-
-  const byName = await prisma.role.findFirst({
-    where: { name: CLIENT_ENVATO_ROLE_NAME },
-    select: { id: true },
-  })
-  return byName?.id ?? null
-}
-
 export async function registerClient(
   _state: RegisterActionState,
   formData: FormData
 ): Promise<RegisterActionState> {
+  const rawProviders = formData
+    .getAll("providers")
+    .map(String)
+    .filter((p): p is ResourceProviderId =>
+      (RESOURCE_PROVIDERS as readonly string[]).includes(p)
+    )
+
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -78,6 +74,7 @@ export async function registerClient(
     phone: formData.get("phone"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
+    providers: rawProviders,
   })
 
   if (!parsed.success) {
@@ -89,13 +86,18 @@ export async function registerClient(
     return { error: "Número de celular inválido" }
   }
 
-  const roleId = await resolveClientEnvatoRoleId()
-  if (!roleId) {
-    return {
-      error:
-        "No está configurado el rol de clientes Envato. Contacta al administrador.",
+  const roleIds: string[] = []
+  for (const provider of parsed.data.providers) {
+    const roleId = await resolveClientRoleId(provider)
+    if (!roleId) {
+      return {
+        error: `No está configurado el rol de clientes ${provider === "ENVATO" ? "Envato" : "Magnific"}. Contacta al administrador.`,
+      }
     }
+    roleIds.push(roleId)
   }
+
+  const uniqueRoleIds = [...new Set(roleIds)]
 
   const exists = await prisma.user.findUnique({
     where: { email: parsed.data.email },
@@ -119,9 +121,7 @@ export async function registerClient(
         mustChangePassword: false,
         passwordChangedAt: new Date(),
         roles: {
-          create: {
-            roleId,
-          },
+          create: uniqueRoleIds.map((roleId) => ({ roleId })),
         },
       },
     })
@@ -136,8 +136,8 @@ export async function registerClient(
           email: parsed.data.email,
           country: parsed.data.country,
           phone: phoneE164,
-          roleId,
-          roleName: CLIENT_ENVATO_ROLE_NAME,
+          providers: parsed.data.providers,
+          roleIds: uniqueRoleIds,
         },
       },
     })
