@@ -3,7 +3,6 @@ import { Plus } from "lucide-react"
 
 import { AccessDenied } from "@/components/auth/access-denied"
 import { buttonVariants } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -15,11 +14,18 @@ import {
 import { hasPermission, requirePagePermission } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/prisma"
+import { cn } from "@/lib/utils"
 
 const statusLabel = {
   ACTIVE: "Activo",
   INACTIVE: "Inactivo",
   SUSPENDED: "Suspendido",
+} as const
+
+const statusChip = {
+  ACTIVE: "mich-chip mich-chip-ok",
+  INACTIVE: "mich-chip",
+  SUSPENDED: "mich-chip mich-chip-danger",
 } as const
 
 export default async function UsersPage() {
@@ -42,27 +48,38 @@ export default async function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">
-            Usuarios
-          </h1>
-          <p className="text-muted-foreground">
-            Cuentas, estados y roles asignados.
+      <div className="mich-page-card relative px-6 py-7 sm:px-8">
+        <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="mb-2 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
+              Admin
+            </p>
+            <h1 className="font-heading text-3xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-4xl">
+              Usuarios
+            </h1>
+            <p className="mt-2 text-[15px] text-[var(--mich-muted)]">
+              Cuentas, estados y roles asignados.
+            </p>
+          </div>
+          {hasPermission(actor.permissions, PERMISSIONS.USERS_CREATE) ? (
+            <Link
+              href="/users/new"
+              className={cn(buttonVariants(), "rounded-xl")}
+            >
+              <Plus />
+              Nuevo usuario
+            </Link>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="mich-page-card relative overflow-hidden">
+        <div className="relative z-10 border-b border-[var(--mich-border)] px-5 py-4">
+          <p className="text-sm font-medium text-[var(--mich-text)]">
+            {users.length} usuarios
           </p>
         </div>
-        {hasPermission(actor.permissions, PERMISSIONS.USERS_CREATE) ? (
-          <Link href="/users/new" className={buttonVariants()}>
-            <Plus />
-            Nuevo usuario
-          </Link>
-        ) : null}
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>{users.length} usuarios</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <div className="relative z-10">
           <Table>
             <TableHeader>
               <TableRow>
@@ -77,30 +94,42 @@ export default async function UsersPage() {
               {users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
-                    <Link href={`/users/${user.id}`} className="font-medium hover:underline">
+                    <Link
+                      href={`/users/${user.id}`}
+                      className="font-medium text-[var(--mich-text)] hover:underline"
+                    >
                       {user.name}
                     </Link>
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                    <p className="text-xs text-[var(--mich-muted)]">
+                      {user.email}
+                    </p>
                   </TableCell>
                   <TableCell>
                     {user.phone ? (
                       <div>
-                        <p className="text-sm">{user.phone}</p>
+                        <p className="text-sm text-[var(--mich-text)]">
+                          {user.phone}
+                        </p>
                         {user.country ? (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-[var(--mich-muted)]">
                             {user.country}
                           </p>
                         ) : null}
                       </div>
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-xs text-[var(--mich-muted)]">—</span>
                     )}
                   </TableCell>
-                  <TableCell>{statusLabel[user.status]}</TableCell>
                   <TableCell>
-                    {user.roles.map(({ role }) => role.name).join(", ") || "Sin rol"}
+                    <span className={statusChip[user.status]}>
+                      {statusLabel[user.status]}
+                    </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-[var(--mich-muted)]">
+                    {user.roles.map(({ role }) => role.name).join(", ") ||
+                      "Sin rol"}
+                  </TableCell>
+                  <TableCell className="text-[var(--mich-muted)]">
                     {user.lastLoginAt
                       ? new Intl.DateTimeFormat("es", {
                           dateStyle: "medium",
@@ -112,8 +141,8 @@ export default async function UsersPage() {
               ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

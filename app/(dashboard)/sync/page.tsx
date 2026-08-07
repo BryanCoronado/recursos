@@ -33,19 +33,19 @@ export default async function SyncPage() {
     <div className="space-y-8">
       <SyncAutoRefresh active={anySyncing} />
 
-      <div className="relative overflow-hidden rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] px-6 py-7 shadow-[0_20px_50px_-36px_rgba(11,18,32,0.4)] sm:px-8">
+      <div className="mich-page-card relative px-6 py-7 sm:px-8">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-50"
+          className="pointer-events-none absolute inset-0 z-0 opacity-40"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(93,156,236,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(93,156,236,0.07) 1px, transparent 1px)",
+              "linear-gradient(rgba(79,143,232,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(79,143,232,0.07) 1px, transparent 1px)",
             backgroundSize: "36px 36px",
             maskImage:
               "radial-gradient(ellipse at 20% 0%, black 10%, transparent 65%)",
           }}
         />
-        <div className="relative">
+        <div className="relative z-10">
           <p className="mb-2 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
             Admin
           </p>
@@ -56,7 +56,7 @@ export default async function SyncPage() {
             Inicia sesión por proveedor. El escritorio del worker aparece abajo
             en un iframe (maximiza si necesitas más espacio).
           </p>
-          <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-3 py-1.5 text-xs font-medium text-[var(--mich-muted)]">
+          <p className="mich-chip mt-4">
             <span className="size-1.5 rounded-full bg-[var(--mich-blue)]" />
             {readyCount}/{providerList().length} proveedores listos
             {anySyncing ? " · sincronizando…" : null}

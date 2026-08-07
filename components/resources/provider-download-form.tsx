@@ -56,9 +56,9 @@ type ProviderDownloadFormProps = {
   } | null>
   listHistory: () => Promise<ProviderHistoryItem[]>
   cancelJob: (jobId: string) => Promise<{ ok?: boolean; error?: string }>
-  /** Ayuda opcional (tutorial + enlace externo), p. ej. solo Envato */
+  /** Ayuda (tutorial + enlace externo) */
   help?: {
-    tutorialYoutubeUrl: string
+    tutorialYoutubeUrl?: string
     browseUrl: string
     browseLabel: string
   }
@@ -224,83 +224,102 @@ export function ProviderDownloadForm({
   }, [jobId, jobActive, getJob])
 
   return (
-    <div className="space-y-8">
-      <section className="relative isolate overflow-hidden rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] px-6 py-16 shadow-[0_24px_60px_-36px_rgba(11,18,32,0.3)] sm:px-10">
+    <div className="grid grid-cols-1 gap-5 lg:h-[calc(100vh-7.25rem)] lg:min-h-[32rem] lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.95fr)] lg:gap-5">
+      {/* Izquierda: descargar */}
+      <section className="mich-page-card relative flex min-h-0 flex-col overflow-y-auto px-6 py-6 sm:px-7 sm:py-7 lg:h-full">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 z-0 opacity-60"
+          className="pointer-events-none absolute inset-0 z-0 opacity-50"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(93,156,236,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(93,156,236,0.08) 1px, transparent 1px)",
+              "linear-gradient(rgba(79,143,232,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(79,143,232,0.07) 1px, transparent 1px)",
             backgroundSize: "42px 42px",
             maskImage:
-              "radial-gradient(ellipse at center, black 18%, transparent 70%)",
+              "radial-gradient(ellipse at 20% 0%, black 12%, transparent 70%)",
           }}
         />
-        <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--mich-blue)]/15 blur-[120px]" />
 
-        <div className="relative z-10 mx-auto w-full max-w-2xl text-center">
-          <div className="mx-auto mb-6 flex size-20 items-center justify-center overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-3 shadow-[0_12px_30px_-16px_var(--mich-glow)]">
-            <Image
-              src={def.logoSrc}
-              alt={def.shortLabel}
-              width={72}
-              height={72}
-              unoptimized
-              className="h-14 w-14 object-contain"
-              priority
-            />
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+          <div className="flex items-start gap-4">
+            <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-2.5 shadow-[0_12px_30px_-16px_var(--mich-glow)]">
+              <Image
+                src={def.logoSrc}
+                alt={def.shortLabel}
+                width={56}
+                height={56}
+                unoptimized
+                className="size-11 object-contain"
+                priority
+              />
+            </div>
+            <div className="min-w-0 pt-0.5">
+              <p className="font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
+                Módulo de recursos
+              </p>
+              <h1 className="font-heading mt-1 text-3xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-4xl">
+                {def.shortLabel}
+              </h1>
+              <p className="mt-2 max-w-md text-[14px] leading-6 text-[var(--mich-muted)]">
+                Pega el enlace de {def.label} y descarga el recurso con la
+                sesión sincronizada.
+              </p>
+            </div>
           </div>
-          <p className="mb-2 font-heading text-[11px] font-medium uppercase tracking-[0.32em] text-[var(--mich-blue-bright)]">
-            Módulo de recursos
-          </p>
-          <h1 className="font-heading text-4xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-5xl">
-            {def.shortLabel}
-          </h1>
-          <p className="mx-auto mt-4 max-w-lg text-[15px] leading-7 text-[var(--mich-muted)]">
-            Pega el enlace de {def.label} y descarga el recurso con la sesión
-            sincronizada.
-          </p>
 
           {help ? (
-            <ProviderHelpPanel
-              tutorialYoutubeUrl={help.tutorialYoutubeUrl}
-              browseUrl={help.browseUrl}
-              browseLabel={help.browseLabel}
-            />
+            <div className="mt-5">
+              <ProviderHelpPanel
+                tutorialYoutubeUrl={help.tutorialYoutubeUrl}
+                browseUrl={help.browseUrl}
+                browseLabel={help.browseLabel}
+                providerLabel={def.shortLabel}
+                align="start"
+              />
+            </div>
           ) : null}
 
-          <div className="mx-auto mt-4 max-w-md rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-4 py-3 text-sm text-[var(--mich-muted)]">
+          <div className="mich-soft-card mt-5 px-4 py-3 text-sm">
             {quota.unlimited ? (
-              <p>
-                Membresía activa · descargas ilimitadas
-                {"membershipEndsAt" in quota
-                  ? ` hasta ${new Date(quota.membershipEndsAt).toLocaleDateString("es")}`
-                  : ""}
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="mich-chip mich-chip-ok">Membresía</span>
+                <p className="text-[var(--mich-muted)]">
+                  Descargas ilimitadas
+                  {"membershipEndsAt" in quota
+                    ? ` · hasta ${new Date(quota.membershipEndsAt).toLocaleDateString("es")}`
+                    : ""}
+                </p>
+              </div>
             ) : quota.allowed ? (
-              <p>
-                Plan gratis · {quota.remaining} de{" "}
-                {quota.used + quota.remaining} descargas restantes.{" "}
-                <a
-                  href="/recharge"
-                  className="text-[var(--mich-blue-bright)] underline"
-                >
-                  Recargar
-                </a>
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="mich-chip mich-chip-warn">Plan gratis</span>
+                <p className="text-[var(--mich-muted)]">
+                  {quota.remaining} de {quota.used + quota.remaining} restantes.{" "}
+                  <a
+                    href="/recharge"
+                    className="font-medium text-[var(--mich-blue-bright)] underline-offset-2 hover:underline"
+                  >
+                    Recargar
+                  </a>
+                </p>
+              </div>
             ) : (
-              <p className="text-amber-900">
-                {quota.reason}{" "}
-                <a href="/recharge" className="underline">
-                  Ir a Recarga
-                </a>
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="mich-chip mich-chip-danger">Sin cupo</span>
+                <p className="text-[var(--mich-muted)]">
+                  {quota.reason}{" "}
+                  <a
+                    href="/recharge"
+                    className="font-medium text-[var(--mich-blue-bright)] underline-offset-2 hover:underline"
+                  >
+                    Ir a Recarga
+                  </a>
+                </p>
+              </div>
             )}
           </div>
 
           {!sessionReady ? (
-            <p className="mx-auto mt-8 max-w-md rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p className="mt-5 rounded-2xl border border-[color-mix(in_srgb,var(--mich-warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-warning)_12%,transparent)] px-4 py-3 text-sm text-[var(--mich-warning)]">
               {def.shortLabel} aún no está sincronizado. Pide al administrador
               que inicie sesión, o escríbenos por WhatsApp al{" "}
               <a
@@ -315,9 +334,16 @@ export function ProviderDownloadForm({
             </p>
           ) : null}
 
-          <form action={formAction} className="mt-10 space-y-4">
+          <form action={formAction} className="mt-6 space-y-3">
+            <label
+              htmlFor={`${provider}-url`}
+              className="block text-left text-xs font-medium uppercase tracking-[0.14em] text-[var(--mich-muted)]"
+            >
+              Enlace del recurso
+            </label>
             <input type="hidden" name="deviceId" value={deviceId} />
             <Input
+              id={`${provider}-url`}
               name="url"
               type="url"
               required
@@ -325,12 +351,12 @@ export function ProviderDownloadForm({
               aria-label={`URL de ${def.label}`}
               placeholder={def.sampleUrlPlaceholder}
               autoFocus
-              className="h-14 rounded-2xl border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-5 text-base text-[var(--mich-text)] shadow-sm placeholder:text-[var(--mich-muted)]/55 focus-visible:border-[var(--mich-blue)]/55 focus-visible:ring-[var(--mich-blue)]/25"
+              className="h-12 rounded-2xl border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-4 text-base text-[var(--mich-text)] shadow-[var(--mich-shadow-soft)] placeholder:text-[var(--mich-muted)]/55 focus-visible:border-[var(--mich-blue)]/55 focus-visible:ring-[var(--mich-blue)]/25"
             />
             <Button
               type="submit"
               disabled={!sessionReady || pending || !quota.allowed}
-              className="h-11 rounded-xl px-6"
+              className="h-11 rounded-2xl px-7 shadow-[0_12px_28px_-16px_var(--mich-glow)]"
             >
               {pending ? <Loader2 className="animate-spin" /> : <Download />}
               Descargar recurso
@@ -338,87 +364,100 @@ export function ProviderDownloadForm({
           </form>
 
           {state.error ? (
-            <p role="alert" className="mt-4 text-sm text-destructive">
+            <p role="alert" className="mt-3 text-left text-sm text-destructive">
               {state.error}
             </p>
           ) : null}
 
-          {job ? (
-            <DownloadProgressCard
-              key={job.id}
-              status={job.status}
-              providerLabel={def.shortLabel}
-              fileName={job.fileName}
-              error={job.error}
-              cancelling={cancellingId === job.id}
-              onCancel={
-                job.status === "QUEUED" || job.status === "RUNNING"
-                  ? () =>
-                      startTransition(async () => {
-                        await handleCancel(job.id)
-                      })
-                  : undefined
-              }
-            >
-              {job.status === "FAILED" && job.logs ? (
-                <div className="mt-3 space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setLogOpenId((id) => (id === job.id ? null : job.id))
-                      }
-                    >
-                      <FileText />
-                      {logOpenId === job.id ? "Ocultar log" : "Ver log"}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => downloadLogFile(job.id, job.logs!)}
-                    >
-                      <Download />
-                      Descargar log
-                    </Button>
+          <div className="mt-auto pt-5">
+            {job ? (
+              <DownloadProgressCard
+                key={job.id}
+                status={job.status}
+                providerLabel={def.shortLabel}
+                fileName={job.fileName}
+                error={job.error}
+                cancelling={cancellingId === job.id}
+                onCancel={
+                  job.status === "QUEUED" || job.status === "RUNNING"
+                    ? () =>
+                        startTransition(async () => {
+                          await handleCancel(job.id)
+                        })
+                    : undefined
+                }
+              >
+                {job.status === "FAILED" && job.logs ? (
+                  <div className="mt-3 space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setLogOpenId((id) => (id === job.id ? null : job.id))
+                        }
+                      >
+                        <FileText />
+                        {logOpenId === job.id ? "Ocultar log" : "Ver log"}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => downloadLogFile(job.id, job.logs!)}
+                      >
+                        <Download />
+                        Descargar log
+                      </Button>
+                    </div>
+                    {logOpenId === job.id ? (
+                      <pre className="max-h-40 overflow-auto rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-3 text-left text-[11px] leading-relaxed text-[var(--mich-muted)] whitespace-pre-wrap">
+                        {job.logs}
+                      </pre>
+                    ) : null}
                   </div>
-                  {logOpenId === job.id ? (
-                    <pre className="max-h-64 overflow-auto rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-3 text-left text-[11px] leading-relaxed text-[var(--mich-muted)] whitespace-pre-wrap">
-                      {job.logs}
-                    </pre>
-                  ) : null}
-                </div>
-              ) : null}
-              {job.status === "DONE" ? (
-                <a
-                  href={`/api/downloads/${job.id}`}
-                  className="mt-4 inline-flex items-center gap-2 font-medium text-[var(--mich-blue-bright)] underline-offset-2 hover:underline"
-                >
-                  <Download className="size-4" />
-                  {job.fileName ?? "Descargar archivo"}
-                </a>
-              ) : null}
-            </DownloadProgressCard>
-          ) : null}
+                ) : null}
+                {job.status === "DONE" ? (
+                  <a
+                    href={`/api/downloads/${job.id}`}
+                    className="mt-4 inline-flex items-center gap-2 font-medium text-[var(--mich-blue-bright)] underline-offset-2 hover:underline"
+                  >
+                    <Download className="size-4" />
+                    {job.fileName ?? "Descargar archivo"}
+                  </a>
+                ) : null}
+              </DownloadProgressCard>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-[var(--mich-border)] bg-[color-mix(in_srgb,var(--mich-surface-muted)_55%,transparent)] px-4 py-5 text-sm text-[var(--mich-muted)]">
+                Cuando inicies una descarga, el progreso aparecerá aquí.
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      <section className="rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-6 shadow-[0_16px_40px_-32px_rgba(11,18,32,0.25)] sm:p-8">
-        <div className="mb-5 flex items-end justify-between gap-3">
+      {/* Derecha: historial */}
+      <section className="mich-page-card relative flex min-h-[22rem] flex-col lg:h-full lg:min-h-0">
+        <div className="relative z-10 flex shrink-0 items-center justify-between gap-3 border-b border-[var(--mich-border)] px-5 py-4 sm:px-6">
           <div>
-            <h2 className="font-heading text-xl font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
-              Historial de descargas
-            </h2>
-            <p className="mt-1 text-sm text-[var(--mich-muted)]">
-              Tus últimas solicitudes en {def.label}.
+            <div className="flex items-center gap-2">
+              <h2 className="font-heading text-lg font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
+                Historial
+              </h2>
+              {history.length > 0 ? (
+                <span className="mich-chip">{history.length}</span>
+              ) : null}
+            </div>
+            <p className="mt-0.5 text-sm text-[var(--mich-muted)]">
+              Últimas en {def.shortLabel}
             </p>
           </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
+            className="rounded-xl"
             onClick={() =>
               startTransition(async () => {
                 await refreshHistory()
@@ -429,115 +468,127 @@ export function ProviderDownloadForm({
           </Button>
         </div>
 
-        {history.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-[var(--mich-border)] px-4 py-10 text-center text-sm text-[var(--mich-muted)]">
-            Aún no hay descargas. Pega un enlace arriba para empezar.
-          </p>
-        ) : (
-          <ul className="divide-y divide-[var(--mich-border)]">
-            {history.map((item) => (
-              <li
-                key={item.id}
-                className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0 space-y-1 text-left">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge status={item.status} />
-                    <span className="text-xs text-[var(--mich-muted)]">
-                      {formatDate(item.createdAt)}
-                    </span>
-                  </div>
-                  <p className="truncate font-medium text-[var(--mich-text)]">
-                    {item.fileName || shortenUrl(item.url)}
-                  </p>
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex max-w-full items-center gap-1 truncate text-xs text-[var(--mich-muted)] hover:text-[var(--mich-blue-bright)]"
-                  >
-                    <ExternalLink className="size-3 shrink-0" />
-                    <span className="truncate">{item.url}</span>
-                  </a>
-                  {item.status === "FAILED" && item.error ? (
-                    <p className="text-xs text-destructive line-clamp-2">
-                      {item.error}
+        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+          {history.length === 0 ? (
+            <div className="flex h-full min-h-[12rem] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--mich-border)] bg-[color-mix(in_srgb,var(--mich-surface-muted)_70%,transparent)] px-5 text-center">
+              <span className="mb-3 flex size-11 items-center justify-center rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] text-[var(--mich-blue)] shadow-[var(--mich-shadow-soft)]">
+                <Download className="size-5" />
+              </span>
+              <p className="font-heading text-sm font-semibold text-[var(--mich-text)]">
+                Sin descargas todavía
+              </p>
+              <p className="mx-auto mt-1.5 max-w-[15rem] text-sm leading-6 text-[var(--mich-muted)]">
+                Pega un enlace a la izquierda y aparecerán aquí.
+              </p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {history.map((item) => (
+                <li
+                  key={item.id}
+                  className="mich-soft-card rounded-[1.15rem] p-3.5 transition-colors hover:border-[var(--mich-blue)]/30"
+                >
+                  <div className="min-w-0 space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusBadge status={item.status} />
+                      <span className="text-[11px] text-[var(--mich-muted)]">
+                        {formatDate(item.createdAt)}
+                      </span>
+                    </div>
+                    <p className="truncate text-sm font-medium text-[var(--mich-text)]">
+                      {item.fileName || shortenUrl(item.url)}
                     </p>
-                  ) : null}
-                  {item.status === "FAILED" && item.logs ? (
-                    <div className="space-y-2 pt-1">
-                      <div className="flex flex-wrap gap-2">
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex max-w-full items-center gap-1 truncate text-[11px] text-[var(--mich-muted)] hover:text-[var(--mich-blue-bright)]"
+                    >
+                      <ExternalLink className="size-3 shrink-0" />
+                      <span className="truncate">{item.url}</span>
+                    </a>
+                    {item.status === "FAILED" && item.error ? (
+                      <p className="text-xs text-destructive line-clamp-2">
+                        {item.error}
+                      </p>
+                    ) : null}
+                    {item.status === "FAILED" && item.logs ? (
+                      <div className="space-y-2 pt-1">
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              setLogOpenId((id) =>
+                                id === item.id ? null : item.id
+                              )
+                            }
+                          >
+                            <FileText />
+                            {logOpenId === item.id ? "Ocultar log" : "Ver log"}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => downloadLogFile(item.id, item.logs!)}
+                          >
+                            <Download />
+                            Descargar log
+                          </Button>
+                        </div>
+                        {logOpenId === item.id ? (
+                          <pre className="max-h-36 overflow-auto rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-3 text-[11px] leading-relaxed text-[var(--mich-muted)] whitespace-pre-wrap">
+                            {item.logs}
+                          </pre>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {item.status === "DONE" ? (
+                      <a href={`/api/downloads/${item.id}`}>
+                        <Button type="button" size="sm" className="rounded-xl">
+                          <Download />
+                          Descargar
+                        </Button>
+                      </a>
+                    ) : item.status === "QUEUED" ||
+                      item.status === "RUNNING" ? (
+                      <>
+                        <span className="inline-flex items-center gap-2 text-xs text-[var(--mich-muted)]">
+                          <Loader2 className="size-3.5 animate-spin" />
+                          En proceso
+                        </span>
                         <Button
                           type="button"
                           size="sm"
                           variant="outline"
+                          className="rounded-xl"
+                          disabled={cancellingId === item.id}
                           onClick={() =>
-                            setLogOpenId((id) =>
-                              id === item.id ? null : item.id
-                            )
+                            startTransition(async () => {
+                              await handleCancel(item.id)
+                            })
                           }
                         >
-                          <FileText />
-                          {logOpenId === item.id ? "Ocultar log" : "Ver log"}
+                          {cancellingId === item.id ? (
+                            <Loader2 className="animate-spin" />
+                          ) : (
+                            <CircleStop />
+                          )}
+                          Finalizar
                         </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => downloadLogFile(item.id, item.logs!)}
-                        >
-                          <Download />
-                          Descargar log
-                        </Button>
-                      </div>
-                      {logOpenId === item.id ? (
-                        <pre className="max-h-56 overflow-auto rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] p-3 text-[11px] leading-relaxed text-[var(--mich-muted)] whitespace-pre-wrap">
-                          {item.logs}
-                        </pre>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="shrink-0">
-                  {item.status === "DONE" ? (
-                    <a href={`/api/downloads/${item.id}`}>
-                      <Button type="button" size="sm" variant="outline">
-                        <Download />
-                        Descargar
-                      </Button>
-                    </a>
-                  ) : item.status === "QUEUED" || item.status === "RUNNING" ? (
-                    <div className="flex flex-col items-end gap-2">
-                      <span className="inline-flex items-center gap-2 text-xs text-[var(--mich-muted)]">
-                        <Loader2 className="size-3.5 animate-spin" />
-                        En proceso
-                      </span>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={cancellingId === item.id}
-                        onClick={() =>
-                          startTransition(async () => {
-                            await handleCancel(item.id)
-                          })
-                        }
-                      >
-                        {cancellingId === item.id ? (
-                          <Loader2 className="animate-spin" />
-                        ) : (
-                          <CircleStop />
-                        )}
-                        Finalizar
-                      </Button>
-                    </div>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+                      </>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </section>
     </div>
   )
@@ -549,10 +600,13 @@ function StatusBadge({
   status: ProviderHistoryItem["status"]
 }) {
   const styles = {
-    QUEUED: "bg-slate-100 text-slate-700",
-    RUNNING: "bg-sky-100 text-sky-800",
-    DONE: "bg-emerald-100 text-emerald-800",
-    FAILED: "bg-red-100 text-red-800",
+    QUEUED:
+      "border-[var(--mich-border)] bg-[var(--mich-surface-muted)] text-[var(--mich-muted)]",
+    RUNNING:
+      "border-[color-mix(in_srgb,var(--mich-blue)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-blue)_14%,transparent)] text-[var(--mich-blue-bright)]",
+    DONE: "border-[color-mix(in_srgb,var(--mich-success)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_12%,transparent)] text-[var(--mich-success)]",
+    FAILED:
+      "border-[color-mix(in_srgb,var(--mich-danger)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-danger)_12%,transparent)] text-[var(--mich-danger)]",
   } as const
 
   const Icon = {
@@ -564,7 +618,7 @@ function StatusBadge({
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${styles[status]}`}
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${styles[status]}`}
     >
       <Icon
         className={`size-3 ${status === "RUNNING" ? "animate-spin" : ""}`}

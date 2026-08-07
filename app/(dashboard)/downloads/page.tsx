@@ -122,12 +122,8 @@ export default async function AdminDownloadsPage({
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] px-6 py-7 shadow-[0_20px_50px_-36px_rgba(11,18,32,0.4)] sm:px-8">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-8 -top-8 size-44 rounded-full bg-[var(--mich-blue)]/15 blur-3xl"
-        />
-        <div className="relative">
+      <div className="mich-page-card relative px-6 py-7 sm:px-8">
+        <div className="relative z-10">
           <p className="mb-2 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
             Admin
           </p>
@@ -156,10 +152,9 @@ export default async function AdminDownloadsPage({
               status: statusFilter === key ? null : key,
             })}
             className={cn(
-              "rounded-2xl border bg-[var(--mich-surface)] px-4 py-3 transition",
-              statusFilter === key
-                ? "border-[var(--mich-blue)]/50 shadow-[0_12px_30px_-20px_var(--mich-glow)]"
-                : "border-[var(--mich-border)] hover:border-[var(--mich-blue)]/35"
+              "mich-soft-card px-4 py-3 transition",
+              statusFilter === key &&
+                "border-[var(--mich-blue)]/50 shadow-[0_12px_30px_-20px_var(--mich-glow)]"
             )}
           >
             <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-[var(--mich-muted)]">
@@ -174,7 +169,7 @@ export default async function AdminDownloadsPage({
       </div>
 
       <form
-        className="flex flex-col gap-3 rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-4 sm:flex-row sm:items-end"
+        className="mich-soft-card flex flex-col gap-3 p-4 sm:flex-row sm:items-end"
         action="/downloads"
         method="get"
       >
@@ -234,7 +229,7 @@ export default async function AdminDownloadsPage({
         </button>
       </form>
 
-      <div className="overflow-hidden rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] shadow-[0_16px_40px_-32px_rgba(11,18,32,0.3)]">
+      <div className="mich-page-card relative overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>

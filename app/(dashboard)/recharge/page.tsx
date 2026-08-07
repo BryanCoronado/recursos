@@ -68,15 +68,7 @@ export default async function RechargePage() {
 
   return (
     <div className="space-y-10">
-      <section className="relative isolate overflow-hidden rounded-[1.75rem] border border-[var(--mich-border)] bg-[var(--mich-surface)] px-6 py-10 shadow-[0_24px_60px_-40px_rgba(11,18,32,0.35)] sm:px-10">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-70"
-          style={{
-            backgroundImage:
-              "radial-gradient(ellipse at 20% 0%, rgba(93,156,236,0.22), transparent 55%), radial-gradient(ellipse at 90% 80%, rgba(63,81,181,0.14), transparent 50%)",
-          }}
-        />
+      <section className="mich-page-card relative isolate px-6 py-10 sm:px-10">
         <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-xl">
             <p className="mb-3 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
@@ -171,10 +163,9 @@ export default async function RechargePage() {
                 <article
                   key={`${provider.id}-${key}`}
                   className={cn(
-                    "relative flex flex-col overflow-hidden rounded-[1.5rem] border bg-[var(--mich-surface)] p-6 transition-transform duration-300 hover:-translate-y-1",
-                    plan.highlight
-                      ? "border-[var(--mich-blue)]/50 shadow-[0_24px_50px_-28px_var(--mich-glow)]"
-                      : "border-[var(--mich-border)] shadow-[0_16px_40px_-32px_rgba(11,18,32,0.3)]"
+                    "mich-soft-card relative flex flex-col overflow-hidden p-6 transition-transform duration-300 hover:-translate-y-1",
+                    plan.highlight &&
+                      "border-[var(--mich-blue)]/50 shadow-[0_24px_50px_-28px_var(--mich-glow)]"
                   )}
                 >
                   {plan.highlight ? (
@@ -261,10 +252,10 @@ export default async function RechargePage() {
           href={whatsappRechargeUrl(user.name, user.email)}
           target="_blank"
           rel="noreferrer"
-          className="group relative overflow-hidden rounded-[1.5rem] border border-[var(--mich-border)] bg-[linear-gradient(135deg,rgba(93,156,236,0.16),rgba(63,81,181,0.1))] p-6 transition-transform hover:-translate-y-0.5"
+          className="group mich-soft-card relative overflow-hidden bg-[linear-gradient(135deg,rgba(79,143,232,0.14),rgba(63,81,181,0.08))] p-6 transition-transform hover:-translate-y-0.5"
         >
           <MessageCircle className="mb-4 size-8 text-[var(--mich-blue-bright)]" />
-          <h3 className="font-heading text-xl font-semibold tracking-[-0.03em]">
+          <h3 className="font-heading text-xl font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
             Solicitar recarga
           </h3>
           <p className="mt-2 text-sm text-[var(--mich-muted)]">
@@ -275,10 +266,10 @@ export default async function RechargePage() {
           href={supportUrl}
           target="_blank"
           rel="noreferrer"
-          className="group relative overflow-hidden rounded-[1.5rem] border border-[var(--mich-border)] bg-[var(--mich-surface)] p-6 transition-transform hover:-translate-y-0.5"
+          className="group mich-soft-card relative overflow-hidden p-6 transition-transform hover:-translate-y-0.5"
         >
           <Headphones className="mb-4 size-8 text-[var(--mich-indigo)]" />
-          <h3 className="font-heading text-xl font-semibold tracking-[-0.03em]">
+          <h3 className="font-heading text-xl font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
             Soporte
           </h3>
           <p className="mt-2 text-sm text-[var(--mich-muted)]">
@@ -305,7 +296,7 @@ function ProviderStatusCard({
   deviceUsed: number
 }) {
   return (
-    <div className="rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)]/85 px-4 py-3 backdrop-blur">
+    <div className="mich-soft-card px-4 py-3 backdrop-blur">
       <div className="mb-2 flex items-center gap-2 text-sm font-medium text-[var(--mich-text)]">
         <Image
           src={logoSrc}
@@ -319,11 +310,11 @@ function ProviderStatusCard({
         <Sparkles className="ml-auto size-3.5 text-[var(--mich-blue-bright)]" />
       </div>
       {membership ? (
-        <div className="space-y-1 text-sm">
-          <p className="flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-300">
-            <CheckCircle2 className="size-4" />
-            Membresía activa
-          </p>
+        <div className="space-y-1.5 text-sm">
+          <span className="mich-chip mich-chip-ok">
+            <CheckCircle2 className="size-3" />
+            Activa
+          </span>
           <p className="text-[var(--mich-muted)]">
             {SUBSCRIPTION_PLANS[membership.plan].label} · ilimitado
           </p>
@@ -337,10 +328,8 @@ function ProviderStatusCard({
         </div>
       ) : downloadAccess.allowed && !downloadAccess.unlimited ? (
         <div className="space-y-2 text-sm">
-          <p className="font-semibold text-amber-800 dark:text-amber-300">
-            Plan gratis
-          </p>
-          <div className="h-2 overflow-hidden rounded-full bg-[var(--mich-surface-muted)]">
+          <span className="mich-chip mich-chip-warn">Plan gratis</span>
+          <div className="h-2 overflow-hidden rounded-full bg-[var(--mich-surface)] ring-1 ring-[var(--mich-border)]">
             <div
               className="h-full rounded-full bg-[linear-gradient(90deg,var(--mich-blue),var(--mich-indigo))]"
               style={{
@@ -353,8 +342,8 @@ function ProviderStatusCard({
           </p>
         </div>
       ) : (
-        <div className="space-y-1 text-sm">
-          <p className="font-semibold text-destructive">Sin cupo gratis</p>
+        <div className="space-y-1.5 text-sm">
+          <span className="mich-chip mich-chip-danger">Sin cupo</span>
           <p className="text-[var(--mich-muted)]">Activa un plan para seguir.</p>
         </div>
       )}

@@ -98,28 +98,38 @@ export function AppShell({
     })
   }
 
+  const activeLabel =
+    navigation.find(
+      (item) => pathname === item.href || pathname.startsWith(`${item.href}/`)
+    )?.label ?? "Recursos"
+
   return (
     <div className="min-h-screen bg-[var(--mich-surface-muted)] text-[var(--mich-text)]">
       {mobileOpen ? (
         <button
           type="button"
           aria-label="Cerrar menú"
-          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       ) : null}
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[var(--mich-border)] bg-[var(--mich-surface)]/95 shadow-[0_10px_40px_-24px_rgba(11,18,32,0.35)] backdrop-blur-xl transition-all duration-300 ease-out",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[var(--mich-border)] bg-[var(--mich-surface)]/92 shadow-[0_10px_40px_-24px_rgba(11,18,32,0.35)] backdrop-blur-2xl transition-all duration-300 ease-out",
           "w-[272px] md:translate-x-0",
           collapsed ? "md:w-[88px]" : "md:w-[272px]",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
         <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(ellipse_at_top,rgba(79,143,232,0.14),transparent_70%)]"
+        />
+
+        <div
           className={cn(
-            "flex h-16 items-center border-b border-[var(--mich-border)] px-3",
+            "relative flex h-[4.5rem] items-center border-b border-[var(--mich-border)] px-3",
             collapsed ? "md:justify-center" : "justify-between"
           )}
         >
@@ -130,8 +140,8 @@ export function AppShell({
               collapsed && "md:justify-center"
             )}
           >
-            <span className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)] shadow-[0_8px_24px_-12px_var(--mich-glow)]">
-              <BrandLogo width={52} height={52} className="size-12" priority />
+            <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] shadow-[0_8px_24px_-12px_var(--mich-glow)]">
+              <BrandLogo width={48} height={48} className="size-11" priority />
             </span>
             <span
               className={cn(
@@ -162,14 +172,14 @@ export function AppShell({
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-3 py-4">
+        <div className="relative flex-1 overflow-y-auto px-3 py-4">
           <p
             className={cn(
               "mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--mich-muted)]/70 transition-all",
               collapsed && "md:hidden"
             )}
           >
-            Navegación
+            Menú
           </p>
           <nav className="space-y-1">
             {navigation.map((item) => {
@@ -184,15 +194,21 @@ export function AppShell({
                   href={item.href}
                   title={item.label}
                   className={cn(
-                    "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all",
+                    "group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-all duration-200",
                     collapsed && "md:justify-center md:px-0",
                     active
-                      ? "bg-[linear-gradient(135deg,rgba(93,156,236,0.18),rgba(63,81,181,0.12))] text-[var(--mich-text)] shadow-[inset_0_0_0_1px_rgba(93,156,236,0.35)]"
+                      ? "bg-[linear-gradient(135deg,rgba(79,143,232,0.2),rgba(63,81,181,0.12))] font-medium text-[var(--mich-text)] shadow-[inset_0_0_0_1px_rgba(79,143,232,0.28)]"
                       : "text-[var(--mich-muted)] hover:bg-[var(--mich-blue)]/8 hover:text-[var(--mich-text)]"
                   )}
                 >
+                  {active ? (
+                    <span
+                      aria-hidden
+                      className="absolute left-0 top-1/2 hidden h-7 w-1 -translate-y-1/2 rounded-r-full bg-[var(--mich-blue-bright)] md:block"
+                    />
+                  ) : null}
                   {logoSrc ? (
-                    <span className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--mich-surface)]">
+                    <span className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[var(--mich-border)] bg-[var(--mich-surface)] p-0.5">
                       <Image
                         src={logoSrc}
                         alt={item.label}
@@ -226,10 +242,10 @@ export function AppShell({
           </nav>
         </div>
 
-        <div className="border-t border-[var(--mich-border)] p-3">
+        <div className="relative border-t border-[var(--mich-border)] p-3">
           <div
             className={cn(
-              "mb-3 rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] p-3",
+              "mb-3 rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)]/90 p-3",
               collapsed && "md:hidden"
             )}
           >
@@ -244,7 +260,7 @@ export function AppShell({
             type="button"
             variant="ghost"
             className={cn(
-              "w-full justify-start text-[var(--mich-muted)] hover:bg-[var(--mich-blue)]/10 hover:text-[var(--mich-blue-bright)]",
+              "w-full justify-start rounded-xl text-[var(--mich-muted)] hover:bg-[var(--mich-blue)]/10 hover:text-[var(--mich-blue-bright)]",
               collapsed && "md:justify-center md:px-0"
             )}
             onClick={() => signOut({ callbackUrl: "/login" })}
@@ -262,9 +278,9 @@ export function AppShell({
           collapsed ? "md:pl-[88px]" : "md:pl-[272px]"
         )}
       >
-        <header className="sticky top-0 z-30 border-b border-[var(--mich-border)] bg-[var(--mich-surface)]/80 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 border-b border-[var(--mich-border)] bg-[var(--mich-surface)]/75 backdrop-blur-2xl">
           <div className="flex h-16 items-center justify-between gap-3 px-4 md:px-8">
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               <Button
                 type="button"
                 variant="ghost"
@@ -285,30 +301,29 @@ export function AppShell({
               >
                 {collapsed ? <ChevronRight /> : <ChevronLeft />}
               </Button>
-              <div>
-                <p className="font-heading text-sm font-semibold tracking-[-0.02em] text-[var(--mich-text)]">
-                  Panel de recursos
+              <div className="min-w-0">
+                <p className="font-heading truncate text-sm font-semibold tracking-[-0.02em] text-[var(--mich-text)]">
+                  {activeLabel}
                 </p>
                 <p className="hidden text-xs text-[var(--mich-muted)] sm:block">
-                  Sistema MICHITECH
+                  MICHITECH Recursos
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
               <ThemeToggle />
-              <div className="hidden text-right text-xs sm:block">
+              <div className="hidden rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)]/80 px-3 py-1.5 text-right text-xs sm:block">
                 <p className="font-medium text-[var(--mich-text)]">{user.name}</p>
                 <p className="text-[var(--mich-muted)]">
-                  {user.roleNames.join(", ") || "Sin rol"}
+                  {user.roleNames[0] || "Sin rol"}
                 </p>
               </div>
-              <span className="hidden size-2 rounded-full bg-[var(--mich-blue)] shadow-[0_0_12px_var(--mich-glow)] sm:inline-flex" />
             </div>
           </div>
         </header>
 
-        <main className="min-w-0 p-4 md:p-8">{children}</main>
+        <main className="mich-auth-rise min-w-0 p-4 md:p-8">{children}</main>
       </div>
     </div>
   )

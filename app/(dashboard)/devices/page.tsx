@@ -49,12 +49,8 @@ export default async function DevicesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] px-6 py-7 shadow-[0_20px_50px_-36px_rgba(11,18,32,0.4)] sm:px-8">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-8 -top-8 size-44 rounded-full bg-[var(--mich-blue)]/15 blur-3xl"
-        />
-        <div className="relative">
+      <div className="mich-page-card relative px-6 py-7 sm:px-8">
+        <div className="relative z-10">
           <p className="mb-2 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
             Cuenta
           </p>
@@ -84,7 +80,7 @@ export default async function DevicesPage() {
       </div>
 
       {!hasAny ? (
-        <div className="rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] px-6 py-12 text-center">
+        <div className="mich-soft-card px-6 py-12 text-center">
           <p className="text-[var(--mich-muted)]">
             Aún no tienes membresías ni dispositivos registrados.
           </p>
@@ -111,13 +107,14 @@ export default async function DevicesPage() {
                   membership.maxDevices
                 )
               : null
+            const full = membership ? used >= max : false
 
             return (
               <section
                 key={provider.id}
-                className="rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-6 shadow-[0_16px_40px_-32px_rgba(11,18,32,0.3)]"
+                className="mich-page-card relative p-6"
               >
-                <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+                <div className="relative z-10 mb-5 flex flex-wrap items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <span className="flex size-12 items-center justify-center rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] p-2">
                       <Image
@@ -134,12 +131,22 @@ export default async function DevicesPage() {
                         {provider.shortLabel}
                       </h2>
                       {membership ? (
-                        <p className="text-sm text-[var(--mich-muted)]">
-                          Cupos {used}/{max} · vigente hasta{" "}
-                          {membership.endsAt.toLocaleString("es", {
-                            dateStyle: "medium",
-                          })}
-                        </p>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          <span
+                            className={cn(
+                              "mich-chip",
+                              full ? "mich-chip-warn" : "mich-chip-ok"
+                            )}
+                          >
+                            {used}/{max} cupos
+                          </span>
+                          <p className="text-sm text-[var(--mich-muted)]">
+                            hasta{" "}
+                            {membership.endsAt.toLocaleString("es", {
+                              dateStyle: "medium",
+                            })}
+                          </p>
+                        </div>
                       ) : (
                         <p className="text-sm text-[var(--mich-muted)]">
                           Sin membresía activa (dispositivos históricos)
@@ -164,16 +171,16 @@ export default async function DevicesPage() {
                 </div>
 
                 {list.length === 0 ? (
-                  <p className="text-sm text-[var(--mich-muted)]">
+                  <p className="relative z-10 text-sm text-[var(--mich-muted)]">
                     Ningún dispositivo registrado aún. Se registrará al usar{" "}
                     {provider.shortLabel} desde este navegador.
                   </p>
                 ) : (
-                  <ul className="divide-y divide-[var(--mich-border)]">
+                  <ul className="relative z-10 divide-y divide-[var(--mich-border)]">
                     {list.map((device) => (
                       <li
                         key={device.id}
-                        className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between"
+                        className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div className="min-w-0">
                           <p className="font-medium text-[var(--mich-text)]">
@@ -185,9 +192,7 @@ export default async function DevicesPage() {
                             {device.createdAt.toLocaleString("es")}
                           </p>
                         </div>
-                        <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--mich-muted)]">
-                          Solo admin puede liberar
-                        </span>
+                        <span className="mich-chip">Solo admin libera</span>
                       </li>
                     ))}
                   </ul>

@@ -31,8 +31,8 @@ export default async function AutomationsPage({
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-4 rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] px-6 py-7 shadow-[0_18px_40px_-34px_rgba(11,18,32,0.35)] sm:px-8">
-        <div>
+      <div className="mich-page-card relative flex flex-wrap items-start justify-between gap-4 px-6 py-7 sm:px-8">
+        <div className="relative z-10">
           <p className="mb-2 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
             Flujos
           </p>
@@ -43,7 +43,7 @@ export default async function AutomationsPage({
             Flujos por proveedor. Graba clics o edita reglas JSON.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="relative z-10 flex flex-wrap gap-2">
           <Link
             href={
               providerFilter

@@ -3,6 +3,7 @@ import { JetBrains_Mono, Manrope, Outfit } from "next/font/google"
 import { cookies } from "next/headers"
 
 import { ThemeProvider } from "@/components/theme/theme-provider"
+import { SITE, absoluteUrl } from "@/lib/site"
 
 import "./globals.css"
 
@@ -25,11 +26,37 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE.url),
   title: {
-    default: "MICHITECH",
-    template: "%s | MICHITECH",
+    default: `${SITE.name} — Recursos Envato y Magnific`,
+    template: `%s | ${SITE.name}`,
   },
-  description: "Panel de recursos MICHITECH",
+  description: SITE.description,
+  applicationName: SITE.name,
+  authors: [{ name: SITE.legalName }],
+  creator: SITE.legalName,
+  publisher: SITE.legalName,
+  openGraph: {
+    type: "website",
+    locale: SITE.locale,
+    url: absoluteUrl("/"),
+    siteName: SITE.name,
+    title: `${SITE.name} — Recursos Envato y Magnific`,
+    description: SITE.description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE.name} — Recursos Envato y Magnific`,
+    description: SITE.description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  icons: {
+    icon: "/logo-sinfondo-michitech.png",
+    apple: "/logo-sinfondo-michitech.png",
+  },
 }
 
 export default async function RootLayout({

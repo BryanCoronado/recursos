@@ -62,12 +62,8 @@ export default async function SubscriptionsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] px-6 py-7 shadow-[0_20px_50px_-36px_rgba(11,18,32,0.4)] sm:px-8">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-8 -top-8 size-44 rounded-full bg-[var(--mich-blue)]/15 blur-3xl"
-        />
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
+      <div className="mich-page-card relative px-6 py-7 sm:px-8">
+        <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="mb-2 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
               Admin
@@ -109,10 +105,9 @@ export default async function SubscriptionsPage() {
               <div
                 key={key}
                 className={cn(
-                  "rounded-2xl border bg-[var(--mich-surface)] px-4 py-4",
-                  plan.highlight
-                    ? "border-[var(--mich-blue)]/45 shadow-[0_12px_30px_-20px_var(--mich-glow)]"
-                    : "border-[var(--mich-border)]"
+                  "mich-soft-card px-4 py-4",
+                  plan.highlight &&
+                    "border-[var(--mich-blue)]/45 shadow-[0_12px_30px_-20px_var(--mich-glow)]"
                 )}
               >
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--mich-blue-bright)]">
@@ -134,21 +129,23 @@ export default async function SubscriptionsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-6 shadow-[0_16px_40px_-32px_rgba(11,18,32,0.3)]">
-          <div className="mb-5 flex items-center gap-2">
+        <section className="mich-page-card relative p-6">
+          <div className="relative z-10 mb-5 flex items-center gap-2">
             <CreditCard className="size-5 text-[var(--mich-blue)]" />
-            <h2 className="font-heading text-lg font-semibold tracking-[-0.03em]">
+            <h2 className="font-heading text-lg font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
               Activar membresía
             </h2>
           </div>
-          <ActivateMembershipForm users={users} />
+          <div className="relative z-10">
+            <ActivateMembershipForm users={users} />
+          </div>
         </section>
 
-        <section className="rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-6 shadow-[0_16px_40px_-32px_rgba(11,18,32,0.3)]">
-          <h2 className="font-heading mb-4 text-lg font-semibold tracking-[-0.03em]">
+        <section className="mich-page-card relative p-6">
+          <h2 className="relative z-10 font-heading mb-4 text-lg font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
             Historial reciente
           </h2>
-          <ul className="divide-y divide-[var(--mich-border)]">
+          <ul className="relative z-10 divide-y divide-[var(--mich-border)]">
             {memberships.length === 0 ? (
               <li className="py-8 text-center text-sm text-[var(--mich-muted)]">
                 Aún no hay membresías.

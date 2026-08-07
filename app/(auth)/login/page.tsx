@@ -1,9 +1,15 @@
 import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth/next"
+import type { Metadata } from "next"
 
 import { AuthShell } from "@/components/auth/auth-shell"
 import { LoginForm } from "@/components/auth/login-form"
 import { authOptions } from "@/lib/auth/config"
+
+export const metadata: Metadata = {
+  title: "Iniciar sesión",
+  robots: { index: false, follow: false },
+}
 
 type LoginPageProps = {
   searchParams: Promise<{ callbackUrl?: string; registered?: string }>
@@ -11,13 +17,18 @@ type LoginPageProps = {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await getServerSession(authOptions)
-  if (session) redirect("/")
+  if (session) redirect("/go")
 
   const params = await searchParams
+  const raw = params.callbackUrl
   const callbackUrl =
-    params.callbackUrl?.startsWith("/") && !params.callbackUrl.startsWith("//")
-      ? params.callbackUrl
-      : "/"
+    raw?.startsWith("/") &&
+    !raw.startsWith("//") &&
+    raw !== "/" &&
+    raw !== "/login" &&
+    raw !== "/register"
+      ? raw
+      : "/go"
   const justRegistered = params.registered === "1"
 
   return (

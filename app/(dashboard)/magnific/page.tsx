@@ -91,6 +91,10 @@ export default async function MagnificPage() {
         getJob={getMagnificDownloadJob}
         listHistory={listMagnificDownloadHistory}
         cancelJob={cancelMagnificDownloadJob}
+        help={{
+          browseUrl: "https://www.magnific.com/",
+          browseLabel: "Abrir Magnific",
+        }}
       />
     </DeviceGate>
   )
