@@ -21,6 +21,10 @@ model User {
   email               String        @unique
   name                String
   passwordHash        String
+  /// Código ISO país (ej. PE, MX, CO)
+  country             String?
+  /// Celular con código país (ej. +51917080235)
+  phone               String?
   status              UserStatus    @default(ACTIVE)
   mustChangePassword  Boolean       @default(true)
   failedLoginAttempts Int           @default(0)
@@ -42,6 +46,7 @@ model User {
 
   @@index([status])
   @@index([createdById])
+  @@index([phone])
 }
 
 model Role {

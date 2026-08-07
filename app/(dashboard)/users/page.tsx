@@ -32,6 +32,8 @@ export default async function UsersPage() {
       id: true,
       name: true,
       email: true,
+      country: true,
+      phone: true,
       status: true,
       lastLoginAt: true,
       roles: { select: { role: { select: { name: true } } } },
@@ -65,6 +67,7 @@ export default async function UsersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Usuario</TableHead>
+                <TableHead>Contacto</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Roles</TableHead>
                 <TableHead>Último acceso</TableHead>
@@ -78,6 +81,20 @@ export default async function UsersPage() {
                       {user.name}
                     </Link>
                     <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </TableCell>
+                  <TableCell>
+                    {user.phone ? (
+                      <div>
+                        <p className="text-sm">{user.phone}</p>
+                        {user.country ? (
+                          <p className="text-xs text-muted-foreground">
+                            {user.country}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell>{statusLabel[user.status]}</TableCell>
                   <TableCell>

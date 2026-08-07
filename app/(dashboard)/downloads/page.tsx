@@ -91,7 +91,7 @@ export default async function AdminDownloadsPage({
     orderBy: { createdAt: "desc" },
     take: 150,
     include: {
-      requestedBy: { select: { id: true, name: true, email: true } },
+      requestedBy: { select: { id: true, name: true, email: true, phone: true, country: true } },
     },
   })
 
@@ -275,6 +275,14 @@ export default async function AdminDownloadsPage({
                       <p className="text-xs text-[var(--mich-muted)]">
                         {job.requestedBy.email}
                       </p>
+                      {job.requestedBy.phone ? (
+                        <p className="text-xs text-[var(--mich-muted)]">
+                          {job.requestedBy.country
+                            ? `${job.requestedBy.country} · `
+                            : ""}
+                          {job.requestedBy.phone}
+                        </p>
+                      ) : null}
                     </TableCell>
                     <TableCell>
                       <span className="inline-flex items-center gap-2 text-sm">

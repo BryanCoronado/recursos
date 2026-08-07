@@ -27,6 +27,8 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
         id: true,
         name: true,
         email: true,
+        country: true,
+        phone: true,
         status: true,
         roles: { select: { roleId: true } },
       },
@@ -52,6 +54,11 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
           {user.name}
         </h1>
         <p className="text-muted-foreground">{user.email}</p>
+        {user.phone || user.country ? (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {[user.country, user.phone].filter(Boolean).join(" · ")}
+          </p>
+        ) : null}
       </div>
       {canUpdate ? (
         <Card>

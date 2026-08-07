@@ -161,4 +161,89 @@
     opacity: 1 !important;
     transform: none !important;
   }
+
+  .mich-dl-shimmer,
+  .mich-dl-bar-active {
+    animation: none !important;
+  }
+}
+
+@keyframes mich-dl-shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+@keyframes mich-dl-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.15);
+  }
+}
+
+@keyframes mich-dl-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.mich-dl-card {
+  animation: mich-dl-card-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mich-dl-bar {
+  background: linear-gradient(
+    90deg,
+    var(--mich-blue),
+    var(--mich-indigo),
+    var(--mich-blue-bright)
+  );
+  background-size: 200% 100%;
+}
+
+.mich-dl-bar-active {
+  animation: mich-dl-glow 2.2s ease-in-out infinite;
+}
+
+.mich-dl-bar-done {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.mich-dl-bar-failed {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.mich-dl-shimmer {
+  pointer-events: none;
+  position: absolute;
+  inset-y: 0;
+  left: 0;
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.45),
+    transparent
+  );
+  animation: mich-dl-shimmer 1.4s ease-in-out infinite;
+}
+
+.dark .mich-dl-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
 }

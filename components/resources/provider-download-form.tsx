@@ -18,6 +18,7 @@ import type {
   ProviderHistoryItem,
 } from "@/app/(dashboard)/resources/provider-download-actions"
 import { ProviderHelpPanel } from "@/components/resources/provider-help-panel"
+import { DownloadProgressCard } from "@/components/resources/download-progress-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getOrCreateDeviceId } from "@/lib/billing/device-client"
@@ -121,13 +122,6 @@ export function ProviderDownloadForm({
   useEffect(() => {
     setDeviceId(getOrCreateDeviceId())
   }, [])
-
-  const statusCopy = {
-    QUEUED: "En cola… el worker tomará el trabajo en breve.",
-    RUNNING: `Descargando en ${def.shortLabel}…`,
-    DONE: "Listo. Ya puedes bajar el archivo.",
-    FAILED: "La descarga falló.",
-  } as const
 
   async function refreshHistory() {
     const next = await listHistory()
@@ -350,42 +344,22 @@ export function ProviderDownloadForm({
           ) : null}
 
           {job ? (
-            <div className="mx-auto mt-8 max-w-md rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-4 py-4 text-left text-sm">
-              <p className="font-medium text-[var(--mich-text)]">
-                {job.status === "FAILED" &&
-                job.error === "Cancelada por el usuario"
-                  ? "Descarga finalizada / cancelada."
-                  : statusCopy[job.status]}
-              </p>
-              {job.status === "QUEUED" || job.status === "RUNNING" ? (
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <p className="flex items-center gap-2 text-[var(--mich-muted)]">
-                    <Loader2 className="size-4 animate-spin" />
-                    Estado: {job.status}
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={cancellingId === job.id}
-                    onClick={() =>
+            <DownloadProgressCard
+              key={job.id}
+              status={job.status}
+              providerLabel={def.shortLabel}
+              fileName={job.fileName}
+              error={job.error}
+              cancelling={cancellingId === job.id}
+              onCancel={
+                job.status === "QUEUED" || job.status === "RUNNING"
+                  ? () =>
                       startTransition(async () => {
                         await handleCancel(job.id)
                       })
-                    }
-                  >
-                    {cancellingId === job.id ? (
-                      <Loader2 className="animate-spin" />
-                    ) : (
-                      <CircleStop />
-                    )}
-                    Finalizar descarga
-                  </Button>
-                </div>
-              ) : null}
-              {job.status === "FAILED" && job.error ? (
-                <p className="mt-2 text-destructive">{job.error}</p>
-              ) : null}
+                  : undefined
+              }
+            >
               {job.status === "FAILED" && job.logs ? (
                 <div className="mt-3 space-y-2">
                   <div className="flex flex-wrap gap-2">
@@ -420,13 +394,13 @@ export function ProviderDownloadForm({
               {job.status === "DONE" ? (
                 <a
                   href={`/api/downloads/${job.id}`}
-                  className="mt-3 inline-flex items-center gap-2 font-medium text-[var(--mich-blue-bright)] underline-offset-2 hover:underline"
+                  className="mt-4 inline-flex items-center gap-2 font-medium text-[var(--mich-blue-bright)] underline-offset-2 hover:underline"
                 >
                   <Download className="size-4" />
                   {job.fileName ?? "Descargar archivo"}
                 </a>
               ) : null}
-            </div>
+            </DownloadProgressCard>
           ) : null}
         </div>
       </section>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useMemo, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Loader2 } from "lucide-react"
 
@@ -10,12 +10,16 @@ import {
 } from "@/app/(auth)/register/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { COUNTRIES, getCountry } from "@/lib/geo/countries"
 
 export function RegisterForm() {
   const [state, formAction, pending] = useActionState(
     registerClient,
     {} as RegisterActionState
   )
+  const [country, setCountry] = useState("PE")
+
+  const dial = useMemo(() => getCountry(country)?.dial ?? "", [country])
 
   const fieldClass =
     "h-12 rounded-2xl border-[var(--mich-border)] bg-[var(--mich-surface)]/80 text-[var(--mich-text)] shadow-none transition-[border-color,box-shadow,background-color] duration-300 placeholder:text-[var(--mich-muted)]/50 focus-visible:border-[var(--mich-blue)]/55 focus-visible:bg-[var(--mich-surface)] focus-visible:ring-[var(--mich-blue)]/25 focus-visible:shadow-[0_0_0_4px_var(--mich-glow)]"
@@ -57,6 +61,60 @@ export function RegisterForm() {
           className={fieldClass}
         />
       </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label
+            htmlFor="country"
+            className="text-[13px] font-medium text-[var(--mich-text)]"
+          >
+            País
+          </label>
+          <select
+            id="country"
+            name="country"
+            required
+            disabled={pending}
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className={fieldClass + " w-full px-3"}
+          >
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+                {c.dial ? ` (+${c.dial})` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label
+            htmlFor="phone"
+            className="text-[13px] font-medium text-[var(--mich-text)]"
+          >
+            Celular / WhatsApp
+          </label>
+          <div className="relative">
+            {dial ? (
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-medium text-[var(--mich-muted)]">
+                +{dial}
+              </span>
+            ) : null}
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel-national"
+              required
+              disabled={pending}
+              placeholder={dial ? "917080235" : "Código + número"}
+              className={fieldClass + (dial ? " pl-14" : "")}
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <label

@@ -4,6 +4,7 @@ import { hash } from "bcryptjs"
 import { redirect } from "next/navigation"
 import { z } from "zod"
 
+import { buildE164Phone, COUNTRIES } from "@/lib/geo/countries"
 import { prisma } from "@/lib/prisma"
 
 export type RegisterActionState = {
@@ -15,6 +16,8 @@ const CLIENT_ENVATO_ROLE_ID =
   process.env.CLIENT_ENVATO_ROLE_ID ?? "cms22f2n50002i9wgsp8bae7d"
 const CLIENT_ENVATO_ROLE_NAME = "Clientes Envato"
 
+const countryCodes = COUNTRIES.map((c) => c.code) as [string, ...string[]]
+
 const registerSchema = z
   .object({
     name: z
@@ -23,6 +26,12 @@ const registerSchema = z
       .min(2, "El nombre debe tener al menos 2 caracteres")
       .max(80),
     email: z.string().trim().toLowerCase().email("Correo inválido"),
+    country: z.enum(countryCodes, { message: "Elige tu país" }),
+    phone: z
+      .string()
+      .trim()
+      .min(7, "Ingresa un número de celular válido")
+      .max(20),
     password: z
       .string()
       .min(8, "La contraseña debe tener al menos 8 caracteres")
@@ -32,6 +41,16 @@ const registerSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: "Las contraseñas no coinciden",
     path: ["confirmPassword"],
+  })
+  .superRefine((data, ctx) => {
+    const e164 = buildE164Phone(data.country, data.phone)
+    if (!e164) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Número de celular inválido para ese país",
+        path: ["phone"],
+      })
+    }
   })
 
 async function resolveClientEnvatoRoleId() {
@@ -55,12 +74,19 @@ export async function registerClient(
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
+    country: formData.get("country"),
+    phone: formData.get("phone"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
   })
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" }
+  }
+
+  const phoneE164 = buildE164Phone(parsed.data.country, parsed.data.phone)
+  if (!phoneE164) {
+    return { error: "Número de celular inválido" }
   }
 
   const roleId = await resolveClientEnvatoRoleId()
@@ -86,6 +112,8 @@ export async function registerClient(
       data: {
         name: parsed.data.name,
         email: parsed.data.email,
+        country: parsed.data.country,
+        phone: phoneE164,
         passwordHash,
         status: "ACTIVE",
         mustChangePassword: false,
@@ -106,6 +134,8 @@ export async function registerClient(
         entityId: user.id,
         metadata: {
           email: parsed.data.email,
+          country: parsed.data.country,
+          phone: phoneE164,
           roleId,
           roleName: CLIENT_ENVATO_ROLE_NAME,
         },
