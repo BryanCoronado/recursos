@@ -5,9 +5,9 @@
 export const SITE = {
   name: "MICHITECH",
   legalName: "MICHITECH Recursos",
-  tagline: "Descarga Envato y Magnific desde un solo panel",
+  tagline: "Descarga Envato Elements y Magnific desde un solo panel",
   description:
-    "Descarga recursos de Envato Elements y Magnific desde un solo panel en michitech.digital. Historial, progreso en vivo, membresías y prueba gratis. Sin subdominios.",
+    "Descarga Envato Elements y Magnific online en Perú con MICHITECH. Paneles separados, tutorial, historial y progreso en vivo. Prueba 2 descargas gratis. Membresías desde S/ 20 o $6 USD al mes.",
   /** Dominio canónico público (SEO / OG). No uses NEXTAUTH_URL: no está en el cliente. */
   url: (
     process.env.NEXT_PUBLIC_SITE_URL || "https://michitech.digital"

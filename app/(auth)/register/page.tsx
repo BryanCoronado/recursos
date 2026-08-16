@@ -7,10 +7,17 @@ import { RegisterForm } from "@/components/auth/register-form"
 import { authOptions } from "@/lib/auth/config"
 
 export const metadata: Metadata = {
-  title: "Crear cuenta",
+  title: "Crear cuenta gratis | Descargar Envato Elements y Magnific",
   description:
-    "Regístrate en MICHITECH y empieza a descargar recursos de Envato y Magnific.",
+    "Regístrate en MICHITECH y descarga Envato Elements o Magnific. 2 descargas gratis. Membresías desde S/ 20 o $6 USD al mes en Perú.",
+  alternates: { canonical: "/register" },
   robots: { index: true, follow: true },
+  openGraph: {
+    title: "Crear cuenta MICHITECH",
+    description:
+      "Empieza gratis: Envato Elements y Magnific con tutorial, historial y progreso en vivo.",
+    url: "/register",
+  },
 }
 
 export default async function RegisterPage() {

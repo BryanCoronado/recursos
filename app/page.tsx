@@ -27,12 +27,16 @@ import { getCurrentUser } from "@/lib/auth/authorization"
 import { resolveHomePath } from "@/lib/auth/home-path"
 import {
   EXTRA_DEVICE_MONTHLY_SOLES,
+  EXTRA_DEVICE_MONTHLY_USD,
   FREE_DOWNLOAD_LIMIT,
   MONTHLY_PRICE_SOLES,
+  MONTHLY_PRICE_USD,
   SUBSCRIPTION_PLANS,
   planPerMonthSoles,
+  planPerMonthUsd,
   planSavingsSoles,
   planTotalSoles,
+  planTotalUsd,
   type SubscriptionPlanKey,
 } from "@/lib/billing/plans"
 import { PROVIDERS } from "@/lib/providers/catalog"
@@ -40,9 +44,9 @@ import { SITE, absoluteUrl } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
 const TITLE =
-  "MICHITECH | Descargar Envato Elements y Magnific online en Perú"
+  "Descargar Envato Elements y Magnific en Perú | MICHITECH desde S/ 20 o $6 USD"
 const DESCRIPTION =
-  "Panel MICHITECH en michitech.digital: descarga Envato Elements o Magnific por separado, con tutorial, historial y progreso en vivo. Prueba gratis y membresías desde Perú."
+  "Descarga Envato Elements y Magnific online con MICHITECH. Paneles separados, tutorial, historial y progreso en vivo. 2 descargas gratis. Membresía desde S/ 20 o $6 USD al mes. Activación por WhatsApp en Perú y Latinoamérica."
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
@@ -50,16 +54,24 @@ export const metadata: Metadata = {
   keywords: [
     "MICHITECH",
     "descargar Envato Elements",
+    "descargar Envato Elements Perú",
+    "Envato Elements barato",
+    "membresía Envato Elements",
+    "alternativa Envato Elements",
     "tutorial Envato Elements",
-    "Envato Elements Perú",
-    "membresía Envato",
     "descargar Magnific",
+    "Magnific AI Perú",
     "tutorial Magnific",
-    "Magnific AI",
     "recursos digitales Perú",
     "plantillas Envato",
+    "stock Envato",
+    "gráficos Envato",
+    "música Envato Elements",
     "panel Envato online",
     "panel Magnific",
+    "descargas ilimitadas Envato",
+    "precio Envato Elements dólares",
+    "Envato Elements USD",
     "michitech.digital",
   ],
   alternates: {
@@ -76,20 +88,11 @@ export const metadata: Metadata = {
     siteName: SITE.name,
     title: TITLE,
     description: DESCRIPTION,
-    images: [
-      {
-        url: absoluteUrl("/logo-sinfondo-michitech.png"),
-        width: 512,
-        height: 512,
-        alt: "Logo MICHITECH — panel Envato Elements y Magnific",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
-    images: [absoluteUrl("/logo-sinfondo-michitech.png")],
   },
   robots: {
     index: true,
@@ -103,6 +106,10 @@ export const metadata: Metadata = {
     },
   },
   category: "technology",
+  other: {
+    "geo.region": "PE",
+    "geo.placename": "Perú",
+  },
 }
 
 const FAQ = [
@@ -111,7 +118,7 @@ const FAQ = [
     a: "No. Son proveedores distintos con roles separados (Clientes Envato y Clientes Magnific). Puedes tener uno o ambos; cada uno tiene su panel y cupo gratis independiente.",
   },
   {
-    q: "¿Cómo descargo Envato Elements?",
+    q: "¿Cómo descargo Envato Elements con MICHITECH?",
     a: "Entra al panel Envato, copia la URL del recurso en elements.envato.com, pégala y pulsa Descargar. Cuando termine, baja el archivo desde el historial.",
   },
   {
@@ -120,15 +127,23 @@ const FAQ = [
   },
   {
     q: "¿Hay plan gratis para probar?",
-    a: `Sí. Incluye ${FREE_DOWNLOAD_LIMIT} descargas gratis para probar el flujo completo antes de activar una membresía.`,
+    a: `Sí. Incluye ${FREE_DOWNLOAD_LIMIT} descargas gratis por proveedor para probar el flujo completo antes de activar una membresía.`,
   },
   {
-    q: "¿Cuánto cuesta la membresía?",
-    a: `Desde S/ ${MONTHLY_PRICE_SOLES}/mes. También hay packs de 3 meses y 1 año. La activación es por WhatsApp.`,
+    q: "¿Cuánto cuesta la membresía en soles y dólares?",
+    a: `Desde S/ ${MONTHLY_PRICE_SOLES} o $${MONTHLY_PRICE_USD} USD al mes. Pack 3 meses: S/ 54 / $15 USD. Pack 1 año: S/ 180 / $49 USD. La activación es por WhatsApp.`,
+  },
+  {
+    q: "¿Puedo pagar en dólares?",
+    a: `Sí. Publicamos el equivalente en USD (1 mes $${MONTHLY_PRICE_USD}, 3 meses $15, 1 año $49). Coordina el pago por WhatsApp en soles o dólares.`,
   },
   {
     q: "¿Cuántos dispositivos puedo usar?",
-    a: `Cada plan incluye 1 dispositivo. Puedes ampliar con extras (+S/ ${EXTRA_DEVICE_MONTHLY_SOLES}/mes) por WhatsApp.`,
+    a: `Cada plan incluye 1 dispositivo. Extra: +S/ ${EXTRA_DEVICE_MONTHLY_SOLES} o +$${EXTRA_DEVICE_MONTHLY_USD} USD al mes, por WhatsApp.`,
+  },
+  {
+    q: "¿MICHITECH funciona en Perú y Latinoamérica?",
+    a: "Sí. El panel es web: funciona en Perú, México, Colombia y el resto de Latinoamérica. El soporte principal es por WhatsApp.",
   },
 ] as const
 
@@ -258,8 +273,13 @@ export default async function LandingPage() {
         url: SITE.url,
         logo: {
           "@type": "ImageObject",
-          url: absoluteUrl("/logo-sinfondo-michitech.png"),
+          url: absoluteUrl("/icon-512.png"),
+          width: 512,
+          height: 512,
         },
+        image: absoluteUrl("/icon-512.png"),
+        sameAs: [`https://wa.me/${SITE.whatsapp.phone}`],
+        areaServed: ["PE", "MX", "CO", "AR", "CL", "EC"],
         contactPoint: [
           {
             "@type": "ContactPoint",
@@ -293,6 +313,10 @@ export default async function LandingPage() {
         isPartOf: { "@id": `${SITE.url}/#website` },
         about: { "@id": `${SITE.url}/#organization` },
         inLanguage: "es-PE",
+        primaryImageOfPage: {
+          "@type": "ImageObject",
+          url: absoluteUrl("/icon-512.png"),
+        },
       },
       {
         "@type": "SoftwareApplication",
@@ -301,20 +325,45 @@ export default async function LandingPage() {
         applicationSubCategory: "Resource download panel",
         operatingSystem: "Web",
         url: SITE.url,
-        offers: {
-          "@type": "AggregateOffer",
-          lowPrice: String(MONTHLY_PRICE_SOLES),
-          priceCurrency: "PEN",
-          offerCount: PLAN_KEYS.length,
-          description: `${FREE_DOWNLOAD_LIMIT} descargas gratis · desde S/ ${MONTHLY_PRICE_SOLES}/mes`,
-        },
-        featureList: [
-          "Panel Envato Elements",
-          "Panel Magnific",
-          "Tutoriales por proveedor",
-          "Historial y progreso",
-          "Control de dispositivos",
+        image: absoluteUrl("/icon-512.png"),
+        offers: [
+          {
+            "@type": "AggregateOffer",
+            lowPrice: String(MONTHLY_PRICE_SOLES),
+            highPrice: String(planTotalSoles("YEARLY")),
+            priceCurrency: "PEN",
+            offerCount: PLAN_KEYS.length,
+          },
+          {
+            "@type": "AggregateOffer",
+            lowPrice: String(MONTHLY_PRICE_USD),
+            highPrice: String(planTotalUsd("YEARLY")),
+            priceCurrency: "USD",
+            offerCount: PLAN_KEYS.length,
+          },
         ],
+        featureList: [
+          "Descargar Envato Elements online",
+          "Descargar Magnific online",
+          "Tutoriales por proveedor",
+          "Historial y progreso en vivo",
+          "Control de dispositivos",
+          "Precios en soles y dólares",
+        ],
+      },
+      {
+        "@type": "OfferCatalog",
+        name: "Planes MICHITECH",
+        itemListElement: PLAN_KEYS.map((key, i) => ({
+          "@type": "Offer",
+          position: i + 1,
+          name: `Membresía ${SUBSCRIPTION_PLANS[key].label}`,
+          price: String(planTotalUsd(key)),
+          priceCurrency: "USD",
+          description: `S/ ${planTotalSoles(key)} o $${planTotalUsd(key)} USD · ${SUBSCRIPTION_PLANS[key].months} mes(es)`,
+          availability: "https://schema.org/InStock",
+          url: absoluteUrl("/#planes"),
+        })),
       },
       ...guides.map((g) => ({
         "@type": "HowTo",
@@ -391,6 +440,7 @@ export default async function LandingPage() {
         appHref={appHref}
         freeLimit={FREE_DOWNLOAD_LIMIT}
         monthlyPrice={MONTHLY_PRICE_SOLES}
+        monthlyPriceUsd={MONTHLY_PRICE_USD}
         siteHost={SITE.host}
         providers={guides.map((p) => ({
           id: p.id,
@@ -428,6 +478,7 @@ export default async function LandingPage() {
             {
               value: MONTHLY_PRICE_SOLES,
               prefix: "S/ ",
+              extra: ` / $${MONTHLY_PRICE_USD} USD`,
               label: "desde / mes por membresía",
               delay: 80,
             },
@@ -444,6 +495,11 @@ export default async function LandingPage() {
                     to={stat.value}
                     prefix={"prefix" in stat ? stat.prefix : ""}
                   />
+                  {"extra" in stat ? (
+                    <span className="ml-1 text-2xl text-[var(--mich-muted)] sm:text-3xl">
+                      {stat.extra}
+                    </span>
+                  ) : null}
                 </p>
                 <p className="mt-2 text-sm text-[var(--mich-muted)]">{stat.label}</p>
               </div>
@@ -513,6 +569,39 @@ export default async function LandingPage() {
               Ver tutorial Magnific
             </a>
           </div>
+
+          <LandingReveal delay={80}>
+            <div className="mich-soft-card mt-12 p-5 sm:p-7">
+              <h2 className="font-heading text-xl font-semibold tracking-[-0.03em] sm:text-2xl">
+                Descargar Envato Elements y Magnific online en Perú
+              </h2>
+              <p className="mt-3 text-[15px] leading-7 text-[var(--mich-muted)]">
+                MICHITECH es el panel web en{" "}
+                <strong className="font-medium text-[var(--mich-text)]">
+                  michitech.digital
+                </strong>{" "}
+                para descargar recursos de Envato Elements (plantillas, gráficos,
+                música, vídeo) y Magnific, cada uno en su propio módulo. No
+                mezclamos historiales: el rol{" "}
+                <strong className="font-medium text-[var(--mich-text)]">
+                  Clientes Envato
+                </strong>{" "}
+                solo ve Envato y el rol{" "}
+                <strong className="font-medium text-[var(--mich-text)]">
+                  Clientes Magnific
+                </strong>{" "}
+                solo ve Magnific. Si necesitas ambos, se asignan los dos roles.
+              </p>
+              <p className="mt-3 text-[15px] leading-7 text-[var(--mich-muted)]">
+                Empiezas con {FREE_DOWNLOAD_LIMIT} descargas gratis por
+                proveedor. La membresía ilimitada cuesta desde S/{" "}
+                {MONTHLY_PRICE_SOLES} o ${MONTHLY_PRICE_USD} USD al mes, con
+                packs de 3 meses (S/ 54 / $15 USD) y 1 año (S/ 180 / $49 USD).
+                Pagas en soles o dólares por WhatsApp y activamos el plan el
+                mismo día.
+              </p>
+            </div>
+          </LandingReveal>
         </div>
       </section>
 
@@ -584,9 +673,9 @@ export default async function LandingPage() {
               Empieza gratis. Escala cuando quieras.
             </h2>
             <p className="mt-3 max-w-xl text-[15px] leading-7 text-[var(--mich-muted)]">
-              Base S/ {MONTHLY_PRICE_SOLES}/mes · 1 dispositivo incluido · +S/{" "}
-              {EXTRA_DEVICE_MONTHLY_SOLES}/mes por extra. Activación por
-              WhatsApp.
+              Base S/ {MONTHLY_PRICE_SOLES} o ${MONTHLY_PRICE_USD} USD / mes · 1
+              dispositivo incluido · extra +S/ {EXTRA_DEVICE_MONTHLY_SOLES} / $
+              {EXTRA_DEVICE_MONTHLY_USD} USD. Activación por WhatsApp.
             </p>
           </LandingReveal>
 
@@ -619,8 +708,11 @@ export default async function LandingPage() {
                     <p className="mt-4 font-heading text-4xl font-semibold tracking-[-0.04em]">
                       S/ {total}
                     </p>
+                    <p className="mt-1 font-heading text-xl font-semibold text-[var(--mich-blue-bright)]">
+                      ${planTotalUsd(key)} USD
+                    </p>
                     <p className="mt-1 text-sm text-[var(--mich-muted)]">
-                      ≈ S/ {perMonth}/mes
+                      ≈ S/ {perMonth}/mes · ${planPerMonthUsd(key)} USD/mes
                       {save > 0 ? ` · ahorras S/ ${save}` : ""}
                     </p>
                     <ul className="mt-6 space-y-2 text-sm text-[var(--mich-muted)]">
@@ -794,8 +886,10 @@ export default async function LandingPage() {
           </nav>
         </div>
         <p className="mx-auto mt-8 max-w-6xl px-4 text-xs text-[var(--mich-muted)] sm:px-6">
-          © {new Date().getFullYear()} {SITE.legalName}. Paneles separados para
-          Envato Elements y Magnific en Perú. Todos los derechos reservados.
+          © {new Date().getFullYear()} {SITE.legalName}. Descargar Envato
+          Elements y Magnific online en Perú. Precios desde S/{" "}
+          {MONTHLY_PRICE_SOLES} o ${MONTHLY_PRICE_USD} USD / mes. Todos los
+          derechos reservados.
         </p>
       </footer>
     </div>

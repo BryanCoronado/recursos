@@ -9,6 +9,8 @@ import {
 } from "@/lib/providers/catalog"
 
 export const MONTHLY_PRICE_SOLES = 20
+/** Precio público en USD (equivalente redondeado de S/ 20). */
+export const MONTHLY_PRICE_USD = 6
 export const FREE_DOWNLOAD_LIMIT = 2
 /**
  * Tope suave por IP en plan gratis (misma red / móvil).
@@ -17,6 +19,7 @@ export const FREE_DOWNLOAD_LIMIT = 2
 export const FREE_DOWNLOAD_PER_IP_LIMIT = 4
 /** Precio mensual por cada dispositivo adicional (el 1.º va incluido). */
 export const EXTRA_DEVICE_MONTHLY_SOLES = 10
+export const EXTRA_DEVICE_MONTHLY_USD = 3
 export const MIN_DEVICES = 1
 export const MAX_DEVICES = 10
 
@@ -31,6 +34,7 @@ export const SUBSCRIPTION_PLANS = {
     label: "1 mes",
     tagline: "Flexible",
     totalSoles: 20,
+    totalUsd: 6,
     highlight: false,
   },
   QUARTERLY: {
@@ -38,6 +42,7 @@ export const SUBSCRIPTION_PLANS = {
     label: "3 meses",
     tagline: "Más elegido",
     totalSoles: 54,
+    totalUsd: 15,
     highlight: true,
   },
   YEARLY: {
@@ -45,6 +50,7 @@ export const SUBSCRIPTION_PLANS = {
     label: "1 año",
     tagline: "Mejor precio",
     totalSoles: 180,
+    totalUsd: 49,
     highlight: false,
   },
 } as const
@@ -61,6 +67,31 @@ export function planListSoles(plan: SubscriptionPlanKey) {
 
 export function planTotalSoles(plan: SubscriptionPlanKey) {
   return SUBSCRIPTION_PLANS[plan].totalSoles
+}
+
+export function planTotalUsd(plan: SubscriptionPlanKey) {
+  return SUBSCRIPTION_PLANS[plan].totalUsd
+}
+
+export function planPerMonthUsd(plan: SubscriptionPlanKey) {
+  const p = SUBSCRIPTION_PLANS[plan]
+  return Math.round((p.totalUsd / p.months) * 10) / 10
+}
+
+export function extraDevicesUsd(maxDevices: number, months: number) {
+  const extras = Math.max(0, clampDevices(maxDevices) - 1)
+  return extras * EXTRA_DEVICE_MONTHLY_USD * months
+}
+
+export function membershipTotalUsd(
+  plan: SubscriptionPlanKey,
+  maxDevices: number = 1
+) {
+  return planTotalUsd(plan) + extraDevicesUsd(maxDevices, SUBSCRIPTION_PLANS[plan].months)
+}
+
+export function formatPenUsd(soles: number, usd: number) {
+  return `S/ ${soles} · $${usd} USD`
 }
 
 /** Extra por dispositivos adicionales (sin descuento de pack). */

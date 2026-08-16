@@ -21,13 +21,17 @@ import { countDevicesForProvider } from "@/lib/billing/devices"
 import { freeDownloadContextFromRequest } from "@/lib/billing/free-download-context"
 import {
   EXTRA_DEVICE_MONTHLY_SOLES,
+  EXTRA_DEVICE_MONTHLY_USD,
   MONTHLY_PRICE_SOLES,
+  MONTHLY_PRICE_USD,
   SUBSCRIPTION_PLANS,
   WHATSAPP,
   planListSoles,
   planPerMonthSoles,
+  planPerMonthUsd,
   planSavingsSoles,
   planTotalSoles,
+  planTotalUsd,
   whatsappRechargeUrl,
   whatsappSupportUrl,
   type SubscriptionPlanKey,
@@ -151,8 +155,9 @@ export default async function RechargePage() {
                   Planes {provider.shortLabel}
                 </h2>
                 <p className="mt-1 text-sm text-[var(--mich-muted)]">
-                  Base S/ {MONTHLY_PRICE_SOLES}/mes · 1 dispositivo incluido ·
-                  +S/ {EXTRA_DEVICE_MONTHLY_SOLES}/mes extra
+                  Base S/ {MONTHLY_PRICE_SOLES} / ${MONTHLY_PRICE_USD} USD · mes
+                  · 1 dispositivo incluido · +S/ {EXTRA_DEVICE_MONTHLY_SOLES} / $
+                  {EXTRA_DEVICE_MONTHLY_USD} USD extra
                 </p>
               </div>
             </div>
@@ -212,8 +217,11 @@ export default async function RechargePage() {
                       </span>
                     ) : null}
                   </div>
+                  <p className="mt-1 font-heading text-lg font-semibold text-[var(--mich-blue-bright)]">
+                    ${planTotalUsd(key)} USD
+                  </p>
                   <p className="mt-1 text-sm text-[var(--mich-muted)]">
-                    ≈ S/ {perMonth}/mes
+                    ≈ S/ {perMonth}/mes · ${planPerMonthUsd(key)} USD/mes
                     {save > 0 ? ` · ahorras S/ ${save}` : ""}
                   </p>
 
@@ -228,7 +236,8 @@ export default async function RechargePage() {
                     </li>
                     <li className="flex items-center gap-2">
                       <Zap className="size-4 text-[var(--mich-blue)]" />
-                      +S/ {EXTRA_DEVICE_MONTHLY_SOLES}/mes por dispositivo extra
+                      +S/ {EXTRA_DEVICE_MONTHLY_SOLES} / $
+                      {EXTRA_DEVICE_MONTHLY_USD} USD por dispositivo extra
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="size-4 text-[var(--mich-blue)]" />

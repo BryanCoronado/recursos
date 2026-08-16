@@ -8,7 +8,10 @@ import { authOptions } from "@/lib/auth/config"
 
 export const metadata: Metadata = {
   title: "Iniciar sesión",
-  robots: { index: false, follow: false },
+  description:
+    "Entra a tu panel MICHITECH para descargar Envato Elements o Magnific.",
+  alternates: { canonical: "/login" },
+  robots: { index: true, follow: true },
 }
 
 type LoginPageProps = {

@@ -21,6 +21,7 @@ export function LandingHero({
   appHref,
   freeLimit,
   monthlyPrice,
+  monthlyPriceUsd,
   providers,
   siteHost,
 }: {
@@ -28,6 +29,7 @@ export function LandingHero({
   appHref: string
   freeLimit: number
   monthlyPrice: number
+  monthlyPriceUsd: number
   providers: ProviderChip[]
   siteHost: string
 }) {
@@ -153,7 +155,7 @@ export function LandingHero({
             </li>
             <li className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="size-3.5 text-[var(--mich-success)]" />
-              desde S/ {monthlyPrice}/mes
+              desde S/ {monthlyPrice} / ${monthlyPriceUsd} USD al mes
             </li>
             <li className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="size-3.5 text-[var(--mich-success)]" />
