@@ -33,36 +33,20 @@ export default async function SyncPage() {
     <div className="space-y-8">
       <SyncAutoRefresh active={anySyncing} />
 
-      <div className="mich-page-card relative px-6 py-7 sm:px-8">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-0 opacity-40"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(79,143,232,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(79,143,232,0.07) 1px, transparent 1px)",
-            backgroundSize: "36px 36px",
-            maskImage:
-              "radial-gradient(ellipse at 20% 0%, black 10%, transparent 65%)",
-          }}
-        />
-        <div className="relative z-10">
-          <p className="mb-2 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
-            Admin
-          </p>
-          <h1 className="font-heading text-3xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-4xl">
-            Sincronización
-          </h1>
-          <p className="mt-3 max-w-2xl text-[15px] leading-6 text-[var(--mich-muted)]">
-            Inicia sesión por proveedor. El escritorio del worker aparece abajo
-            en un iframe (maximiza si necesitas más espacio).
-          </p>
-          <p className="mich-chip mt-4">
-            <span className="size-1.5 rounded-full bg-[var(--mich-blue)]" />
-            {readyCount}/{providerList().length} proveedores listos
-            {anySyncing ? " · sincronizando…" : null}
-          </p>
-        </div>
-      </div>
+      <section>
+        <h1 className="font-heading text-2xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-3xl">
+          Sincronización
+        </h1>
+        <p className="mt-1.5 max-w-xl text-sm leading-6 text-[var(--mich-muted)]">
+          Inicia sesión por proveedor. El escritorio del worker aparece abajo
+          en un iframe (maximiza si necesitas más espacio).
+        </p>
+        <p className="mich-chip mt-4">
+          <span className="size-1.5 rounded-full bg-[var(--mich-blue)]" />
+          {readyCount}/{providerList().length} proveedores listos
+          {anySyncing ? " · sincronizando…" : null}
+        </p>
+      </section>
 
       <NovncPanel
         viewerUrl={novncUrl}

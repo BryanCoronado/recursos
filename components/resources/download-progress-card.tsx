@@ -109,10 +109,10 @@ export function DownloadProgressCard({
                 }
 
   return (
-    <div className="mich-dl-card mich-soft-card mt-0 w-full overflow-hidden px-4 py-5 text-left shadow-[0_16px_40px_-28px_var(--mich-glow)]">
+    <div className="mich-dl-card rounded-xl border border-[var(--mich-border)] px-4 py-4 text-left">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-heading text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--mich-blue-bright)]">
+          <p className="text-sm font-medium text-[var(--mich-text)]">
             {meta.label}
           </p>
           <p className="mt-1.5 text-[15px] font-medium text-[var(--mich-text)]">

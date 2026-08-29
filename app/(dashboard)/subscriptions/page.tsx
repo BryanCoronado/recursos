@@ -61,22 +61,18 @@ export default async function SubscriptionsPage() {
   ])
 
   return (
-    <div className="space-y-8">
-      <div className="mich-page-card relative px-6 py-7 sm:px-8">
-        <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="mb-2 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
-              Admin
-            </p>
-            <h1 className="font-heading text-3xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-4xl">
-              Membresías
-            </h1>
-            <p className="mt-3 max-w-2xl text-[15px] leading-6 text-[var(--mich-muted)]">
-              Activa planes de Envato o Magnific. 1 dispositivo incluido; +S/{" "}
-              {EXTRA_DEVICE_MONTHLY_SOLES}/mes por cada extra. Sin membresía:{" "}
-              {FREE_DOWNLOAD_LIMIT} descargas gratis.
-            </p>
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-3xl">
+            Membresías
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--mich-muted)]">
+            Activa planes de Envato o Magnific. 1 dispositivo incluido; +S/{" "}
+            {EXTRA_DEVICE_MONTHLY_SOLES}/mes por cada extra. Sin membresía:{" "}
+            {FREE_DOWNLOAD_LIMIT} descargas gratis.
+          </p>
+        </div>
           <div className="flex items-center gap-2">
             {providerList().map((p) => (
               <span
@@ -95,7 +91,6 @@ export default async function SubscriptionsPage() {
             ))}
           </div>
         </div>
-      </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         {(Object.keys(SUBSCRIPTION_PLANS) as Array<keyof typeof SUBSCRIPTION_PLANS>).map(
@@ -106,11 +101,10 @@ export default async function SubscriptionsPage() {
                 key={key}
                 className={cn(
                   "mich-soft-card px-4 py-4",
-                  plan.highlight &&
-                    "border-[var(--mich-blue)]/45 shadow-[0_12px_30px_-20px_var(--mich-glow)]"
+                  plan.highlight && "border-[var(--mich-blue)]/40"
                 )}
               >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--mich-blue-bright)]">
+                <p className="text-[12px] text-[var(--mich-muted)]">
                   {plan.tagline}
                 </p>
                 <p className="mt-1 font-heading text-xl font-semibold text-[var(--mich-text)]">
@@ -129,23 +123,21 @@ export default async function SubscriptionsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="mich-page-card relative p-6">
-          <div className="relative z-10 mb-5 flex items-center gap-2">
+        <section className="mich-soft-card p-5 sm:p-6">
+          <div className="mb-5 flex items-center gap-2">
             <CreditCard className="size-5 text-[var(--mich-blue)]" />
             <h2 className="font-heading text-lg font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
               Activar membresía
             </h2>
           </div>
-          <div className="relative z-10">
-            <ActivateMembershipForm users={users} />
-          </div>
+          <ActivateMembershipForm users={users} />
         </section>
 
-        <section className="mich-page-card relative p-6">
-          <h2 className="relative z-10 font-heading mb-4 text-lg font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
+        <section className="mich-soft-card p-5 sm:p-6">
+          <h2 className="font-heading mb-4 text-lg font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
             Historial reciente
           </h2>
-          <ul className="relative z-10 divide-y divide-[var(--mich-border)]">
+          <ul className="divide-y divide-[var(--mich-border)]">
             {memberships.length === 0 ? (
               <li className="py-8 text-center text-sm text-[var(--mich-muted)]">
                 Aún no hay membresías.
@@ -186,7 +178,7 @@ export default async function SubscriptionsPage() {
                               className={cn(
                                 "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase",
                                 active
-                                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                                  ? "border-[color-mix(in_srgb,var(--mich-success)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_12%,transparent)] text-[var(--mich-success)]"
                                   : "border-[var(--mich-border)]"
                               )}
                             >

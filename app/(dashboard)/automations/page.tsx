@@ -30,20 +30,17 @@ export default async function AutomationsPage({
   })
 
   return (
-    <div className="space-y-8">
-      <div className="mich-page-card relative flex flex-wrap items-start justify-between gap-4 px-6 py-7 sm:px-8">
-        <div className="relative z-10">
-          <p className="mb-2 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
-            Flujos
-          </p>
-          <h1 className="font-heading text-3xl font-semibold tracking-[-0.04em] text-[var(--mich-text)]">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-3xl">
             Automatizaciones
           </h1>
-          <p className="mt-2 max-w-xl text-[15px] text-[var(--mich-muted)]">
+          <p className="mt-1.5 max-w-xl text-sm text-[var(--mich-muted)]">
             Flujos por proveedor. Graba clics o edita reglas JSON.
           </p>
         </div>
-        <div className="relative z-10 flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href={
               providerFilter
@@ -86,15 +83,15 @@ export default async function AutomationsPage({
       <div className="grid gap-4 md:grid-cols-2">
         {rules.map((rule) => (
           <Link key={rule.id} href={`/automations/${rule.id}`}>
-            <Card className="h-full border-[var(--mich-border)] bg-[var(--mich-surface)] shadow-[0_14px_36px_-30px_rgba(11,18,32,0.35)] transition-all hover:-translate-y-0.5 hover:border-[var(--mich-blue)]/40">
+            <Card className="h-full border-[var(--mich-border)] bg-[var(--mich-surface)] shadow-none transition-colors hover:border-[var(--mich-blue)]/35">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between gap-2">
                   <span>{rule.name}</span>
                   <span
                     className={cn(
-                      "rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                      "rounded-full border px-2.5 py-0.5 text-[11px] font-medium",
                       rule.isActive
-                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                        ? "border-[color-mix(in_srgb,var(--mich-success)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_12%,transparent)] text-[var(--mich-success)]"
                         : "border-[var(--mich-border)] text-[var(--mich-muted)]"
                     )}
                   >

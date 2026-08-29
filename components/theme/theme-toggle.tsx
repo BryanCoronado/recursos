@@ -40,7 +40,7 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
       aria-label={`Tema: ${label}. Cambiar tema`}
       title={`Tema: ${label}`}
       className={cn(
-        "rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)]/80 text-[var(--mich-muted)] hover:bg-[var(--mich-blue)]/10 hover:text-[var(--mich-blue-bright)]",
+        "rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)]/80 text-[var(--mich-muted)] hover:bg-[var(--mich-blue)]/10 hover:text-[var(--mich-blue)]",
         !compact && "size-9"
       )}
     >

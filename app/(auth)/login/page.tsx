@@ -37,12 +37,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <AuthShell
       headline="Tu panel de recursos, listo."
-      subline="Descargas Envato y herramientas MICHITECH en un solo lugar."
+      subline="Descargas Envato y Magnific con progreso en vivo, cada uno en su módulo."
       formTitle="Iniciar sesión"
       formSubtitle="Entra con tu correo y contraseña."
     >
       {justRegistered ? (
-        <p className="mich-auth-rise mb-5 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-3 text-[13px] leading-5 text-emerald-800 dark:text-emerald-200">
+        <p className="mich-auth-rise mb-5 rounded-2xl border border-[color-mix(in_srgb,var(--mich-success)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_12%,transparent)] px-3.5 py-3 text-[13px] leading-5 text-[var(--mich-success)]">
           Cuenta creada correctamente. Ya puedes entrar.
         </p>
       ) : null}

@@ -108,14 +108,9 @@ export function ProviderHelpPanel({
             expanded && "sm:max-w-3xl"
           )}
         >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-52 bg-[radial-gradient(ellipse_at_top_right,rgba(93,156,236,0.28),transparent_62%)]"
-          />
-
           <header className="relative flex items-center justify-between gap-3 border-b border-white/[0.07] px-5 pb-4 pt-5 sm:px-6">
             <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/40">
+              <p className="text-[12px] font-medium text-white/40">
                 Tutorial
               </p>
               <h2
@@ -155,7 +150,7 @@ export function ProviderHelpPanel({
           <div className="relative flex-1 overflow-y-auto px-5 pb-8 pt-5 sm:px-6">
             {videoId ? (
               <>
-                <div className="overflow-hidden rounded-2xl bg-black shadow-[0_20px_40px_-24px_rgba(0,0,0,0.8)] ring-1 ring-white/[0.1]">
+                <div className="overflow-hidden rounded-xl bg-black ring-1 ring-white/[0.08]">
                   <div className="relative aspect-video">
                     {open ? (
                       <iframe
@@ -201,7 +196,7 @@ export function ProviderHelpPanel({
             </ol>
 
             <div className="mt-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3.5 text-left">
-              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/35">
+              <p className="text-[12px] font-medium text-white/40">
                 Importante
               </p>
               <p className="mt-1.5 text-[13px] leading-6 text-white/60">
@@ -215,7 +210,7 @@ export function ProviderHelpPanel({
               href={browseUrl}
               target="_blank"
               rel="noreferrer"
-              className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--mich-blue)] text-[14px] font-semibold tracking-[-0.02em] text-white transition hover:brightness-110"
+              className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--mich-blue)] text-[14px] font-medium text-white transition hover:brightness-110"
             >
               {browseLabel}
               <ArrowUpRight className="size-4 opacity-90" />

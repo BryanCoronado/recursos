@@ -96,7 +96,7 @@ function QuotaChipLink({ chip }: { chip: ShellQuotaChip }) {
           : `${chip.label}: ${chip.remaining ?? 0} gratis`
       }
       className={cn(
-        "mich-shell-quota inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition hover:-translate-y-0.5",
+        "mich-shell-quota inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium",
         chip.unlimited
           ? "border-[color-mix(in_srgb,var(--mich-success)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_12%,transparent)] text-[var(--mich-success)]"
           : (chip.remaining ?? 0) <= 0
@@ -169,20 +169,15 @@ export function AppShell({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[var(--mich-border)] bg-[var(--mich-surface)]/92 shadow-[0_10px_40px_-24px_rgba(11,18,32,0.35)] backdrop-blur-2xl transition-all duration-300 ease-out",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[var(--mich-border)] bg-[var(--mich-surface)] transition-all duration-300 ease-out",
           "w-[272px] md:translate-x-0",
           collapsed ? "md:w-[88px]" : "md:w-[272px]",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
         <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(ellipse_at_top,rgba(79,143,232,0.14),transparent_70%)]"
-        />
-
-        <div
           className={cn(
-            "relative flex h-[4.5rem] items-center border-b border-[var(--mich-border)] px-3",
+            "relative flex h-16 items-center border-b border-[var(--mich-border)] px-3",
             collapsed ? "md:justify-center" : "justify-between"
           )}
         >
@@ -193,8 +188,8 @@ export function AppShell({
               collapsed && "md:justify-center"
             )}
           >
-            <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] shadow-[0_8px_24px_-12px_var(--mich-glow)]">
-              <BrandLogo width={48} height={48} className="size-11" priority />
+            <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+              <BrandLogo width={36} height={36} className="size-9" priority />
             </span>
             <span
               className={cn(
@@ -204,10 +199,10 @@ export function AppShell({
                   : "opacity-100"
               )}
             >
-              <span className="font-heading block truncate text-[15px] font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
+              <span className="font-heading block truncate text-[16px] font-medium tracking-[-0.02em] text-[var(--mich-text)]">
                 MICHITECH
               </span>
-              <span className="block truncate text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--mich-muted)]">
+              <span className="block truncate text-[11px] text-[var(--mich-muted)]">
                 Recursos
               </span>
             </span>
@@ -225,16 +220,8 @@ export function AppShell({
           </Button>
         </div>
 
-        <div className="relative flex-1 overflow-y-auto px-3 py-4">
-          <p
-            className={cn(
-              "mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--mich-muted)]/70 transition-all",
-              collapsed && "md:hidden"
-            )}
-          >
-            Menú
-          </p>
-          <nav className="space-y-1">
+        <div className="relative flex-1 overflow-y-auto px-2.5 py-3">
+          <nav className="space-y-0.5">
             {navigation.map((item) => {
               const Icon: LucideIcon = ICONS[item.icon]
               const logoSrc = NAV_LOGOS[item.icon]
@@ -247,21 +234,15 @@ export function AppShell({
                   href={item.href}
                   title={item.label}
                   className={cn(
-                    "group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-all duration-200",
+                    "group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors",
                     collapsed && "md:justify-center md:px-0",
                     active
-                      ? "bg-[linear-gradient(135deg,rgba(79,143,232,0.2),rgba(63,81,181,0.12))] font-medium text-[var(--mich-text)] shadow-[inset_0_0_0_1px_rgba(79,143,232,0.28)]"
-                      : "text-[var(--mich-muted)] hover:bg-[var(--mich-blue)]/8 hover:text-[var(--mich-text)]"
+                      ? "bg-[var(--mich-surface-muted)] font-medium text-[var(--mich-text)] before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-[2px] before:rounded-full before:bg-[var(--mich-blue)]"
+                      : "text-[var(--mich-muted)] hover:bg-[var(--mich-surface-muted)]/70 hover:text-[var(--mich-text)]"
                   )}
                 >
-                  {active ? (
-                    <span
-                      aria-hidden
-                      className="absolute left-0 top-1/2 hidden h-7 w-1 -translate-y-1/2 rounded-r-full bg-[var(--mich-blue-bright)] md:block"
-                    />
-                  ) : null}
                   {logoSrc ? (
-                    <span className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[var(--mich-border)] bg-[var(--mich-surface)] p-0.5">
+                    <span className="flex size-5 shrink-0 items-center justify-center">
                       <Image
                         src={logoSrc}
                         alt={item.label}
@@ -298,7 +279,7 @@ export function AppShell({
         <div className="relative border-t border-[var(--mich-border)] p-3">
           <div
             className={cn(
-              "mb-3 rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)]/90 p-3",
+              "mb-2 px-2 py-1.5",
               collapsed && "md:hidden"
             )}
           >
@@ -331,7 +312,7 @@ export function AppShell({
           collapsed ? "md:pl-[88px]" : "md:pl-[272px]"
         )}
       >
-        <header className="sticky top-0 z-30 border-b border-[var(--mich-border)] bg-[var(--mich-surface)]/75 backdrop-blur-2xl">
+        <header className="sticky top-0 z-30 border-b border-[var(--mich-border)] bg-[var(--mich-surface)]/90 backdrop-blur-md">
           <div className="flex h-16 items-center justify-between gap-3 px-4 md:px-8">
             <div className="flex min-w-0 items-center gap-2">
               <Button

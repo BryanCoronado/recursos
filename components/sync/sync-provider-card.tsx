@@ -42,24 +42,24 @@ const STATUS_UI: Record<
     label: "Sincronizado",
     hint: "Sesión activa y lista para descargas",
     badge:
-      "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-    ring: "border-emerald-500/35 shadow-[0_0_0_1px_rgba(16,185,129,0.12)]",
+      "border-[color-mix(in_srgb,var(--mich-success)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_12%,transparent)] text-[var(--mich-success)]",
+    ring: "border-[color-mix(in_srgb,var(--mich-success)_40%,transparent)]",
     icon: <CheckCircle2 className="size-5" />,
   },
   SYNCING: {
     label: "Esperando login",
     hint: "Abre el navegador del worker e inicia sesión",
     badge:
-      "border-sky-500/30 bg-sky-500/10 text-sky-800 dark:text-sky-300",
-    ring: "border-sky-500/35 shadow-[0_0_0_1px_rgba(14,165,233,0.12)]",
+      "border-[color-mix(in_srgb,var(--mich-blue)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-blue)_12%,transparent)] text-[var(--mich-blue)]",
+    ring: "border-[color-mix(in_srgb,var(--mich-blue)_40%,transparent)]",
     icon: <Loader2 className="size-5 animate-spin" />,
   },
   EXPIRED: {
     label: "Sesión expirada",
     hint: "Vuelve a iniciar sesión y marca como listo",
     badge:
-      "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300",
-    ring: "border-amber-500/35",
+      "border-[color-mix(in_srgb,var(--mich-warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-warning)_12%,transparent)] text-[var(--mich-warning)]",
+    ring: "border-[color-mix(in_srgb,var(--mich-warning)_40%,transparent)]",
     icon: <AlertTriangle className="size-5" />,
   },
   DISCONNECTED: {
@@ -92,16 +92,11 @@ export function SyncProviderCard({
   return (
     <article
       className={cn(
-        "relative overflow-hidden rounded-3xl border bg-[var(--mich-surface)] p-5 shadow-[0_18px_40px_-34px_rgba(11,18,32,0.45)] transition-shadow sm:p-6",
+        "mich-soft-card p-5 sm:p-6",
         ui.ring
       )}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full bg-[var(--mich-blue)]/10 blur-3xl"
-      />
-
-      <div className="relative flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] p-2">
             <Image
@@ -133,7 +128,7 @@ export function SyncProviderCard({
       </div>
 
       {status === "READY" ? (
-        <div className="relative mt-5 flex items-center gap-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/8 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">
+        <div className="relative mt-5 flex items-center gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--mich-success)_30%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_10%,transparent)] px-4 py-3 text-sm text-[var(--mich-success)]">
           <CheckCircle2 className="size-5 shrink-0" />
           <div>
             <p className="font-medium">Sesión lista</p>
@@ -255,7 +250,7 @@ function ActionButton({
         </Button>
       </form>
       {flash ? (
-        <p className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-300">
+        <p className="flex items-center gap-1 text-[11px] font-medium text-[var(--mich-success)]">
           <CheckCircle2 className="size-3.5" />
           {flash}
         </p>

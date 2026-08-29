@@ -78,9 +78,9 @@ export function DeviceSessionGuard({ children }: { children: ReactNode }) {
   if (state.status === "blocked" && !allowThrough) {
     const def = getProvider(state.provider)
     return (
-      <div className="mx-auto flex max-w-lg flex-col items-center rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] px-6 py-12 text-center shadow-[0_20px_50px_-36px_rgba(11,18,32,0.35)]">
-        <span className="mb-4 flex size-14 items-center justify-center rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)]">
-          <MonitorSmartphone className="size-7 text-[var(--mich-blue)]" />
+      <div className="mx-auto flex max-w-lg flex-col items-center rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)] px-6 py-10 text-center">
+        <span className="mb-4 flex size-12 items-center justify-center rounded-xl border border-[var(--mich-border)]">
+          <MonitorSmartphone className="size-6 text-[var(--mich-muted)]" />
         </span>
         <h2 className="font-heading text-2xl font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
           Dispositivo no autorizado

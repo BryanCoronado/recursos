@@ -55,7 +55,7 @@ export default async function RecordAutomationPage({
         title="Escritorio del worker (grabación)"
       />
 
-      <section className="rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-6 shadow-[0_16px_40px_-32px_rgba(11,18,32,0.3)]">
+      <section className="mich-soft-card p-5 sm:p-6">
         <h2 className="font-heading mb-4 text-lg font-semibold tracking-[-0.03em]">
           Controles de grabación
         </h2>

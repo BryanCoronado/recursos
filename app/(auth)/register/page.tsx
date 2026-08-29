@@ -26,10 +26,10 @@ export default async function RegisterPage() {
 
   return (
     <AuthShell
-      headline="Únete y descarga más rápido."
-      subline="Crea tu cuenta y empieza en minutos."
+      headline="Empieza gratis en minutos."
+      subline="Elige Envato, Magnific o ambos. 2 descargas de prueba y membresía cuando la necesites."
       formTitle="Crear cuenta"
-      formSubtitle="Registro rápido. Sin pasos extra."
+      formSubtitle="Registro rápido. Sin tarjeta."
     >
       <RegisterForm />
     </AuthShell>

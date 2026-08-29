@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { MonitorSmartphone, MessageCircle } from "lucide-react"
+import { MessageCircle } from "lucide-react"
 
 import { AccessDenied } from "@/components/auth/access-denied"
 import { buttonVariants } from "@/components/ui/button"
@@ -56,22 +56,17 @@ export default async function DevicesPage() {
     sections.some((s) => s.membership || s.devices.length > 0)
 
   return (
-    <div className="space-y-8">
-      <div className="mich-page-card relative px-6 py-7 sm:px-8">
-        <div className="relative z-10">
-          <p className="mb-2 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
-            Cuenta
-          </p>
-          <h1 className="font-heading flex items-center gap-3 text-3xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-4xl">
-            <MonitorSmartphone className="size-8 text-[var(--mich-blue)]" />
-            Mis dispositivos
-          </h1>
-          <p className="mt-3 max-w-2xl text-[15px] leading-6 text-[var(--mich-muted)]">
-            Cada membresía incluye 1 dispositivo. Extra: +S/{" "}
-            {EXTRA_DEVICE_MONTHLY_SOLES}/mes. No puedes quitar dispositivos tú
-            mismo: si cambias de equipo, escríbenos por WhatsApp para liberar el
-            cupo o ampliar el plan.
-          </p>
+    <div className="space-y-6">
+      <section>
+        <h1 className="font-heading text-2xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-3xl">
+          Mis dispositivos
+        </h1>
+        <p className="mt-1.5 max-w-xl text-sm leading-6 text-[var(--mich-muted)]">
+          Cada membresía incluye 1 dispositivo. Extra: +S/{" "}
+          {EXTRA_DEVICE_MONTHLY_SOLES}/mes. No puedes quitar dispositivos tú
+          mismo: si cambias de equipo, escríbenos por WhatsApp para liberar el
+          cupo o ampliar el plan.
+        </p>
           <a
             href={supportUrl}
             target="_blank"
@@ -84,8 +79,7 @@ export default async function DevicesPage() {
             <MessageCircle className="size-3.5" />
             Solicitar cambio de dispositivo
           </a>
-        </div>
-      </div>
+      </section>
 
       {!hasAny ? (
         <div className="mich-soft-card px-6 py-12 text-center">
@@ -120,9 +114,9 @@ export default async function DevicesPage() {
             return (
               <section
                 key={provider.id}
-                className="mich-page-card relative p-6"
+                className="mich-soft-card p-5 sm:p-6"
               >
-                <div className="relative z-10 mb-5 flex flex-wrap items-start justify-between gap-4">
+                <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <span className="flex size-12 items-center justify-center rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] p-2">
                       <Image

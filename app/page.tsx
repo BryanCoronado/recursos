@@ -3,17 +3,16 @@ import type { Metadata } from "next"
 import {
   ArrowRight,
   Check,
-  Download,
-  Link2,
   MessageCircle,
   MonitorSmartphone,
   ShieldCheck,
   Sparkles,
-  Zap,
 } from "lucide-react"
 
-import { BrandLogo } from "@/components/brand/brand-logo"
+import { LandingAudience } from "@/components/marketing/landing-audience"
+import { LandingCompare } from "@/components/marketing/landing-compare"
 import { LandingCountUp } from "@/components/marketing/landing-count-up"
+import { LandingGuides } from "@/components/marketing/landing-guides"
 import { LandingHero } from "@/components/marketing/landing-hero"
 import { LandingNav } from "@/components/marketing/landing-nav"
 import {
@@ -22,6 +21,7 @@ import {
 } from "@/components/marketing/landing-provider-guide"
 import { LandingReveal } from "@/components/marketing/landing-reveal"
 import { LandingScrollProgress } from "@/components/marketing/landing-scroll-progress"
+import { MarketingFooter } from "@/components/marketing/marketing-footer"
 import { buttonVariants } from "@/components/ui/button"
 import { getCurrentUser } from "@/lib/auth/authorization"
 import { resolveHomePath } from "@/lib/auth/home-path"
@@ -40,7 +40,7 @@ import {
   type SubscriptionPlanKey,
 } from "@/lib/billing/plans"
 import { PROVIDERS } from "@/lib/providers/catalog"
-import { SITE, absoluteUrl } from "@/lib/site"
+import { SITE, absoluteUrl, whatsappInfoUrl } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
 const TITLE =
@@ -72,7 +72,10 @@ export const metadata: Metadata = {
     "descargas ilimitadas Envato",
     "precio Envato Elements dólares",
     "Envato Elements USD",
-    "michitech.digital",
+    "qué es Envato Elements",
+    "qué es Magnific",
+    "cómo descargar Envato Elements Perú",
+    "blog Envato Elements",
   ],
   alternates: {
     canonical: absoluteUrl("/"),
@@ -114,6 +117,14 @@ export const metadata: Metadata = {
 
 const FAQ = [
   {
+    q: "¿Qué es Envato Elements?",
+    a: "Una biblioteca de plantillas, gráficos, música y vídeo. En MICHITECH lo descargas desde su propio panel: pegas la URL, ves el progreso y recoges el ZIP. Magnific no se mezcla.",
+  },
+  {
+    q: "¿Qué es Magnific?",
+    a: "Otro proveedor de recursos, con panel, historial y cupo propios. No es un extra de Envato: si lo necesitas, se asigna el rol Clientes Magnific.",
+  },
+  {
     q: "¿Envato y Magnific son el mismo servicio?",
     a: "No. Son proveedores distintos con roles separados (Clientes Envato y Clientes Magnific). Puedes tener uno o ambos; cada uno tiene su panel y cupo gratis independiente.",
   },
@@ -151,32 +162,18 @@ const PLAN_KEYS = Object.keys(SUBSCRIPTION_PLANS) as SubscriptionPlanKey[]
 
 const STEPS = [
   {
-    icon: Link2,
     title: "Elige el proveedor",
     body: "Abre el panel de Envato o el de Magnific — cada uno es independiente.",
   },
   {
-    icon: Download,
     title: "Pega el enlace",
     body: "Copia la URL del recurso en ese proveedor y pégala en su panel.",
   },
   {
-    icon: Zap,
     title: "Descarga el archivo",
     body: "Sigue el progreso en vivo y recoge el ZIP desde el historial.",
   },
 ] as const
-
-const MARQUEE = [
-  "Envato Elements",
-  "Magnific",
-  "Tutoriales",
-  "Descargas en vivo",
-  "Historial por proveedor",
-  "Membresías",
-  "1 dispositivo incluido",
-  "Activación WhatsApp",
-]
 
 const ENVATO_GUIDE: ProviderGuideData = {
   id: PROVIDERS.ENVATO.id,
@@ -189,7 +186,7 @@ const ENVATO_GUIDE: ProviderGuideData = {
   browseLabel: "Abrir Envato Elements",
   headline: "Descargar Envato Elements",
   description:
-    "Plantillas, gráficos, música, vídeo y más desde Envato Elements. Panel exclusivo, historial propio y tutorial en video para que no te pierdas.",
+    "Plantillas, gráficos, música y vídeo. Lo pegas, se descarga, queda en el historial de Envato. Magnific no se mete aquí.",
   bullets: [
     "Panel solo para Envato (no se mezcla con Magnific)",
     "Progreso en vivo e historial de descargas",
@@ -227,7 +224,7 @@ const MAGNIFIC_GUIDE: ProviderGuideData = {
   browseLabel: "Abrir Magnific",
   headline: "Descargar Magnific",
   description:
-    "Magnific va por su propio camino: panel separado, cupo e historial independientes. Sigue el tutorial paso a paso y descarga sin mezclarlo con Envato.",
+    "Otro panel, otro historial, otro cupo. El tutorial es de Magnific y no se cruza con Envato.",
   bullets: [
     "Panel exclusivo de Magnific",
     "Historial y progreso solo de Magnific",
@@ -256,9 +253,7 @@ const MAGNIFIC_GUIDE: ProviderGuideData = {
 export default async function LandingPage() {
   const user = await getCurrentUser()
   const appHref = user ? resolveHomePath(user.permissions) : "/go"
-  const wa = `https://wa.me/${SITE.whatsapp.phone}?text=${encodeURIComponent(
-    "Hola, quiero información sobre MICHITECH (Envato o Magnific)."
-  )}`
+  const wa = whatsappInfoUrl()
 
   const guides = [ENVATO_GUIDE, MAGNIFIC_GUIDE]
 
@@ -422,6 +417,30 @@ export default async function LandingPage() {
           },
         ],
       },
+      {
+        "@type": "ItemList",
+        name: "Guías del blog MICHITECH",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Qué es Envato Elements",
+            url: absoluteUrl("/blog/que-es-envato-elements"),
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Qué es Magnific",
+            url: absoluteUrl("/blog/que-es-magnific"),
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: "Cómo descargar Envato Elements en Perú",
+            url: absoluteUrl("/blog/como-descargar-envato-elements-en-peru"),
+          },
+        ],
+      },
     ],
   }
 
@@ -446,29 +465,12 @@ export default async function LandingPage() {
           id: p.id,
           shortLabel: p.shortLabel,
           logoSrc: p.logoSrc,
+          dashboardPath: p.dashboardPath,
         }))}
       />
 
-      <div className="border-y border-[var(--mich-border)] bg-[var(--mich-surface)]/70 py-3.5 backdrop-blur">
-        <div className="overflow-hidden">
-          <div className="mich-lp-marquee-track gap-8 px-4 text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--mich-muted)]">
-            {[...MARQUEE, ...MARQUEE].map((label, i) => (
-              <span key={`${label}-${i}`} className="inline-flex items-center gap-8">
-                <span>{label}</span>
-                <span className="text-[var(--mich-blue)]/50" aria-hidden>
-                  ·
-                </span>
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <section
-        className="py-12 sm:py-16"
-        aria-label="Ventajas de MICHITECH en números"
-      >
-        <div className="mx-auto grid max-w-6xl gap-3 px-4 sm:grid-cols-3 sm:gap-4 sm:px-6">
+      <div className="border-y border-[var(--mich-border)] py-8">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:grid-cols-3 sm:px-6">
           {[
             {
               value: FREE_DOWNLOAD_LIMIT,
@@ -478,35 +480,40 @@ export default async function LandingPage() {
             {
               value: MONTHLY_PRICE_SOLES,
               prefix: "S/ ",
-              extra: ` / $${MONTHLY_PRICE_USD} USD`,
-              label: "desde / mes por membresía",
+              extra: ` / $${MONTHLY_PRICE_USD}`,
+              label: "desde / mes, se activa por WhatsApp",
               delay: 80,
             },
             {
               value: 2,
-              label: "paneles: Envato y Magnific",
+              label: "paneles: Envato y Magnific, sin mezclar",
               delay: 160,
             },
           ].map((stat) => (
-            <LandingReveal key={stat.label} delay={stat.delay} variant="scale">
-              <div className="mich-soft-card mich-lp-stat mich-lp-hover-lift px-4 py-5 text-center sm:px-5 sm:py-6">
-                <p className="font-heading text-3xl font-semibold tracking-[-0.05em] text-[var(--mich-text)] sm:text-5xl">
-                  <LandingCountUp
-                    to={stat.value}
-                    prefix={"prefix" in stat ? stat.prefix : ""}
-                  />
-                  {"extra" in stat ? (
-                    <span className="ml-1 text-2xl text-[var(--mich-muted)] sm:text-3xl">
-                      {stat.extra}
-                    </span>
-                  ) : null}
-                </p>
-                <p className="mt-2 text-sm text-[var(--mich-muted)]">{stat.label}</p>
+            <LandingReveal key={stat.label} delay={stat.delay}>
+              <div className="mich-hover-card">
+              <p className="font-heading text-4xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-5xl">
+                <LandingCountUp
+                  to={stat.value}
+                  prefix={"prefix" in stat ? stat.prefix : ""}
+                />
+                {"extra" in stat ? (
+                  <span className="ml-1 text-2xl text-[var(--mich-muted)] sm:text-3xl">
+                    {stat.extra}
+                  </span>
+                ) : null}
+              </p>
+              <span className="mt-3 block h-px w-8 bg-[var(--mich-blue)]" />
+              <p className="mt-3 max-w-[16rem] text-sm leading-6 text-[var(--mich-muted)]">
+                {stat.label}
+              </p>
               </div>
             </LandingReveal>
           ))}
         </div>
-      </section>
+      </div>
+
+      <LandingAudience />
 
       <section
         id="como-funciona"
@@ -515,12 +522,12 @@ export default async function LandingPage() {
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <LandingReveal>
-            <p className="font-heading text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
+            <p className="text-[13px] font-medium text-[var(--mich-blue-bright)]">
               Cómo funciona
             </p>
             <h2
               id="como-funciona-title"
-              className="font-heading mt-2 max-w-xl text-3xl font-semibold tracking-[-0.045em] sm:text-4xl"
+              className="font-heading mt-2 max-w-xl text-3xl font-semibold tracking-[-0.04em] sm:text-4xl"
             >
               Un dominio. Dos paneles separados.
             </h2>
@@ -533,12 +540,11 @@ export default async function LandingPage() {
           <ol className="mt-10 grid gap-3 sm:mt-12 sm:gap-4 md:grid-cols-3">
             {STEPS.map((step, i) => (
               <LandingReveal key={step.title} delay={i * 90} variant="scale">
-                <li className="mich-soft-card mich-lp-hover-lift relative h-full p-5 sm:p-6">
-                  <span className="font-heading text-[11px] font-semibold tabular-nums text-[var(--mich-blue-bright)]">
+                <li className="mich-soft-card mich-hover-card relative h-full p-5 sm:p-6">
+                  <span className="font-heading text-sm font-semibold tabular-nums text-[var(--mich-blue-bright)]">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <step.icon className="mt-4 size-6 text-[var(--mich-blue)] sm:mt-5 sm:size-7" />
-                  <h3 className="font-heading mt-3 text-lg font-semibold tracking-[-0.03em] sm:mt-4 sm:text-xl">
+                  <h3 className="font-heading mt-5 text-xl font-semibold tracking-[-0.03em] sm:text-2xl">
                     {step.title}
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-[var(--mich-muted)]">
@@ -571,7 +577,7 @@ export default async function LandingPage() {
           </div>
 
           <LandingReveal delay={80}>
-            <div className="mich-soft-card mt-12 p-5 sm:p-7">
+            <div className="mt-12 max-w-2xl">
               <h2 className="font-heading text-xl font-semibold tracking-[-0.03em] sm:text-2xl">
                 Descargar Envato Elements y Magnific online en Perú
               </h2>
@@ -591,6 +597,28 @@ export default async function LandingPage() {
                   Clientes Magnific
                 </strong>{" "}
                 solo ve Magnific. Si necesitas ambos, se asignan los dos roles.
+                Más detalle en las guías:{" "}
+                <Link
+                  href="/blog/que-es-envato-elements"
+                  className="font-medium text-[var(--mich-blue-bright)] hover:underline"
+                >
+                  qué es Envato Elements
+                </Link>
+                ,{" "}
+                <Link
+                  href="/blog/que-es-magnific"
+                  className="font-medium text-[var(--mich-blue-bright)] hover:underline"
+                >
+                  qué es Magnific
+                </Link>{" "}
+                y{" "}
+                <Link
+                  href="/blog/como-descargar-envato-elements-en-peru"
+                  className="font-medium text-[var(--mich-blue-bright)] hover:underline"
+                >
+                  cómo descargar en Perú
+                </Link>
+                .
               </p>
               <p className="mt-3 text-[15px] leading-7 text-[var(--mich-muted)]">
                 Empiezas con {FREE_DOWNLOAD_LIMIT} descargas gratis por
@@ -622,6 +650,8 @@ export default async function LandingPage() {
         reverse
       />
 
+      <LandingCompare />
+
       <section className="py-10 sm:py-14" aria-label="Beneficios">
         <div className="mx-auto grid max-w-6xl gap-3 px-4 sm:grid-cols-3 sm:gap-4 sm:px-6">
           {[
@@ -642,7 +672,7 @@ export default async function LandingPage() {
             },
           ].map((item, i) => (
             <LandingReveal key={item.title} delay={i * 80} variant="scale">
-              <div className="mich-soft-card mich-lp-hover-lift h-full p-5">
+              <div className="mich-soft-card mich-hover-card h-full p-5">
                 <item.icon className="size-5 text-[var(--mich-blue)]" />
                 <h3 className="font-heading mt-3 text-base font-semibold tracking-[-0.02em]">
                   {item.title}
@@ -663,12 +693,12 @@ export default async function LandingPage() {
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <LandingReveal>
-            <p className="font-heading text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
+            <p className="text-[13px] font-medium text-[var(--mich-blue-bright)]">
               Planes y precios
             </p>
             <h2
               id="planes-title"
-              className="font-heading mt-2 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl"
+              className="font-heading mt-2 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl"
             >
               Empieza gratis. Escala cuando quieras.
             </h2>
@@ -689,23 +719,22 @@ export default async function LandingPage() {
                 <LandingReveal key={key} delay={i * 90} variant="scale">
                   <article
                     className={cn(
-                      "mich-soft-card mich-lp-hover-lift relative flex h-full flex-col p-5 sm:p-6",
-                      plan.highlight &&
-                        "border-[var(--mich-blue)]/45 shadow-[0_24px_50px_-28px_var(--mich-glow)]"
+                      "mich-soft-card mich-hover-card relative flex h-full flex-col p-5 sm:p-6",
+                      plan.highlight && "border-[var(--mich-blue)]/45"
                     )}
                   >
                     {plan.highlight ? (
-                      <span className="absolute right-4 top-4 rounded-full bg-[linear-gradient(135deg,var(--mich-blue),var(--mich-indigo))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
+                      <span className="absolute right-4 top-4 rounded-full bg-[var(--mich-blue)] px-2.5 py-0.5 text-[11px] font-medium text-white">
                         Recomendado
                       </span>
                     ) : null}
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--mich-blue-bright)]">
+                    <p className="text-[12px] text-[var(--mich-muted)]">
                       {plan.tagline}
                     </p>
                     <h3 className="font-heading mt-2 text-2xl font-semibold tracking-[-0.03em]">
                       {plan.label}
                     </h3>
-                    <p className="mt-4 font-heading text-4xl font-semibold tracking-[-0.04em]">
+                    <p className="font-heading mt-5 text-4xl font-semibold tracking-[-0.04em]">
                       S/ {total}
                     </p>
                     <p className="mt-1 font-heading text-xl font-semibold text-[var(--mich-blue-bright)]">
@@ -725,7 +754,7 @@ export default async function LandingPage() {
                         1 dispositivo incluido
                       </li>
                       <li className="flex items-center gap-2">
-                        <Sparkles className="size-4 text-[var(--mich-blue)]" />
+                        <Check className="size-4 text-[var(--mich-blue)]" />
                         Acceso a Envato y a Magnific
                       </li>
                     </ul>
@@ -737,7 +766,7 @@ export default async function LandingPage() {
                         buttonVariants({
                           variant: plan.highlight ? "default" : "outline",
                         }),
-                        "mt-8 w-full justify-center rounded-xl"
+                        "mt-8 w-full justify-center rounded-2xl transition-transform hover:-translate-y-0.5"
                       )}
                     >
                       <MessageCircle />
@@ -751,6 +780,8 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      <LandingGuides />
+
       <section
         id="faq"
         className="scroll-mt-24 py-16 sm:py-24"
@@ -758,12 +789,12 @@ export default async function LandingPage() {
       >
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <LandingReveal className="text-center">
-            <p className="font-heading text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
+            <p className="text-[13px] font-medium text-[var(--mich-blue-bright)]">
               FAQ
             </p>
             <h2
               id="faq-title"
-              className="font-heading mt-2 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl"
+              className="font-heading mt-2 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl"
             >
               Preguntas frecuentes
             </h2>
@@ -771,7 +802,7 @@ export default async function LandingPage() {
           <div className="mt-10 space-y-3">
             {FAQ.map((item, i) => (
               <LandingReveal key={item.q} delay={i * 40}>
-                <details className="mich-soft-card group open:border-[var(--mich-blue)]/30 open:shadow-[0_16px_40px_-28px_var(--mich-glow)]">
+                <details className="mich-soft-card mich-hover-card group">
                   <summary className="cursor-pointer list-none px-4 py-4 font-heading text-[15px] font-semibold tracking-[-0.02em] marker:content-none sm:px-5 [&::-webkit-details-marker]:hidden">
                     <span className="flex items-center justify-between gap-3">
                       {item.q}
@@ -793,29 +824,24 @@ export default async function LandingPage() {
       <section className="pb-16 sm:pb-24" aria-labelledby="cta-title">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <LandingReveal variant="scale">
-            <div className="mich-page-card relative overflow-hidden px-5 py-12 text-center sm:px-10 sm:py-16">
-              <div
-                aria-hidden
-                className="mich-lp-aurora pointer-events-none absolute inset-0 opacity-70"
-              />
-              <div className="relative z-10 mx-auto max-w-xl">
-                <ShieldCheck className="mx-auto size-9 text-[var(--mich-blue)]" />
+            <div className="mich-page-card bg-[linear-gradient(180deg,color-mix(in_srgb,var(--mich-blue)_12%,var(--mich-surface)),var(--mich-surface))] px-5 py-14 text-center sm:px-10 sm:py-16">
+              <div className="mx-auto max-w-xl">
                 <h2
                   id="cta-title"
-                  className="font-heading mt-4 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl"
+                  className="font-heading text-3xl font-semibold tracking-[-0.04em] sm:text-4xl"
                 >
-                  ¿Listo para Envato o Magnific?
+                  ¿Listo para dejar de pagar de más?
                 </h2>
-                <p className="mt-3 text-[15px] leading-7 text-[var(--mich-muted)]">
-                  Crea tu cuenta, elige el panel que necesitas y sigue el
-                  tutorial de ese proveedor.
+                <p className="mt-4 text-[16px] leading-7 text-[var(--mich-muted)]">
+                  Crea tu cuenta, prueba {FREE_DOWNLOAD_LIMIT} descargas y si el
+                  ZIP llega bien, activa el plan por WhatsApp el mismo día.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                   <Link
                     href={user ? appHref : "/register"}
                     className={cn(
                       buttonVariants({ size: "lg" }),
-                      "mich-lp-cta h-12 rounded-2xl px-7"
+                      "h-12 rounded-2xl px-7 transition-transform hover:-translate-y-0.5"
                     )}
                   >
                     {user ? "Ir al panel" : "Crear cuenta gratis"}
@@ -827,7 +853,7 @@ export default async function LandingPage() {
                     rel="noreferrer"
                     className={cn(
                       buttonVariants({ variant: "outline", size: "lg" }),
-                      "h-12 rounded-2xl px-7"
+                      "h-12 rounded-2xl px-6 transition-transform hover:-translate-y-0.5"
                     )}
                   >
                     <MessageCircle />
@@ -840,58 +866,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-[var(--mich-border)] bg-[var(--mich-surface)] py-10 sm:py-12">
-        <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
-          <div className="flex items-center gap-3">
-            <BrandLogo width={40} height={40} className="size-10" />
-            <div>
-              <p className="font-heading text-sm font-semibold tracking-[-0.02em]">
-                {SITE.name}
-              </p>
-              <p className="text-xs text-[var(--mich-muted)]">
-                Envato · Magnific · {SITE.host}
-              </p>
-            </div>
-          </div>
-          <nav
-            className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--mich-muted)]"
-            aria-label="Pie de página"
-          >
-            <a href="#envato" className="hover:text-[var(--mich-text)]">
-              Envato
-            </a>
-            <a href="#magnific" className="hover:text-[var(--mich-text)]">
-              Magnific
-            </a>
-            <a href="#planes" className="hover:text-[var(--mich-text)]">
-              Planes
-            </a>
-            <a href="#faq" className="hover:text-[var(--mich-text)]">
-              FAQ
-            </a>
-            <Link href="/login" className="hover:text-[var(--mich-text)]">
-              Entrar
-            </Link>
-            <Link href="/register" className="hover:text-[var(--mich-text)]">
-              Registro
-            </Link>
-            <a
-              href={wa}
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-[var(--mich-text)]"
-            >
-              Soporte
-            </a>
-          </nav>
-        </div>
-        <p className="mx-auto mt-8 max-w-6xl px-4 text-xs text-[var(--mich-muted)] sm:px-6">
-          © {new Date().getFullYear()} {SITE.legalName}. Descargar Envato
-          Elements y Magnific online en Perú. Precios desde S/{" "}
-          {MONTHLY_PRICE_SOLES} o ${MONTHLY_PRICE_USD} USD / mes. Todos los
-          derechos reservados.
-        </p>
-      </footer>
+      <MarketingFooter wa={wa} />
     </div>
   )
 }

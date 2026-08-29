@@ -121,21 +121,15 @@ export default async function AdminDownloadsPage({
   }
 
   return (
-    <div className="space-y-8">
-      <div className="mich-page-card relative px-6 py-7 sm:px-8">
-        <div className="relative z-10">
-          <p className="mb-2 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
-            Admin
-          </p>
-          <h1 className="font-heading flex items-center gap-3 text-3xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-4xl">
-            <Download className="size-8 text-[var(--mich-blue)]" />
-            Descargas
-          </h1>
-          <p className="mt-3 max-w-2xl text-[15px] leading-6 text-[var(--mich-muted)]">
-            Historial global: quién pidió cada recurso, estado y archivo.
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <section>
+        <h1 className="font-heading text-2xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-3xl">
+          Descargas
+        </h1>
+        <p className="mt-1.5 max-w-xl text-sm leading-6 text-[var(--mich-muted)]">
+          Historial global: quién pidió cada recurso, estado y archivo.
+        </p>
+      </section>
 
       <div className="grid gap-3 sm:grid-cols-4">
         {(
@@ -153,11 +147,10 @@ export default async function AdminDownloadsPage({
             })}
             className={cn(
               "mich-soft-card px-4 py-3 transition",
-              statusFilter === key &&
-                "border-[var(--mich-blue)]/50 shadow-[0_12px_30px_-20px_var(--mich-glow)]"
+              statusFilter === key && "border-[var(--mich-blue)]/40"
             )}
           >
-            <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-[var(--mich-muted)]">
+            <p className="flex items-center gap-2 text-xs text-[var(--mich-muted)]">
               <Icon className="size-3.5" />
               {label}
             </p>
@@ -229,7 +222,7 @@ export default async function AdminDownloadsPage({
         </button>
       </form>
 
-      <div className="mich-page-card relative overflow-hidden">
+      <div className="mich-page-card overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -357,14 +350,14 @@ function StatusPill({
       "border-[var(--mich-border)] bg-[var(--mich-surface-muted)] text-[var(--mich-muted)]",
     RUNNING:
       "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200",
-    DONE: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+    DONE: "border-[color-mix(in_srgb,var(--mich-success)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_12%,transparent)] text-[var(--mich-success)]",
     FAILED: "border-destructive/30 bg-destructive/10 text-destructive",
   } as const
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium",
         styles[status]
       )}
     >

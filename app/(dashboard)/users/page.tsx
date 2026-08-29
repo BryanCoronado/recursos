@@ -48,19 +48,15 @@ export default async function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="mich-page-card relative px-6 py-7 sm:px-8">
-        <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="mb-2 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
-              Admin
-            </p>
-            <h1 className="font-heading text-3xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-4xl">
-              Usuarios
-            </h1>
-            <p className="mt-2 text-[15px] text-[var(--mich-muted)]">
-              Cuentas, estados y roles asignados.
-            </p>
-          </div>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-3xl">
+            Usuarios
+          </h1>
+          <p className="mt-1.5 text-sm text-[var(--mich-muted)]">
+            Cuentas, estados y roles asignados.
+          </p>
+        </div>
           {hasPermission(actor.permissions, PERMISSIONS.USERS_CREATE) ? (
             <Link
               href="/users/new"
@@ -71,15 +67,14 @@ export default async function UsersPage() {
             </Link>
           ) : null}
         </div>
-      </div>
 
-      <div className="mich-page-card relative overflow-hidden">
-        <div className="relative z-10 border-b border-[var(--mich-border)] px-5 py-4">
+      <div className="mich-page-card overflow-hidden">
+        <div className="border-b border-[var(--mich-border)] px-5 py-4">
           <p className="text-sm font-medium text-[var(--mich-text)]">
             {users.length} usuarios
           </p>
         </div>
-        <div className="relative z-10">
+        <div>
           <Table>
             <TableHeader>
               <TableRow>

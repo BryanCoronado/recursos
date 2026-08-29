@@ -23,7 +23,7 @@ export function LandingScrollProgress() {
       aria-hidden
     >
       <div
-        className="h-full origin-left bg-[linear-gradient(90deg,var(--mich-blue),var(--mich-indigo),var(--mich-blue-bright))] transition-[width] duration-150 ease-out"
+        className="h-full origin-left bg-[var(--mich-blue)] transition-[width] duration-150 ease-out"
         style={{ width: `${pct}%` }}
       />
     </div>

@@ -4,7 +4,7 @@ import { cookies } from "next/headers"
 
 import { ThemeProvider } from "@/components/theme/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
-import { SITE, absoluteUrl } from "@/lib/site"
+import { SITE } from "@/lib/site"
 
 import "./globals.css"
 
@@ -56,18 +56,12 @@ export const metadata: Metadata = {
     "plantillas Envato",
     "stock Envato",
     "panel Envato online",
+    "qué es Envato Elements",
+    "qué es Magnific",
   ],
-  alternates: {
-    canonical: absoluteUrl("/"),
-    languages: {
-      "es-PE": absoluteUrl("/"),
-      es: absoluteUrl("/"),
-    },
-  },
   openGraph: {
     type: "website",
     locale: SITE.locale,
-    url: absoluteUrl("/"),
     siteName: SITE.name,
     title: `${SITE.name} | Descargar Envato Elements y Magnific en Perú`,
     description: SITE.description,

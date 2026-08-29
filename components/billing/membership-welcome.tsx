@@ -56,15 +56,11 @@ export function MembershipWelcomeBanner({
   return (
     <div
       role="status"
-      className="mich-welcome-banner relative mb-5 overflow-hidden rounded-[1.35rem] border border-[color-mix(in_srgb,var(--mich-success)_35%,transparent)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--mich-success)_14%,transparent),color-mix(in_srgb,var(--mich-blue)_10%,transparent))] px-4 py-4 shadow-[0_20px_44px_-32px_var(--mich-glow)] sm:px-5"
+      className="relative mb-4 rounded-xl border border-[var(--mich-border)] px-4 py-3.5 sm:px-5"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-8 -top-10 size-36 rounded-full bg-[var(--mich-success)]/15 blur-2xl"
-      />
-      <div className="relative flex items-start gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] text-[var(--mich-success)] shadow-sm">
-          <PartyPopper className="size-5" />
+      <div className="flex items-start gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[var(--mich-border)] text-[var(--mich-success)]">
+          <PartyPopper className="size-4" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-heading text-sm font-semibold tracking-[-0.02em] text-[var(--mich-text)] sm:text-[15px]">

@@ -3,6 +3,8 @@
 @import "shadcn/tailwind.css";
 @import "./brand.css";
 
+/* Brand tokens + landing/blog utilities live in brand.css */
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -56,7 +58,7 @@
   --card-foreground: #0b1220;
   --popover: #ffffff;
   --popover-foreground: #0b1220;
-  --primary: #5d9cec;
+  --primary: #4f8fe8;
   --primary-foreground: #ffffff;
   --secondary: #eef3fa;
   --secondary-foreground: #0b1220;
@@ -64,24 +66,24 @@
   --muted-foreground: #5b6b82;
   --accent: #e8f1fc;
   --accent-foreground: #0b1220;
-  --destructive: oklch(0.55 0.2 25);
+  --destructive: #dc2626;
   --border: rgba(63, 81, 181, 0.14);
   --input: rgba(63, 81, 181, 0.18);
-  --ring: #5d9cec;
-  --chart-1: #5d9cec;
-  --chart-2: #4a90e2;
-  --chart-3: #3f51b5;
-  --chart-4: #7fb8f5;
-  --chart-5: #2d3a80;
-  --radius: 0.75rem;
+  --ring: #4f8fe8;
+  --chart-1: #4f8fe8;
+  --chart-2: #3f51b5;
+  --chart-3: #059669;
+  --chart-4: #d97706;
+  --chart-5: #5b6b82;
+  --radius: 0.9rem;
   --sidebar: #ffffff;
   --sidebar-foreground: #0b1220;
-  --sidebar-primary: #5d9cec;
+  --sidebar-primary: #4f8fe8;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #e8f1fc;
   --sidebar-accent-foreground: #0b1220;
   --sidebar-border: rgba(63, 81, 181, 0.14);
-  --sidebar-ring: #5d9cec;
+  --sidebar-ring: #4f8fe8;
 }
 
 .dark {
@@ -99,15 +101,15 @@
   --muted-foreground: #93a4bc;
   --accent: #1a2740;
   --accent-foreground: #e8eef8;
-  --destructive: oklch(0.65 0.2 25);
+  --destructive: #f87171;
   --border: rgba(126, 182, 245, 0.16);
   --input: rgba(126, 182, 245, 0.22);
   --ring: #6eabf0;
   --chart-1: #6eabf0;
-  --chart-2: #7eb6f5;
-  --chart-3: #7b8cff;
-  --chart-4: #4a90e2;
-  --chart-5: #a8c8f5;
+  --chart-2: #8b9cff;
+  --chart-3: #34d399;
+  --chart-4: #fbbf24;
+  --chart-5: #93a4bc;
   --sidebar: #121a2b;
   --sidebar-foreground: #e8eef8;
   --sidebar-primary: #6eabf0;
@@ -123,17 +125,8 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans tracking-[-0.011em];
-    background-image:
-      radial-gradient(circle at 10% -8%, rgba(93, 156, 236, 0.16), transparent 32rem),
-      radial-gradient(circle at 92% 0%, rgba(63, 81, 181, 0.1), transparent 28rem);
-    background-attachment: fixed;
+    @apply bg-background text-foreground font-sans;
     font-feature-settings: "ss01" on, "cv11" on;
-  }
-  .dark body {
-    background-image:
-      radial-gradient(circle at 12% -10%, rgba(110, 171, 240, 0.14), transparent 30rem),
-      radial-gradient(circle at 88% 0%, rgba(123, 140, 255, 0.1), transparent 26rem);
   }
   html {
     @apply font-sans;
@@ -145,5 +138,6 @@
   [data-slot="card-title"] {
     font-family: var(--font-heading);
     letter-spacing: -0.03em;
+    font-weight: 600;
   }
 }

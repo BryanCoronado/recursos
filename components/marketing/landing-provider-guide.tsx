@@ -60,7 +60,7 @@ export function LandingProviderGuide({
           {/* Producto */}
           <LandingReveal variant={reverse ? "right" : "left"}>
             <div className="flex items-center gap-3">
-              <span className="flex size-14 items-center justify-center rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-2.5 shadow-[var(--mich-shadow-soft)] sm:size-16">
+              <span className="flex size-12 items-center justify-center rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-2 sm:size-14">
                 <Image
                   src={provider.logoSrc}
                   alt={`Logo ${provider.shortLabel}`}
@@ -71,12 +71,12 @@ export function LandingProviderGuide({
                 />
               </span>
               <div>
-                <p className="font-heading text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
+                <p className="text-[13px] font-medium text-[var(--mich-blue-bright)]">
                   Proveedor
                 </p>
                 <h2
                   id={`${provider.slug}-title`}
-                  className="font-heading text-2xl font-semibold tracking-[-0.04em] sm:text-3xl"
+                  className="font-heading text-[1.85rem] font-semibold tracking-[-0.04em] sm:text-[2.15rem]"
                 >
                   {provider.headline}
                 </h2>
@@ -104,7 +104,7 @@ export function LandingProviderGuide({
                 href={ctaHref}
                 className={cn(
                   buttonVariants({ size: "lg" }),
-                  "mich-lp-cta h-11 rounded-2xl px-6 text-[14px]"
+                  "h-11 rounded-2xl px-6 text-[14px] transition-transform hover:-translate-y-0.5"
                 )}
               >
                 {loggedIn ? `Abrir ${provider.shortLabel}` : "Empezar gratis"}
@@ -127,7 +127,7 @@ export function LandingProviderGuide({
 
           {/* Tutorial */}
           <LandingReveal delay={100} variant={reverse ? "left" : "right"}>
-            <div className="mich-soft-card mich-lp-shine relative overflow-hidden p-4 sm:p-5">
+            <div className="mich-soft-card relative overflow-hidden p-4 sm:p-5">
               <div className="relative mb-4 flex flex-wrap items-center justify-between gap-2">
                 <p className="font-heading text-sm font-semibold tracking-[-0.02em]">
                   Tutorial {provider.shortLabel}
@@ -136,7 +136,7 @@ export function LandingProviderGuide({
               </div>
 
               {videoId ? (
-                <div className="mich-lp-video relative mb-5 overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-black/90 shadow-[0_24px_50px_-30px_rgba(0,0,0,0.45)]">
+                <div className="relative mb-5 overflow-hidden rounded-xl border border-[var(--mich-border)] bg-black">
                   <div className="relative aspect-video">
                     <iframe
                       title={`Tutorial cómo descargar ${provider.label} con MICHITECH`}
@@ -147,7 +147,7 @@ export function LandingProviderGuide({
                       loading="lazy"
                     />
                   </div>
-                  <div className="pointer-events-none absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white backdrop-blur">
+                  <div className="pointer-events-none absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white">
                     <CirclePlay className="size-3" />
                     Video
                   </div>
@@ -165,10 +165,10 @@ export function LandingProviderGuide({
                         onClick={() => setActiveStep(i)}
                         onMouseEnter={() => setActiveStep(i)}
                         className={cn(
-                          "mich-lp-step w-full rounded-2xl border px-3.5 py-3 text-left transition-all duration-300",
+                          "w-full rounded-xl border px-3.5 py-3 text-left transition-all duration-300",
                           active
-                            ? "border-[var(--mich-blue)]/45 bg-[color-mix(in_srgb,var(--mich-blue)_10%,transparent)] shadow-[0_16px_36px_-28px_var(--mich-glow)]"
-                            : "border-transparent bg-[var(--mich-surface-muted)]/70 hover:border-[var(--mich-border)]"
+                            ? "border-[var(--mich-blue)]/40 bg-[color-mix(in_srgb,var(--mich-blue)_8%,transparent)]"
+                            : "border-transparent hover:border-[var(--mich-blue)]/25",
                         )}
                       >
                         <div className="flex items-start gap-3">

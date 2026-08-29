@@ -116,7 +116,7 @@ export function NovncPanel({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-3xl border border-[var(--mich-border)] bg-[var(--mich-surface)] shadow-[0_18px_40px_-32px_rgba(11,18,32,0.4)]",
+        "overflow-hidden rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)]",
         className
       )}
     >

@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useRef, type MouseEvent } from "react"
+import { useEffect, useState } from "react"
 import { ArrowRight, CheckCircle2 } from "lucide-react"
 
 import { BrandLogo } from "@/components/brand/brand-logo"
@@ -14,6 +14,7 @@ type ProviderChip = {
   id: string
   shortLabel: string
   logoSrc: string
+  dashboardPath: string
 }
 
 export function LandingHero({
@@ -33,91 +34,64 @@ export function LandingHero({
   providers: ProviderChip[]
   siteHost: string
 }) {
-  const panelRef = useRef<HTMLDivElement>(null)
+  const [active, setActive] = useState(0)
+  const [pct, setPct] = useState<number[]>(() =>
+    providers.map((_, i) => (i === 0 ? 18 : 8))
+  )
 
-  function onMove(e: MouseEvent<HTMLDivElement>) {
-    const el = panelRef.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const x = (e.clientX - rect.left) / rect.width - 0.5
-    const y = (e.clientY - rect.top) / rect.height - 0.5
-    el.style.transform = `perspective(900px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateY(-4px)`
-  }
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setPct((current) =>
+        current.map((value, i) => {
+          const cap = i === active ? 100 : 72
+          const step = i === active ? 2.4 : 1.1
+          return Math.min(cap, value + step)
+        })
+      )
+    }, 70)
+    return () => window.clearInterval(id)
+  }, [active])
 
-  function onLeave() {
-    const el = panelRef.current
-    if (!el) return
-    el.style.transform =
-      "perspective(900px) rotateY(0deg) rotateX(0deg) translateY(0)"
-  }
+  useEffect(() => {
+    setPct(providers.map((_, i) => (i === active ? 22 : 10)))
+  }, [active, providers])
 
   return (
-    <section className="relative isolate min-h-[100svh] overflow-hidden pt-16">
-      <div aria-hidden className="mich-lp-hero-bg pointer-events-none absolute inset-0" />
-      <div aria-hidden className="mich-lp-aurora pointer-events-none absolute inset-0" />
-      <div aria-hidden className="mich-lp-beams pointer-events-none absolute inset-0" />
+    <section className="relative isolate overflow-hidden pt-16">
       <div
         aria-hidden
-        className="mich-auth-grid-drift pointer-events-none absolute inset-0 opacity-35"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(79,143,232,0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(79,143,232,0.09) 1px, transparent 1px)",
-          backgroundSize: "52px 52px",
-          maskImage:
-            "radial-gradient(ellipse 70% 55% at 50% 35%, black 15%, transparent 70%)",
-        }}
+        className="pointer-events-none absolute inset-x-0 top-0 h-[28rem] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--mich-blue)_18%,transparent),transparent_58%)]"
       />
 
-      {/* Órbitas decorativas */}
-      <div
-        aria-hidden
-        className="mich-lp-orbit pointer-events-none absolute left-1/2 top-[42%] hidden size-[34rem] lg:block"
-      />
-      <div
-        aria-hidden
-        className="mich-lp-orbit mich-lp-orbit-slow pointer-events-none absolute left-[72%] top-[48%] hidden size-[22rem] lg:block"
-      />
-
-      <div className="relative z-10 mx-auto grid min-h-[calc(100svh-4rem)] max-w-6xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:py-20">
-        <div className="mich-auth-stagger text-center lg:text-left">
-          <div className="mich-lp-logo-spin mx-auto mb-6 flex size-20 items-center justify-center rounded-[1.5rem] border border-[var(--mich-border)] bg-[var(--mich-surface)]/95 p-3 shadow-[0_28px_70px_-30px_var(--mich-glow)] backdrop-blur lg:mx-0 lg:size-[5.25rem]">
-            <BrandLogo
-              width={80}
-              height={80}
-              className="size-14 lg:size-16"
-              priority
-            />
+      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-24">
+        <div>
+          <div className="mb-5 flex size-12 items-center justify-center rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-2 shadow-[var(--mich-shadow-soft)]">
+            <BrandLogo width={72} height={72} className="size-8" priority />
           </div>
 
-          <p className="font-heading text-[12px] font-semibold uppercase tracking-[0.36em] text-[var(--mich-blue-bright)]">
-            MICHITECH
+          <p className="text-[13px] font-medium text-[var(--mich-blue-bright)]">
+            {siteHost}
           </p>
 
-          <h1 className="font-heading mt-3 text-[2.2rem] font-semibold leading-[1.08] tracking-[-0.055em] text-[var(--mich-text)] sm:text-5xl md:text-[3.25rem]">
+          <h1 className="font-heading mt-3 text-[2.35rem] font-semibold leading-[1.08] tracking-[-0.045em] text-[var(--mich-text)] sm:text-5xl lg:text-[3.35rem]">
             Descarga{" "}
             <LandingWordCycle />
-            <span className="mt-1.5 block text-[var(--mich-text)]">
-              en su propio panel
-            </span>
+            <span className="mt-1.5 block">en su propio panel</span>
           </h1>
 
-          <p className="mx-auto mt-5 max-w-lg text-[15px] leading-7 text-[var(--mich-muted)] lg:mx-0 sm:text-[17px]">
-            En{" "}
-            <strong className="font-medium text-[var(--mich-text)]">
-              {siteHost}
-            </strong>
-            : paneles separados para Envato Elements y Magnific, con tutorial,
-            progreso en vivo e historial. Prueba gratis y activa membresía cuando
-            lo necesites.
+          <p className="mt-5 max-w-lg text-[16px] leading-7 text-[var(--mich-muted)]">
+            Pega el link, mira el progreso en vivo y baja el ZIP. Para
+            freelancers y agencias en Perú y Latam: Envato y Magnific, cada uno
+            en su panel, con tutorial y {freeLimit} descargas para probar.
           </p>
 
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             {loggedIn ? (
               <Link
                 href={appHref}
                 className={cn(
                   buttonVariants({ size: "lg" }),
-                  "mich-lp-cta group h-12 rounded-2xl px-8 text-[15px]"
+                  "group h-12 rounded-2xl px-7 text-[15px] transition-transform hover:-translate-y-0.5"
                 )}
               >
                 Ir al panel
@@ -129,17 +103,17 @@ export function LandingHero({
                   href="/register"
                   className={cn(
                     buttonVariants({ size: "lg" }),
-                    "mich-lp-cta group h-12 rounded-2xl px-8 text-[15px]"
+                    "group h-12 rounded-2xl px-7 text-[15px] transition-transform hover:-translate-y-0.5"
                   )}
                 >
-                  Empezar gratis
+                  Probar {freeLimit} descargas
                   <ArrowRight className="transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <Link
                   href="/login"
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
-                    "h-12 rounded-2xl border-[var(--mich-border)] bg-[var(--mich-surface)]/55 px-8 text-[15px] backdrop-blur transition hover:-translate-y-0.5"
+                    "h-12 rounded-2xl px-6 text-[15px] transition-transform hover:-translate-y-0.5"
                   )}
                 >
                   Ya tengo cuenta
@@ -148,14 +122,14 @@ export function LandingHero({
             )}
           </div>
 
-          <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[13px] text-[var(--mich-muted)] lg:justify-start">
+          <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-[var(--mich-muted)]">
             <li className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="size-3.5 text-[var(--mich-success)]" />
               {freeLimit} descargas gratis
             </li>
             <li className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="size-3.5 text-[var(--mich-success)]" />
-              desde S/ {monthlyPrice} / ${monthlyPriceUsd} USD al mes
+              desde S/ {monthlyPrice} / ${monthlyPriceUsd} USD
             </li>
             <li className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="size-3.5 text-[var(--mich-success)]" />
@@ -164,51 +138,39 @@ export function LandingHero({
           </ul>
         </div>
 
-        <div className="mich-auth-rise relative mx-auto w-full max-w-md lg:max-w-none">
-          <div
-            aria-hidden
-            className="mich-auth-float pointer-events-none absolute -left-10 top-4 size-48 rounded-full bg-[var(--mich-blue)]/30 blur-[70px]"
-          />
-          <div
-            aria-hidden
-            className="mich-auth-float-alt pointer-events-none absolute -right-8 bottom-6 size-52 rounded-full bg-[var(--mich-indigo)]/22 blur-[80px]"
-          />
-
-          <div
-            ref={panelRef}
-            onMouseMove={onMove}
-            onMouseLeave={onLeave}
-            className="mich-lp-panel mich-lp-tilt relative overflow-hidden rounded-[1.85rem] border border-[var(--mich-border)] bg-[var(--mich-surface)]/95 p-5 shadow-[0_48px_90px_-42px_rgba(12,20,36,0.5)] backdrop-blur-xl will-change-transform sm:p-6"
-          >
-            <div className="mich-lp-shine pointer-events-none absolute inset-0" aria-hidden />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(ellipse_at_top,rgba(79,143,232,0.18),transparent_70%)]"
-            />
-
-            <div className="relative mb-5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <span className="relative flex size-2.5">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                  <span className="relative inline-flex size-2.5 rounded-full bg-emerald-400" />
-                </span>
-                <span className="font-heading text-sm font-semibold tracking-[-0.02em]">
-                  Descarga en vivo
-                </span>
-              </div>
-              <span className="mich-chip mich-chip-ok mich-lp-chip-pulse">
-                Listo
+        <div className="rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-5 shadow-[var(--mich-shadow-page)] sm:p-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex size-2.5">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-[var(--mich-success)] opacity-50" />
+                <span className="relative inline-flex size-2.5 rounded-full bg-[var(--mich-success)]" />
+              </span>
+              <span className="font-heading text-sm font-semibold">
+                Descarga en vivo
               </span>
             </div>
+            <span className="mich-chip mich-chip-ok">Interactivo</span>
+          </div>
 
-            <div className="relative space-y-3">
-              {providers.map((p, i) => (
-                <div
+          <div className="space-y-2.5">
+            {providers.map((p, i) => {
+              const value = Math.round(pct[i] ?? 0)
+              const selected = active === i
+              return (
+                <button
                   key={p.id}
-                  className="mich-lp-row flex items-center gap-3 rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)]/85 px-3.5 py-3.5"
-                  style={{ animationDelay: `${0.35 + i * 0.12}s` }}
+                  type="button"
+                  onMouseEnter={() => setActive(i)}
+                  onFocus={() => setActive(i)}
+                  onClick={() => setActive(i)}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3.5 text-left transition-all duration-300",
+                    selected
+                      ? "border-[var(--mich-blue)]/40 bg-[color-mix(in_srgb,var(--mich-blue)_8%,transparent)]"
+                      : "border-[var(--mich-border)] bg-[var(--mich-surface-muted)] hover:border-[var(--mich-blue)]/25"
+                  )}
                 >
-                  <span className="flex size-11 items-center justify-center rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-1.5 shadow-sm">
+                  <span className="flex size-11 items-center justify-center rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-1.5">
                     <Image
                       src={p.logoSrc}
                       alt={p.shortLabel}
@@ -222,27 +184,24 @@ export function LandingHero({
                     <p className="truncate text-sm font-medium text-[var(--mich-text)]">
                       {p.shortLabel} · recurso.zip
                     </p>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--mich-surface)] ring-1 ring-[var(--mich-border)]">
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--mich-surface)]">
                       <div
-                        className="mich-lp-progress h-full rounded-full"
-                        style={{
-                          width: i === 0 ? "100%" : "78%",
-                          animationDelay: `${0.5 + i * 0.15}s`,
-                        }}
+                        className="mich-dl-bar h-full rounded-full transition-[width] duration-150"
+                        style={{ width: `${value}%` }}
                       />
                     </div>
                   </div>
                   <span className="text-xs font-semibold tabular-nums text-[var(--mich-blue-bright)]">
-                    {i === 0 ? "100%" : "78%"}
+                    {value}%
                   </span>
-                </div>
-              ))}
-            </div>
-
-            <div className="relative mt-5 rounded-2xl border border-dashed border-[var(--mich-border)] bg-[color-mix(in_srgb,var(--mich-blue)_6%,transparent)] px-3.5 py-3.5 text-[12px] leading-5 text-[var(--mich-muted)]">
-              Envato y Magnific por separado · tutorial incluido · mismo dominio
-            </div>
+                </button>
+              )
+            })}
           </div>
+
+          <p className="mt-5 text-[12px] leading-5 text-[var(--mich-muted)]">
+            Pasa el cursor: cada proveedor corre aparte, como en el panel real.
+          </p>
         </div>
       </div>
     </section>

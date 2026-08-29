@@ -166,7 +166,7 @@ export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
       ) : null}
       {state.ok ? (
         <div className="space-y-3 rounded-2xl border border-[color-mix(in_srgb,var(--mich-success)_30%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_10%,transparent)] px-4 py-3">
-          <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-[var(--mich-success)]">
             <CheckCircle2 className="size-4" />
             {state.ok}
           </p>
@@ -177,7 +177,7 @@ export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
               rel="noreferrer"
               className={cn(
                 buttonVariants({ size: "sm" }),
-                "rounded-xl bg-emerald-600 hover:bg-emerald-700"
+                "rounded-xl bg-[#25D366] text-white hover:bg-[#1ebe57]"
               )}
             >
               <MessageCircle />

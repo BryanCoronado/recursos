@@ -10,11 +10,11 @@ import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const LINKS = [
-  { href: "#envato", label: "Envato" },
-  { href: "#magnific", label: "Magnific" },
-  { href: "#como-funciona", label: "Cómo funciona" },
-  { href: "#planes", label: "Planes" },
-  { href: "#faq", label: "FAQ" },
+  { href: "/#envato", label: "Envato" },
+  { href: "/#magnific", label: "Magnific" },
+  { href: "/#planes", label: "Planes" },
+  { href: "/blog", label: "Blog" },
+  { href: "/#faq", label: "FAQ" },
 ] as const
 
 export function LandingNav({
@@ -48,14 +48,14 @@ export function LandingNav({
       className={cn(
         "fixed inset-x-0 top-0 z-40 transition-all duration-300",
         scrolled
-          ? "border-b border-[var(--mich-border)] bg-[var(--mich-surface)]/85 backdrop-blur-xl"
+          ? "border-b border-[var(--mich-border)] bg-[var(--mich-surface)]/90 backdrop-blur-md"
           : "bg-transparent"
       )}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5">
           <BrandLogo width={40} height={40} className="size-9" priority />
-          <span className="font-heading text-[15px] font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
+          <span className="font-heading text-[17px] font-medium tracking-[-0.02em] text-[var(--mich-text)]">
             MICHITECH
           </span>
         </Link>
@@ -65,7 +65,7 @@ export function LandingNav({
             <a
               key={link.href}
               href={link.href}
-              className="rounded-lg px-3 py-2 text-sm text-[var(--mich-muted)] transition hover:bg-[var(--mich-blue)]/8 hover:text-[var(--mich-text)]"
+              className="rounded-xl px-3 py-2 text-sm text-[var(--mich-muted)] transition hover:bg-[var(--mich-surface)] hover:text-[var(--mich-text)]"
             >
               {link.label}
             </a>
@@ -77,7 +77,7 @@ export function LandingNav({
           {loggedIn ? (
             <Link
               href={appHref}
-              className={cn(buttonVariants({ size: "sm" }), "hidden rounded-xl sm:inline-flex")}
+              className={cn(buttonVariants({ size: "sm" }), "hidden rounded-2xl sm:inline-flex")}
             >
               Ir al panel
             </Link>
@@ -94,7 +94,7 @@ export function LandingNav({
               </Link>
               <Link
                 href="/register"
-                className={cn(buttonVariants({ size: "sm" }), "hidden rounded-xl sm:inline-flex")}
+                className={cn(buttonVariants({ size: "sm" }), "hidden rounded-2xl sm:inline-flex")}
               >
                 Crear cuenta
               </Link>

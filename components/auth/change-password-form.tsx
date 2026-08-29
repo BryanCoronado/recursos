@@ -47,7 +47,7 @@ export function ChangePasswordForm() {
       <Button
         type="submit"
         size="lg"
-        className="h-11 w-full bg-gradient-to-r from-[var(--mich-blue)] to-[var(--mich-indigo)] text-white shadow-[0_12px_28px_-14px_var(--mich-glow)] hover:brightness-105"
+        className="h-11 w-full rounded-xl"
         disabled={pending}
       >
         {pending ? <Loader2 className="animate-spin" /> : <KeyRound />}

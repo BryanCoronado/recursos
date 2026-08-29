@@ -22,7 +22,7 @@ export function LandingWordCycle({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "mich-lp-word-cycle relative inline-flex h-[1.15em] min-w-[11.5ch] overflow-hidden align-bottom sm:min-w-[14ch]",
+          "mich-lp-word-cycle relative inline-flex h-[1.15em] min-w-[12ch] overflow-hidden align-bottom text-[var(--mich-blue-bright)] sm:min-w-[15ch]",
         className
       )}
       aria-live="polite"
@@ -30,7 +30,7 @@ export function LandingWordCycle({ className }: { className?: string }) {
       <span
         key={ready ? index : 0}
         className={cn(
-          "mich-lp-gradient-text inline-block whitespace-nowrap",
+          "inline-block whitespace-nowrap",
           ready && "mich-lp-word-in"
         )}
       >

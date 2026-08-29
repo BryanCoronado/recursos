@@ -42,7 +42,7 @@ export function RegisterForm() {
   const dial = useMemo(() => getCountry(country)?.dial ?? "", [country])
 
   const fieldClass =
-    "h-12 rounded-2xl border-[var(--mich-border)] bg-[var(--mich-surface)]/80 text-[var(--mich-text)] shadow-none transition-[border-color,box-shadow,background-color] duration-300 placeholder:text-[var(--mich-muted)]/50 focus-visible:border-[var(--mich-blue)]/55 focus-visible:bg-[var(--mich-surface)] focus-visible:ring-[var(--mich-blue)]/25 focus-visible:shadow-[0_0_0_4px_var(--mich-glow)]"
+    "h-11 rounded-xl border-[var(--mich-border)] bg-[var(--mich-surface)] text-[var(--mich-text)] shadow-none placeholder:text-[var(--mich-muted)]/50 focus-visible:border-[var(--mich-blue)]/55 focus-visible:ring-[var(--mich-blue)]/25"
 
   function toggleProvider(id: "ENVATO" | "MAGNIFIC") {
     setProviders((current) => {
@@ -71,10 +71,10 @@ export function RegisterForm() {
               <label
                 key={opt.id}
                 className={cn(
-                  "flex cursor-pointer gap-3 rounded-2xl border p-3 transition",
+                  "flex cursor-pointer gap-3 rounded-xl border p-3 transition-colors",
                   checked
-                    ? "border-[var(--mich-blue)]/45 bg-[color-mix(in_srgb,var(--mich-blue)_10%,transparent)] shadow-[0_12px_28px_-22px_var(--mich-glow)]"
-                    : "border-[var(--mich-border)] bg-[var(--mich-surface)]/70 hover:border-[var(--mich-blue)]/25"
+                    ? "border-[var(--mich-blue)]/40 bg-[var(--mich-surface-muted)]"
+                    : "border-[var(--mich-border)] hover:border-[var(--mich-blue)]/25"
                 )}
               >
                 <input
@@ -250,19 +250,15 @@ export function RegisterForm() {
       <Button
         type="submit"
         size="lg"
-        className="group relative mt-1 h-12 w-full overflow-hidden rounded-2xl bg-[var(--mich-text)] text-[15px] font-semibold text-[var(--mich-surface)] transition-[transform,box-shadow] duration-300 hover:bg-[var(--mich-text)]/90 hover:shadow-[0_12px_40px_-16px_var(--mich-glow)] active:scale-[0.98] dark:bg-white dark:text-[#0b1220] dark:hover:bg-white/90"
+        className="mt-1 h-11 w-full rounded-2xl text-[15px]"
         disabled={pending || providers.length === 0}
       >
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full dark:via-black/10"
-        />
         {pending ? (
           <Loader2 className="animate-spin" />
         ) : (
           <>
             Crear cuenta
-            <ArrowRight className="size-4 transition group-hover:translate-x-0.5" />
+            <ArrowRight className="size-4" />
           </>
         )}
       </Button>

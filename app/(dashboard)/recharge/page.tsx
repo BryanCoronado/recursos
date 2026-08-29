@@ -3,7 +3,6 @@ import {
   Check,
   Headphones,
   MessageCircle,
-  Sparkles,
   Zap,
 } from "lucide-react"
 
@@ -78,50 +77,43 @@ export default async function RechargePage() {
   const readyCount = providerStates.filter((s) => s.membership).length
 
   return (
-    <div className="space-y-10">
-      <section className="mich-page-card relative isolate px-6 py-10 sm:px-10">
-        <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-xl">
-            <p className="mb-3 font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
-              MICHITECH · Recarga
-            </p>
-            <h1 className="font-heading text-4xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-5xl">
-              Recarga tu acceso
-            </h1>
-            <p className="mt-4 text-[15px] leading-7 text-[var(--mich-muted)]">
-              Planes según tus proveedores activos
-              {providerStates.length === 1
-                ? ` (${providerStates[0].provider.shortLabel})`
-                : ""}
-              . 1 dispositivo incluido; +S/ {EXTRA_DEVICE_MONTHLY_SOLES}/mes por
-              cada extra. Escribe por WhatsApp y lo activamos.
-            </p>
-            <div className="mt-5 flex items-center gap-2">
-              {providerStates.map(({ provider: p }) => (
-                <span
-                  key={p.id}
-                  className="flex size-10 items-center justify-center rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)]/80 p-1.5"
-                >
-                  <Image
-                    src={p.logoSrc}
-                    alt={p.shortLabel}
-                    width={28}
-                    height={28}
-                    unoptimized
-                    className="size-7 object-contain"
-                  />
-                </span>
-              ))}
-              <span className="ml-1 text-xs text-[var(--mich-muted)]">
-                {readyCount}/{Math.max(providerStates.length, 1)} con membresía
-                activa
-              </span>
-            </div>
-          </div>
-
-          <div className="grid min-w-[260px] gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            {providerStates.map(
-              ({ provider, membership, downloadAccess, deviceUsed }) => (
+    <div className="space-y-8">
+      <section>
+        <h1 className="font-heading text-3xl font-medium tracking-[-0.03em] text-[var(--mich-text)] sm:text-4xl">
+          Recarga
+        </h1>
+        <p className="mt-2 max-w-xl text-[15px] leading-7 text-[var(--mich-muted)]">
+          Planes según tus proveedores
+          {providerStates.length === 1
+            ? ` (${providerStates[0].provider.shortLabel})`
+            : ""}
+          . 1 dispositivo incluido. Extra +S/ {EXTRA_DEVICE_MONTHLY_SOLES} / $
+          {EXTRA_DEVICE_MONTHLY_USD} USD. Activación por WhatsApp.
+        </p>
+        <div className="mt-4 flex items-center gap-2">
+          {providerStates.map(({ provider: p }) => (
+            <span
+              key={p.id}
+              className="flex size-9 items-center justify-center rounded-lg border border-[var(--mich-border)] p-1.5"
+            >
+              <Image
+                src={p.logoSrc}
+                alt={p.shortLabel}
+                width={24}
+                height={24}
+                unoptimized
+                className="size-6 object-contain"
+              />
+            </span>
+          ))}
+          <span className="ml-1 text-xs text-[var(--mich-muted)]">
+            {readyCount}/{Math.max(providerStates.length, 1)} con membresía
+            activa
+          </span>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          {providerStates.map(
+            ({ provider, membership, downloadAccess, deviceUsed }) => (
               <ProviderStatusCard
                 key={provider.id}
                 logoSrc={provider.logoSrc}
@@ -131,8 +123,7 @@ export default async function RechargePage() {
                 deviceUsed={deviceUsed}
               />
             )
-            )}
-          </div>
+          )}
         </div>
       </section>
 
@@ -179,13 +170,12 @@ export default async function RechargePage() {
                 <article
                   key={`${provider.id}-${key}`}
                   className={cn(
-                    "mich-soft-card relative flex flex-col overflow-hidden p-6 transition-transform duration-300 hover:-translate-y-1",
-                    plan.highlight &&
-                      "border-[var(--mich-blue)]/50 shadow-[0_24px_50px_-28px_var(--mich-glow)]"
+                    "mich-soft-card mich-hover-card relative flex flex-col p-5 sm:p-6",
+                    plan.highlight && "border-[var(--mich-blue)]/45"
                   )}
                 >
                   {plan.highlight ? (
-                    <span className="absolute right-4 top-4 rounded-full bg-[linear-gradient(135deg,var(--mich-blue),var(--mich-indigo))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
+                    <span className="absolute right-4 top-4 rounded-full bg-[var(--mich-blue)] px-2.5 py-0.5 text-[11px] font-medium text-white">
                       Recomendado
                     </span>
                   ) : null}
@@ -199,16 +189,16 @@ export default async function RechargePage() {
                       unoptimized
                       className="size-5 object-contain"
                     />
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--mich-blue-bright)]">
+                    <p className="text-[12px] text-[var(--mich-muted)]">
                       {plan.tagline}
                     </p>
                   </div>
-                  <h3 className="font-heading text-2xl font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
+                  <h3 className="font-heading text-2xl font-semibold tracking-[-0.03em]">
                     {plan.label}
                   </h3>
 
                   <div className="mt-5 flex items-end gap-2">
-                    <span className="font-heading text-4xl font-semibold tracking-[-0.04em] text-[var(--mich-text)]">
+                    <span className="font-heading text-4xl font-semibold tracking-[-0.04em]">
                       S/ {total}
                     </span>
                     {save > 0 ? (
@@ -254,7 +244,7 @@ export default async function RechargePage() {
                       buttonVariants({
                         variant: plan.highlight ? "default" : "outline",
                       }),
-                      "mt-8 w-full justify-center rounded-xl"
+                      "mt-8 w-full justify-center rounded-2xl transition-transform hover:-translate-y-0.5"
                     )}
                   >
                     <MessageCircle />
@@ -272,7 +262,7 @@ export default async function RechargePage() {
           href={whatsappRechargeUrl(user.name, user.email)}
           target="_blank"
           rel="noreferrer"
-          className="group mich-soft-card relative overflow-hidden bg-[linear-gradient(135deg,rgba(79,143,232,0.14),rgba(63,81,181,0.08))] p-6 transition-transform hover:-translate-y-0.5"
+          className="mich-soft-card p-5 sm:p-6"
         >
           <MessageCircle className="mb-4 size-8 text-[var(--mich-blue-bright)]" />
           <h3 className="font-heading text-xl font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
@@ -286,7 +276,7 @@ export default async function RechargePage() {
           href={supportUrl}
           target="_blank"
           rel="noreferrer"
-          className="group mich-soft-card relative overflow-hidden p-6 transition-transform hover:-translate-y-0.5"
+          className="mich-soft-card p-5 sm:p-6"
         >
           <Headphones className="mb-4 size-8 text-[var(--mich-indigo)]" />
           <h3 className="font-heading text-xl font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
@@ -316,7 +306,7 @@ function ProviderStatusCard({
   deviceUsed: number
 }) {
   return (
-    <div className="mich-soft-card px-4 py-3 backdrop-blur">
+    <div className="mich-soft-card px-4 py-3">
       <div className="mb-2 flex items-center gap-2 text-sm font-medium text-[var(--mich-text)]">
         <Image
           src={logoSrc}
@@ -327,7 +317,6 @@ function ProviderStatusCard({
           className="size-5 object-contain"
         />
         {label}
-        <Sparkles className="ml-auto size-3.5 text-[var(--mich-blue-bright)]" />
       </div>
       {membership ? (
         <div className="space-y-2 text-sm">

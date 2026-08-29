@@ -272,44 +272,27 @@ export function ProviderDownloadForm({
   }, [jobId, jobActive, getJob])
 
   return (
-    <div className="grid grid-cols-1 gap-5 lg:h-[calc(100vh-7.25rem)] lg:min-h-[32rem] lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.95fr)] lg:gap-5">
-      {/* Izquierda: descargar */}
-      <section className="mich-page-card relative flex min-h-0 flex-col overflow-y-auto px-6 py-6 sm:px-7 sm:py-7 lg:h-full">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-0 opacity-50"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(79,143,232,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(79,143,232,0.07) 1px, transparent 1px)",
-            backgroundSize: "42px 42px",
-            maskImage:
-              "radial-gradient(ellipse at 20% 0%, black 12%, transparent 70%)",
-          }}
-        />
-
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-          <div className="flex items-start gap-4">
-            <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-2.5 shadow-[0_12px_30px_-16px_var(--mich-glow)]">
+    <div className="grid grid-cols-1 gap-4 lg:h-[calc(100vh-7.25rem)] lg:min-h-[32rem] lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.95fr)]">
+      <section className="mich-page-card relative flex min-h-0 flex-col overflow-y-auto px-5 py-5 sm:px-6 sm:py-6 lg:h-full">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex items-start gap-3.5">
+            <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] p-2">
               <Image
                 src={def.logoSrc}
                 alt={def.shortLabel}
-                width={56}
-                height={56}
+                width={40}
+                height={40}
                 unoptimized
-                className="size-11 object-contain"
+                className="size-8 object-contain"
                 priority
               />
             </div>
-            <div className="min-w-0 pt-0.5">
-              <p className="font-heading text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--mich-blue-bright)]">
-                Módulo de recursos
-              </p>
-              <h1 className="font-heading mt-1 text-3xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-4xl">
+            <div className="min-w-0">
+              <h1 className="font-heading text-3xl font-medium tracking-[-0.03em] text-[var(--mich-text)] sm:text-4xl">
                 {def.shortLabel}
               </h1>
-              <p className="mt-2 max-w-md text-[14px] leading-6 text-[var(--mich-muted)]">
-                Pega el enlace de {def.label} y descarga el recurso con la
-                sesión sincronizada.
+              <p className="mt-1.5 max-w-md text-[15px] leading-6 text-[var(--mich-muted)]">
+                Pega el enlace. El zip aparece aquí.
               </p>
             </div>
           </div>
@@ -366,7 +349,7 @@ export function ProviderDownloadForm({
           <form action={formAction} className="mt-6 space-y-3">
             <label
               htmlFor={`${provider}-url`}
-              className="block text-left text-xs font-medium uppercase tracking-[0.14em] text-[var(--mich-muted)]"
+              className="block text-left text-sm font-medium text-[var(--mich-muted)]"
             >
               Enlace del recurso
             </label>
@@ -380,12 +363,12 @@ export function ProviderDownloadForm({
               aria-label={`URL de ${def.label}`}
               placeholder={def.sampleUrlPlaceholder}
               autoFocus
-              className="h-12 rounded-2xl border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-4 text-base text-[var(--mich-text)] shadow-[var(--mich-shadow-soft)] placeholder:text-[var(--mich-muted)]/55 focus-visible:border-[var(--mich-blue)]/55 focus-visible:ring-[var(--mich-blue)]/25"
+              className="h-12 rounded-xl border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-4 text-base text-[var(--mich-text)] placeholder:text-[var(--mich-muted)]/55 focus-visible:border-[var(--mich-text)]/30 focus-visible:ring-[var(--mich-text)]/15"
             />
             <Button
               type="submit"
               disabled={!sessionReady || pending || !quota.allowed}
-              className="h-11 rounded-2xl px-7 shadow-[0_12px_28px_-16px_var(--mich-glow)]"
+              className="h-12 rounded-xl px-6"
             >
               {pending ? <Loader2 className="animate-spin" /> : <Download />}
               Descargar recurso
@@ -458,8 +441,8 @@ export function ProviderDownloadForm({
                 ) : null}
               </DownloadProgressCard>
             ) : (
-              <div className="rounded-2xl border border-dashed border-[var(--mich-border)] bg-[color-mix(in_srgb,var(--mich-surface-muted)_55%,transparent)] px-4 py-5 text-sm text-[var(--mich-muted)]">
-                Cuando inicies una descarga, el progreso aparecerá aquí.
+              <div className="rounded-xl border border-dashed border-[var(--mich-border)] px-4 py-4 text-sm text-[var(--mich-muted)]">
+                El progreso de la descarga aparecerá aquí.
               </div>
             )}
           </div>
@@ -468,19 +451,18 @@ export function ProviderDownloadForm({
 
       {/* Derecha: historial */}
       <section className="mich-page-card relative flex min-h-[22rem] flex-col lg:h-full lg:min-h-0">
-        <div className="relative z-10 flex shrink-0 items-center justify-between gap-3 border-b border-[var(--mich-border)] px-5 py-4 sm:px-6">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--mich-border)] px-5 py-3.5">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-heading text-lg font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
+              <h2 className="font-heading text-base font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
                 Historial
               </h2>
               {history.length > 0 ? (
-                <span className="mich-chip">{history.length}</span>
+                <span className="text-xs tabular-nums text-[var(--mich-muted)]">
+                  {history.length}
+                </span>
               ) : null}
             </div>
-            <p className="mt-0.5 text-sm text-[var(--mich-muted)]">
-              Últimas en {def.shortLabel}
-            </p>
           </div>
           <Button
             type="button"
@@ -497,26 +479,20 @@ export function ProviderDownloadForm({
           </Button>
         </div>
 
-        <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4">
           {history.length === 0 ? (
-            <div className="flex h-full min-h-[12rem] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--mich-border)] bg-[color-mix(in_srgb,var(--mich-surface-muted)_70%,transparent)] px-5 text-center">
-              <span className="mb-3 flex size-11 items-center justify-center rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface)] text-[var(--mich-blue)] shadow-[var(--mich-shadow-soft)]">
-                <Download className="size-5" />
-              </span>
-              <p className="font-heading text-sm font-semibold text-[var(--mich-text)]">
-                Sin descargas todavía
+            <div className="flex h-full min-h-[12rem] flex-col items-center justify-center px-5 text-center">
+              <p className="text-sm font-medium text-[var(--mich-text)]">
+                Sin descargas
               </p>
-              <p className="mx-auto mt-1.5 max-w-[15rem] text-sm leading-6 text-[var(--mich-muted)]">
-                Pega un enlace a la izquierda y aparecerán aquí.
+              <p className="mt-1 text-sm text-[var(--mich-muted)]">
+                Pega un enlace a la izquierda.
               </p>
             </div>
           ) : (
-            <ul className="space-y-3">
+            <ul className="divide-y divide-[var(--mich-border)]">
               {history.map((item) => (
-                <li
-                  key={item.id}
-                  className="mich-soft-card rounded-[1.15rem] p-3.5 transition-colors hover:border-[var(--mich-blue)]/30"
-                >
+                <li key={item.id} className="px-1 py-3.5">
                   <div className="min-w-0 space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
                       <StatusBadge status={item.status} />
