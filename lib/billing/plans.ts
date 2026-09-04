@@ -8,9 +8,9 @@ import {
   type ResourceProviderId,
 } from "@/lib/providers/catalog"
 
-export const MONTHLY_PRICE_SOLES = 20
-/** Precio público en USD (equivalente redondeado de S/ 20). */
-export const MONTHLY_PRICE_USD = 6
+export const MONTHLY_PRICE_SOLES = 15
+/** Precio público en USD (equivalente redondeado de S/ 15). */
+export const MONTHLY_PRICE_USD = 5
 export const FREE_DOWNLOAD_LIMIT = 2
 /**
  * Tope suave por IP en plan gratis (misma red / móvil).
@@ -33,24 +33,24 @@ export const SUBSCRIPTION_PLANS = {
     months: 1,
     label: "1 mes",
     tagline: "Flexible",
-    totalSoles: 20,
-    totalUsd: 6,
+    totalSoles: 15,
+    totalUsd: 5,
     highlight: false,
   },
   QUARTERLY: {
     months: 3,
     label: "3 meses",
     tagline: "Más elegido",
-    totalSoles: 54,
-    totalUsd: 15,
+    totalSoles: 40,
+    totalUsd: 12,
     highlight: true,
   },
   YEARLY: {
     months: 12,
     label: "1 año",
     tagline: "Mejor precio",
-    totalSoles: 180,
-    totalUsd: 49,
+    totalSoles: 135,
+    totalUsd: 40,
     highlight: false,
   },
 } as const

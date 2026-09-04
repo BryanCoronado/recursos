@@ -7,15 +7,15 @@ import { RegisterForm } from "@/components/auth/register-form"
 import { authOptions } from "@/lib/auth/config"
 
 export const metadata: Metadata = {
-  title: "Crear cuenta gratis | Descargar Envato Elements y Magnific",
+  title: "Crear cuenta gratis | Descargar Envato Elements",
   description:
-    "Regístrate en MICHITECH y descarga Envato Elements o Magnific. 2 descargas gratis. Membresías desde S/ 20 o $6 USD al mes en Perú.",
+    "Regístrate en MICHITECH y descarga Envato Elements. 2 descargas gratis. Membresías desde S/ 15 o $5 USD al mes en Perú.",
   alternates: { canonical: "/register" },
   robots: { index: true, follow: true },
   openGraph: {
     title: "Crear cuenta MICHITECH",
     description:
-      "Empieza gratis: Envato Elements y Magnific con tutorial, historial y progreso en vivo.",
+      "Empieza gratis: Envato Elements con tutorial, historial y progreso en vivo.",
     url: "/register",
   },
 }
@@ -27,7 +27,7 @@ export default async function RegisterPage() {
   return (
     <AuthShell
       headline="Empieza gratis en minutos."
-      subline="Elige Envato, Magnific o ambos. 2 descargas de prueba y membresía cuando la necesites."
+      subline="Crea tu cuenta para Envato Elements. 2 descargas de prueba y membresía cuando la necesites."
       formTitle="Crear cuenta"
       formSubtitle="Registro rápido. Sin tarjeta."
     >

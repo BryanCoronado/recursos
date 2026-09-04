@@ -44,9 +44,9 @@ import { SITE, absoluteUrl, whatsappInfoUrl } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
 const TITLE =
-  "Descargar Envato Elements y Magnific en Perú | MICHITECH desde S/ 20 o $6 USD"
+  "Descargar Envato Elements y Magnific en Perú | MICHITECH desde S/ 15 o $5 USD"
 const DESCRIPTION =
-  "Descarga Envato Elements y Magnific online con MICHITECH. Paneles separados, tutorial, historial y progreso en vivo. 2 descargas gratis. Membresía desde S/ 20 o $6 USD al mes. Activación por WhatsApp en Perú y Latinoamérica."
+  "Descarga Envato Elements y Magnific online con MICHITECH. Paneles separados, tutorial, historial y progreso en vivo. 2 descargas gratis. Membresía desde S/ 15 o $5 USD al mes. Activación por WhatsApp en Perú y Latinoamérica."
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
@@ -142,11 +142,11 @@ const FAQ = [
   },
   {
     q: "¿Cuánto cuesta la membresía en soles y dólares?",
-    a: `Desde S/ ${MONTHLY_PRICE_SOLES} o $${MONTHLY_PRICE_USD} USD al mes. Pack 3 meses: S/ 54 / $15 USD. Pack 1 año: S/ 180 / $49 USD. La activación es por WhatsApp.`,
+    a: `Desde S/ ${MONTHLY_PRICE_SOLES} o $${MONTHLY_PRICE_USD} USD al mes. Pack 3 meses: S/ ${planTotalSoles("QUARTERLY")} / $${planTotalUsd("QUARTERLY")} USD. Pack 1 año: S/ ${planTotalSoles("YEARLY")} / $${planTotalUsd("YEARLY")} USD. La activación es por WhatsApp.`,
   },
   {
     q: "¿Puedo pagar en dólares?",
-    a: `Sí. Publicamos el equivalente en USD (1 mes $${MONTHLY_PRICE_USD}, 3 meses $15, 1 año $49). Coordina el pago por WhatsApp en soles o dólares.`,
+    a: `Sí. Publicamos el equivalente en USD (1 mes $${MONTHLY_PRICE_USD}, 3 meses $${planTotalUsd("QUARTERLY")}, 1 año $${planTotalUsd("YEARLY")}). Coordina el pago por WhatsApp en soles o dólares.`,
   },
   {
     q: "¿Cuántos dispositivos puedo usar?",
@@ -624,7 +624,9 @@ export default async function LandingPage() {
                 Empiezas con {FREE_DOWNLOAD_LIMIT} descargas gratis por
                 proveedor. La membresía ilimitada cuesta desde S/{" "}
                 {MONTHLY_PRICE_SOLES} o ${MONTHLY_PRICE_USD} USD al mes, con
-                packs de 3 meses (S/ 54 / $15 USD) y 1 año (S/ 180 / $49 USD).
+                packs de 3 meses (S/ {planTotalSoles("QUARTERLY")} / $
+                {planTotalUsd("QUARTERLY")} USD) y 1 año (S/{" "}
+                {planTotalSoles("YEARLY")} / ${planTotalUsd("YEARLY")} USD).
                 Pagas en soles o dólares por WhatsApp y activamos el plan el
                 mismo día.
               </p>

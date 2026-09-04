@@ -68,7 +68,7 @@ export default async function OpenGraphImage() {
             Descarga Envato Elements y Magnific online
           </div>
           <div style={{ fontSize: 28, color: "#95a6bf", maxWidth: 900 }}>
-            Paneles separados · tutorial · historial en vivo · desde S/ 20 o $6
+            Paneles separados · tutorial · historial en vivo · desde S/ 15 o $5
             USD / mes
           </div>
         </div>

@@ -171,7 +171,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: "como-descargar-envato-elements-en-peru",
     title: "Cómo descargar Envato Elements en Perú (paso a paso)",
     description:
-      "Guía para descargar Envato Elements online en Perú: copiar la URL, pegarla en MICHITECH, ver el progreso y bajar el ZIP. 2 descargas gratis. Desde S/ 20 o $6 USD al mes.",
+      "Guía para descargar Envato Elements online en Perú: copiar la URL, pegarla en MICHITECH, ver el progreso y bajar el ZIP. 2 descargas gratis. Desde S/ 15 o $5 USD al mes.",
     excerpt:
       "No necesitas VPN rara ni adivinar el flujo. Cuatro pasos: busca, copia, pega, descarga. Pensado para Perú y el resto de Latam.",
     date: "2026-08-04",
@@ -247,7 +247,7 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         type: "p",
-        text: `Membresía desde S/ ${MONTHLY_PRICE_SOLES} o $${MONTHLY_PRICE_USD} USD al mes. Pack 3 meses: S/ 54 / $15 USD. Pack 1 año: S/ 180 / $49 USD. Incluye 1 dispositivo; extra +S/ 10 / $3 USD al mes. Pagas en soles o dólares y lo activamos el mismo día.`,
+        text: `Membresía desde S/ ${MONTHLY_PRICE_SOLES} o $${MONTHLY_PRICE_USD} USD al mes. Pack 3 meses: S/ 40 / $12 USD. Pack 1 año: S/ 135 / $40 USD. Incluye 1 dispositivo; extra +S/ 10 / $3 USD al mes. Pagas en soles o dólares y lo activamos el mismo día.`,
       },
     ],
   },
@@ -316,7 +316,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: "cuanto-cuesta-envato-elements",
     title: "Cuánto cuesta Envato Elements y qué alternativa hay en Perú",
     description:
-      "La membresía oficial de Envato Elements suele superar los 16 USD al mes. En MICHITECH descargas desde S/ 20 o $6 USD, con 2 pruebas gratis y pago por WhatsApp en soles o dólares.",
+      "La membresía oficial de Envato Elements suele superar los 16 USD al mes. En MICHITECH descargas desde S/ 15 o $5 USD, con 2 pruebas gratis y pago por WhatsApp en soles o dólares.",
     excerpt:
       "Si el precio oficial se te va del presupuesto, compara números: prueba gratis, planes en PEN y USD, y activación el mismo día.",
     date: "2026-08-12",
@@ -348,8 +348,8 @@ export const BLOG_POSTS: BlogPost[] = [
         items: [
           `Prueba: ${FREE_DOWNLOAD_LIMIT} descargas gratis por proveedor, sin tarjeta.`,
           `1 mes: S/ ${MONTHLY_PRICE_SOLES} o $${MONTHLY_PRICE_USD} USD.`,
-          "3 meses: S/ 54 o $15 USD (el más pedido).",
-          "1 año: S/ 180 o $49 USD.",
+          "3 meses: S/ 40 o $12 USD (el más pedido).",
+          "1 año: S/ 135 o $40 USD.",
           "1 dispositivo incluido; extra +S/ 10 / $3 USD al mes.",
         ],
       },

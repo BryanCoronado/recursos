@@ -6,10 +6,6 @@ import { z } from "zod"
 
 import { resolveClientRoleId } from "@/lib/auth/client-roles"
 import { buildE164Phone, COUNTRIES } from "@/lib/geo/countries"
-import {
-  RESOURCE_PROVIDERS,
-  type ResourceProviderId,
-} from "@/lib/providers/catalog"
 import { prisma } from "@/lib/prisma"
 
 export type RegisterActionState = {
@@ -38,8 +34,8 @@ const registerSchema = z
       .max(100),
     confirmPassword: z.string(),
     providers: z
-      .array(z.enum(["ENVATO", "MAGNIFIC"]))
-      .min(1, "Elige al menos Envato o Magnific"),
+      .array(z.enum(["ENVATO"]))
+      .min(1, "El registro es solo para Envato por ahora"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Las contraseñas no coinciden",
@@ -60,12 +56,8 @@ export async function registerClient(
   _state: RegisterActionState,
   formData: FormData
 ): Promise<RegisterActionState> {
-  const rawProviders = formData
-    .getAll("providers")
-    .map(String)
-    .filter((p): p is ResourceProviderId =>
-      (RESOURCE_PROVIDERS as readonly string[]).includes(p)
-    )
+  // Magnific aún no está disponible en el registro público.
+  const providers: Array<"ENVATO"> = ["ENVATO"]
 
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
@@ -74,7 +66,7 @@ export async function registerClient(
     phone: formData.get("phone"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
-    providers: rawProviders,
+    providers,
   })
 
   if (!parsed.success) {

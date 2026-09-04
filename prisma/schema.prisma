@@ -225,7 +225,7 @@ enum SubscriptionPlan {
   YEARLY
 }
 
-/// Membresía de un proveedor (ej. Envato a S/ 20 por mes).
+/// Membresía de un proveedor (ej. Envato a S/ 15 por mes).
 model Membership {
   id                String             @id @default(cuid())
   userId            String

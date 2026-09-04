@@ -12,22 +12,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { COUNTRIES, getCountry } from "@/lib/geo/countries"
-import { cn } from "@/lib/utils"
-
-const PROVIDER_OPTIONS = [
-  {
-    id: "ENVATO" as const,
-    label: "Envato Elements",
-    hint: "Plantillas, stock y más · cupo gratis propio",
-    logoSrc: "/envato.png",
-  },
-  {
-    id: "MAGNIFIC" as const,
-    label: "Magnific",
-    hint: "Recursos Magnific · cupo gratis propio",
-    logoSrc: "/magnific.png",
-  },
-]
 
 export function RegisterForm() {
   const [state, formAction, pending] = useActionState(
@@ -35,81 +19,36 @@ export function RegisterForm() {
     {} as RegisterActionState
   )
   const [country, setCountry] = useState("PE")
-  const [providers, setProviders] = useState<Array<"ENVATO" | "MAGNIFIC">>([
-    "ENVATO",
-  ])
 
   const dial = useMemo(() => getCountry(country)?.dial ?? "", [country])
 
   const fieldClass =
     "h-11 rounded-xl border-[var(--mich-border)] bg-[var(--mich-surface)] text-[var(--mich-text)] shadow-none placeholder:text-[var(--mich-muted)]/50 focus-visible:border-[var(--mich-blue)]/55 focus-visible:ring-[var(--mich-blue)]/25"
 
-  function toggleProvider(id: "ENVATO" | "MAGNIFIC") {
-    setProviders((current) => {
-      if (current.includes(id)) {
-        if (current.length === 1) return current
-        return current.filter((p) => p !== id)
-      }
-      return [...current, id]
-    })
-  }
-
   return (
     <form action={formAction} className="mich-auth-stagger space-y-4">
-      <fieldset className="space-y-2">
-        <legend className="text-[13px] font-medium text-[var(--mich-text)]">
-          ¿Qué quieres descargar?
-        </legend>
-        <p className="text-[12px] leading-5 text-[var(--mich-muted)]">
-          Puedes elegir uno o ambos. Cada proveedor tiene su propio panel y
-          cupo gratis.
-        </p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {PROVIDER_OPTIONS.map((opt) => {
-            const checked = providers.includes(opt.id)
-            return (
-              <label
-                key={opt.id}
-                className={cn(
-                  "flex cursor-pointer gap-3 rounded-xl border p-3 transition-colors",
-                  checked
-                    ? "border-[var(--mich-blue)]/40 bg-[var(--mich-surface-muted)]"
-                    : "border-[var(--mich-border)] hover:border-[var(--mich-blue)]/25"
-                )}
-              >
-                <input
-                  type="checkbox"
-                  name="providers"
-                  value={opt.id}
-                  checked={checked}
-                  onChange={() => toggleProvider(opt.id)}
-                  className="mt-1"
-                />
-                <span className="flex min-w-0 items-start gap-2.5">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-1.5">
-                    <Image
-                      src={opt.logoSrc}
-                      alt=""
-                      width={24}
-                      height={24}
-                      unoptimized
-                      className="size-6 object-contain"
-                    />
-                  </span>
-                  <span>
-                    <span className="block text-sm font-semibold text-[var(--mich-text)]">
-                      {opt.label}
-                    </span>
-                    <span className="mt-0.5 block text-[11px] leading-4 text-[var(--mich-muted)]">
-                      {opt.hint}
-                    </span>
-                  </span>
-                </span>
-              </label>
-            )
-          })}
+      <input type="hidden" name="providers" value="ENVATO" />
+
+      <div className="flex items-center gap-3 rounded-xl border border-[var(--mich-blue)]/35 bg-[var(--mich-surface-muted)] p-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface)] p-1.5">
+          <Image
+            src="/envato.png"
+            alt=""
+            width={24}
+            height={24}
+            unoptimized
+            className="size-6 object-contain"
+          />
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-[var(--mich-text)]">
+            Envato Elements
+          </p>
+          <p className="mt-0.5 text-[11px] leading-4 text-[var(--mich-muted)]">
+            Panel y cupo gratis listos. Magnific se habilitará más adelante.
+          </p>
         </div>
-      </fieldset>
+      </div>
 
       <div className="space-y-2">
         <label
@@ -251,7 +190,7 @@ export function RegisterForm() {
         type="submit"
         size="lg"
         className="mt-1 h-11 w-full rounded-2xl text-[15px]"
-        disabled={pending || providers.length === 0}
+        disabled={pending}
       >
         {pending ? (
           <Loader2 className="animate-spin" />
