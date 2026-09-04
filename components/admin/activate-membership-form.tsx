@@ -1,39 +1,49 @@
 "use client"
 
+import Image from "next/image"
 import { useActionState, useEffect, useMemo, useState } from "react"
-import { CheckCircle2, Loader2, MessageCircle } from "lucide-react"
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+  MessageCircle,
+  Minus,
+  Plus,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import {
   activateMembership,
   type MembershipActionState,
 } from "@/app/(dashboard)/subscriptions/actions"
-import { ProviderSelect } from "@/components/providers/provider-select"
+import { UserPicker, type PickerUser } from "@/components/admin/user-picker"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   EXTRA_DEVICE_MONTHLY_SOLES,
   MAX_DEVICES,
   MIN_DEVICES,
-  MONTHLY_PRICE_SOLES,
   SUBSCRIPTION_PLANS,
   membershipTotalSoles,
+  planPerMonthSoles,
+  planSavingsSoles,
   type SubscriptionPlanKey,
 } from "@/lib/billing/plans"
+import {
+  PROVIDERS,
+  RESOURCE_PROVIDERS,
+  type ResourceProviderId,
+} from "@/lib/providers/catalog"
 import { cn } from "@/lib/utils"
 
-type UserOption = {
-  id: string
-  name: string
-  email: string
-  phone?: string | null
-}
+const PLAN_KEYS = Object.keys(SUBSCRIPTION_PLANS) as SubscriptionPlanKey[]
 
-export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
+export function ActivateMembershipForm({ users }: { users: PickerUser[] }) {
   const [state, action, pending] = useActionState(
     activateMembership,
     {} as MembershipActionState
   )
+  const [provider, setProvider] = useState<ResourceProviderId>("ENVATO")
   const [plan, setPlan] = useState<SubscriptionPlanKey>("MONTHLY")
   const [maxDevices, setMaxDevices] = useState(1)
   const [userId, setUserId] = useState("")
@@ -46,12 +56,21 @@ export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
   const extras = Math.max(0, maxDevices - 1)
   const extraTotal = extras * EXTRA_DEVICE_MONTHLY_SOLES * months
   const selected = users.find((u) => u.id === userId)
+  const endsAt = useMemo(() => {
+    const date = new Date()
+    date.setMonth(date.getMonth() + months)
+    return date
+  }, [months])
+
+  const alreadyActive = Boolean(
+    selected?.activeProviders?.includes(PROVIDERS[provider].shortLabel)
+  )
 
   useEffect(() => {
     if (state.ok) {
-      toast.success("Membresía activada", {
-        description: state.ok,
-      })
+      toast.success("Membresía activada", { description: state.ok })
+      setUserId("")
+      setMaxDevices(1)
     }
     if (state.error) {
       toast.error("No se pudo activar", { description: state.error })
@@ -59,113 +78,192 @@ export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
   }, [state.ok, state.error, state.membershipId])
 
   return (
-    <form action={action} className="space-y-4">
-      <ProviderSelect name="provider" defaultValue="ENVATO" />
-
+    <form action={action} className="space-y-5">
       <div className="space-y-1.5">
-        <label htmlFor="userId" className="text-sm font-medium">
+        <label className="text-sm font-medium text-[var(--mich-text)]">
           Cliente
         </label>
-        <select
-          id="userId"
-          name="userId"
-          required
+        <UserPicker
+          users={users}
           value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          className="h-10 w-full rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-3 text-sm"
-        >
-          <option value="">Selecciona un usuario</option>
-          {users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.name} — {user.email}
-              {user.phone ? ` · ${user.phone}` : ""}
-            </option>
-          ))}
-        </select>
+          onChange={setUserId}
+          disabled={pending}
+        />
         {selected && !selected.phone ? (
-          <p className="text-xs text-[var(--mich-warning)]">
-            Este usuario no tiene celular: no podrás avisar por WhatsApp
+          <p className="flex items-start gap-1.5 text-xs text-[var(--mich-warning)]">
+            <AlertTriangle className="mt-0.5 size-3 shrink-0" />
+            Sin celular en el perfil: no podrás avisar por WhatsApp
             automáticamente.
+          </p>
+        ) : null}
+        {alreadyActive ? (
+          <p className="flex items-start gap-1.5 text-xs text-[var(--mich-warning)]">
+            <AlertTriangle className="mt-0.5 size-3 shrink-0" />
+            Ya tiene una membresía activa de{" "}
+            {PROVIDERS[provider].shortLabel}. Al activar otra se reemplaza la
+            vigencia.
           </p>
         ) : null}
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="plan" className="text-sm font-medium">
-          Plan (S/ {MONTHLY_PRICE_SOLES}/mes base)
+        <label className="text-sm font-medium text-[var(--mich-text)]">
+          Proveedor
         </label>
-        <select
-          id="plan"
-          name="plan"
-          required
-          value={plan}
-          onChange={(e) => setPlan(e.target.value as SubscriptionPlanKey)}
-          className="h-10 w-full rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-3 text-sm"
-        >
-          {(
-            Object.keys(SUBSCRIPTION_PLANS) as Array<keyof typeof SUBSCRIPTION_PLANS>
-          ).map((key) => {
-            const p = SUBSCRIPTION_PLANS[key]
+        <div className="grid gap-2 sm:grid-cols-2">
+          {RESOURCE_PROVIDERS.map((id) => {
+            const item = PROVIDERS[id]
+            const active = provider === id
             return (
-              <option key={key} value={key}>
-                {p.label} — base S/ {p.totalSoles}
-                {key !== "MONTHLY" ? " (descuento)" : ""}
-              </option>
+              <label
+                key={id}
+                className={cn(
+                  "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition-colors",
+                  active
+                    ? "border-[var(--mich-blue)]/55 bg-[var(--mich-blue)]/8"
+                    : "border-[var(--mich-border)] bg-[var(--mich-surface-muted)] hover:border-[var(--mich-blue)]/35"
+                )}
+              >
+                <input
+                  type="radio"
+                  name="provider"
+                  value={id}
+                  checked={active}
+                  onChange={() => setProvider(id)}
+                  disabled={pending}
+                  className="sr-only"
+                />
+                <Image
+                  src={item.logoSrc}
+                  alt=""
+                  width={24}
+                  height={24}
+                  unoptimized
+                  className="size-6 object-contain"
+                />
+                <span className="font-medium text-[var(--mich-text)]">
+                  {item.shortLabel}
+                </span>
+              </label>
             )
           })}
-        </select>
+        </div>
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="maxDevices" className="text-sm font-medium">
+        <label className="text-sm font-medium text-[var(--mich-text)]">
+          Plan
+        </label>
+        <input type="hidden" name="plan" value={plan} />
+        <div className="grid gap-2 sm:grid-cols-3">
+          {PLAN_KEYS.map((key) => {
+            const item = SUBSCRIPTION_PLANS[key]
+            const active = plan === key
+            const save = planSavingsSoles(key)
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setPlan(key)}
+                disabled={pending}
+                className={cn(
+                  "rounded-xl border px-3 py-3 text-left transition-colors",
+                  active
+                    ? "border-[var(--mich-blue)]/55 bg-[var(--mich-blue)]/8"
+                    : "border-[var(--mich-border)] bg-[var(--mich-surface-muted)] hover:border-[var(--mich-blue)]/35"
+                )}
+              >
+                <span className="block text-sm font-semibold text-[var(--mich-text)]">
+                  {item.label}
+                </span>
+                <span className="mt-0.5 block font-heading text-lg font-semibold text-[var(--mich-text)]">
+                  S/ {item.totalSoles}
+                </span>
+                <span className="mt-0.5 block text-[11px] text-[var(--mich-muted)]">
+                  ≈ S/ {planPerMonthSoles(key)}/mes
+                  {save > 0 ? ` · ahorra S/ ${save}` : ""}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-[var(--mich-text)]">
           Dispositivos
         </label>
-        <select
-          id="maxDevices"
-          name="maxDevices"
-          value={maxDevices}
-          onChange={(e) => setMaxDevices(Number(e.target.value))}
-          className="h-10 w-full rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-3 text-sm"
-        >
-          {Array.from(
-            { length: MAX_DEVICES - MIN_DEVICES + 1 },
-            (_, i) => MIN_DEVICES + i
-          ).map((n) => (
-            <option key={n} value={n}>
-              {n} dispositivo{n === 1 ? "" : "s"}
-              {n === 1
-                ? " (incluido)"
-                : ` (+S/ ${EXTRA_DEVICE_MONTHLY_SOLES}/mes × ${n - 1})`}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs text-[var(--mich-muted)]">
-          Total a cobrar:{" "}
-          <span className="font-semibold text-[var(--mich-text)]">
-            S/ {total}
-          </span>
-          {extraTotal > 0
-            ? ` (plan S/ ${SUBSCRIPTION_PLANS[plan].totalSoles} + dispositivos S/ ${extraTotal})`
-            : null}
-        </p>
+        <input type="hidden" name="maxDevices" value={maxDevices} />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] p-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              disabled={pending || maxDevices <= MIN_DEVICES}
+              onClick={() => setMaxDevices((n) => Math.max(MIN_DEVICES, n - 1))}
+              aria-label="Quitar dispositivo"
+            >
+              <Minus className="size-3.5" />
+            </Button>
+            <span className="min-w-9 text-center font-heading text-base font-semibold tabular-nums text-[var(--mich-text)]">
+              {maxDevices}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              disabled={pending || maxDevices >= MAX_DEVICES}
+              onClick={() => setMaxDevices((n) => Math.min(MAX_DEVICES, n + 1))}
+              aria-label="Agregar dispositivo"
+            >
+              <Plus className="size-3.5" />
+            </Button>
+          </div>
+          <p className="text-xs text-[var(--mich-muted)]">
+            1 incluido · extra +S/ {EXTRA_DEVICE_MONTHLY_SOLES}/mes
+          </p>
+        </div>
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="notes" className="text-sm font-medium">
+        <label
+          htmlFor="notes"
+          className="text-sm font-medium text-[var(--mich-text)]"
+        >
           Notas (opcional)
         </label>
         <Input
           id="notes"
           name="notes"
+          disabled={pending}
           placeholder="Pago Yape, transferencia…"
+          className="h-11 rounded-xl"
         />
       </div>
 
-      {state.error ? (
-        <p className="text-sm text-destructive">{state.error}</p>
-      ) : null}
+      <div className="rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] px-4 py-3">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.06em] text-[var(--mich-muted)]">
+              Total a cobrar
+            </p>
+            <p className="font-heading text-2xl font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
+              S/ {total}
+            </p>
+          </div>
+          <div className="text-right text-xs leading-5 text-[var(--mich-muted)]">
+            <p>
+              Plan S/ {SUBSCRIPTION_PLANS[plan].totalSoles}
+              {extraTotal > 0 ? ` + disp. S/ ${extraTotal}` : ""}
+            </p>
+            <p>Vence {endsAt.toLocaleDateString("es")}</p>
+          </div>
+        </div>
+      </div>
+
       {state.ok ? (
-        <div className="space-y-3 rounded-2xl border border-[color-mix(in_srgb,var(--mich-success)_30%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_10%,transparent)] px-4 py-3">
+        <div className="space-y-3 rounded-xl border border-[color-mix(in_srgb,var(--mich-success)_30%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_10%,transparent)] px-4 py-3">
           <p className="flex items-center gap-1.5 text-sm font-medium text-[var(--mich-success)]">
             <CheckCircle2 className="size-4" />
             {state.ok}
@@ -192,16 +290,26 @@ export function ActivateMembershipForm({ users }: { users: UserOption[] }) {
         </div>
       ) : null}
 
-      <Button type="submit" disabled={pending} className="w-full rounded-xl sm:w-auto">
+      <Button
+        type="submit"
+        size="lg"
+        disabled={pending || !userId}
+        className="h-11 w-full rounded-xl"
+      >
         {pending ? (
           <>
             <Loader2 className="animate-spin" />
             Activando…
           </>
         ) : (
-          `Activar · S/ ${total}`
+          `Activar ${PROVIDERS[provider].shortLabel} · S/ ${total}`
         )}
       </Button>
+      {!userId ? (
+        <p className="text-center text-xs text-[var(--mich-muted)]">
+          Elige un cliente para continuar.
+        </p>
+      ) : null}
     </form>
   )
 }

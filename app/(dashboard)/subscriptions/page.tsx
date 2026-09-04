@@ -1,18 +1,18 @@
-import Image from "next/image"
-import { CheckCircle2, CreditCard } from "lucide-react"
+import { AlertTriangle, CheckCircle2, Users, Wallet } from "lucide-react"
 
 import { AccessDenied } from "@/components/auth/access-denied"
-import { ActivateMembershipForm } from "@/components/admin/activate-membership-form"
-import { MembershipDevicesAdmin } from "@/components/admin/membership-devices-admin"
-import { Button } from "@/components/ui/button"
+import {
+  MembershipsTable,
+  type MembershipRow,
+} from "@/components/admin/memberships-table"
+import { NewMembershipPanel } from "@/components/admin/new-membership-panel"
 import { requirePagePermission } from "@/lib/auth/authorization"
 import { PERMISSIONS } from "@/lib/auth/permissions"
 import {
   EXTRA_DEVICE_MONTHLY_SOLES,
   FREE_DOWNLOAD_LIMIT,
   MONTHLY_PRICE_SOLES,
-  SUBSCRIPTION_PLANS,
-  planTotalSoles,
+  type SubscriptionPlanKey,
 } from "@/lib/billing/plans"
 import { expireDueMemberships } from "@/lib/billing/membership"
 import {
@@ -21,15 +21,8 @@ import {
   type ResourceProviderId,
 } from "@/lib/providers/catalog"
 import { prisma } from "@/lib/prisma"
-import { cn } from "@/lib/utils"
 
-import { cancelMembershipAction } from "./actions"
-
-const statusLabel = {
-  ACTIVE: "Activa",
-  CANCELLED: "Cancelada",
-  EXPIRED: "Expirada",
-} as const
+const WEEK_MS = 7 * 86_400_000
 
 export default async function SubscriptionsPage() {
   const access = await requirePagePermission(PERMISSIONS.SUBSCRIPTIONS_MANAGE)
@@ -37,198 +30,146 @@ export default async function SubscriptionsPage() {
 
   await expireDueMemberships()
 
-  const [users, memberships] = await Promise.all([
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  const [users, memberships, monthRevenue] = await Promise.all([
     prisma.user.findMany({
       where: { status: "ACTIVE" },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, email: true, phone: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        memberships: {
+          where: { status: "ACTIVE", endsAt: { gt: now } },
+          select: { provider: true },
+        },
+      },
     }),
     prisma.membership.findMany({
       orderBy: { createdAt: "desc" },
-      take: 80,
+      take: 200,
       include: {
         user: { select: { name: true, email: true } },
         devices: {
           orderBy: { lastSeenAt: "desc" },
-          select: {
-            id: true,
-            label: true,
-            lastSeenAt: true,
-          },
+          select: { id: true, label: true, lastSeenAt: true },
         },
       },
     }),
+    prisma.membership.aggregate({
+      where: { createdAt: { gte: monthStart } },
+      _sum: { totalPriceSoles: true },
+      _count: true,
+    }),
   ])
+
+  const rows: MembershipRow[] = memberships.map((item) => {
+    const provider = PROVIDERS[item.provider as ResourceProviderId]
+    return {
+      id: item.id,
+      provider: item.provider,
+      providerLabel: provider?.shortLabel ?? item.provider,
+      providerLogo: provider?.logoSrc ?? "/envato.png",
+      plan: item.plan as SubscriptionPlanKey,
+      status: item.status as MembershipRow["status"],
+      totalPriceSoles: Number(item.totalPriceSoles),
+      maxDevices: item.maxDevices,
+      startsAt: item.startsAt.toISOString(),
+      endsAt: item.endsAt.toISOString(),
+      userName: item.user.name,
+      userEmail: item.user.email,
+      devices: item.devices.map((d) => ({
+        id: d.id,
+        label: d.label,
+        lastSeenAt: d.lastSeenAt.toISOString(),
+      })),
+    }
+  })
+
+  const activeRows = rows.filter((r) => r.status === "ACTIVE")
+  const expiringSoon = activeRows.filter(
+    (r) => new Date(r.endsAt).getTime() - now.getTime() <= WEEK_MS
+  ).length
+  const revenue = Number(monthRevenue._sum.totalPriceSoles ?? 0)
+
+  const stats = [
+    {
+      icon: CheckCircle2,
+      label: "Membresías activas",
+      value: String(activeRows.length),
+      hint: `${rows.length} registradas en total`,
+    },
+    {
+      icon: AlertTriangle,
+      label: "Vencen en 7 días",
+      value: String(expiringSoon),
+      hint: "Avisa por WhatsApp antes del corte",
+    },
+    {
+      icon: Wallet,
+      label: "Cobrado este mes",
+      value: `S/ ${revenue}`,
+      hint: `${monthRevenue._count} activaciones`,
+    },
+    {
+      icon: Users,
+      label: "Clientes activos",
+      value: String(users.length),
+      hint: `Sin plan: ${FREE_DOWNLOAD_LIMIT} descargas gratis`,
+    },
+  ]
+
+  const pickerUsers = users.map((user) => ({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    activeProviders: user.memberships.map(
+      (m) => PROVIDERS[m.provider as ResourceProviderId]?.shortLabel ?? m.provider
+    ),
+  }))
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-2xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-3xl">
-            Membresías
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--mich-muted)]">
-            Activa planes de Envato o Magnific. 1 dispositivo incluido; +S/{" "}
-            {EXTRA_DEVICE_MONTHLY_SOLES}/mes por cada extra. Sin membresía:{" "}
-            {FREE_DOWNLOAD_LIMIT} descargas gratis.
-          </p>
-        </div>
-          <div className="flex items-center gap-2">
-            {providerList().map((p) => (
-              <span
-                key={p.id}
-                className="flex size-11 items-center justify-center rounded-2xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] p-2"
-              >
-                <Image
-                  src={p.logoSrc}
-                  alt={p.shortLabel}
-                  width={32}
-                  height={32}
-                  unoptimized
-                  className="size-8 object-contain"
-                />
-              </span>
-            ))}
-          </div>
-        </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        {(Object.keys(SUBSCRIPTION_PLANS) as Array<keyof typeof SUBSCRIPTION_PLANS>).map(
-          (key) => {
-            const plan = SUBSCRIPTION_PLANS[key]
-            return (
-              <div
-                key={key}
-                className={cn(
-                  "mich-soft-card px-4 py-4",
-                  plan.highlight && "border-[var(--mich-blue)]/40"
-                )}
-              >
-                <p className="text-[12px] text-[var(--mich-muted)]">
-                  {plan.tagline}
-                </p>
-                <p className="mt-1 font-heading text-xl font-semibold text-[var(--mich-text)]">
-                  {plan.label}
-                </p>
-                <p className="mt-2 text-sm text-[var(--mich-muted)]">
-                  S/ {planTotalSoles(key)} · base S/ {MONTHLY_PRICE_SOLES}/mes
-                </p>
-                <p className="mt-1 text-xs text-[var(--mich-muted)]">
-                  +S/ {EXTRA_DEVICE_MONTHLY_SOLES}/mes por dispositivo extra
-                </p>
-              </div>
-            )
-          }
-        )}
+      <div>
+        <h1 className="font-heading text-2xl font-semibold tracking-[-0.04em] text-[var(--mich-text)] sm:text-3xl">
+          Membresías
+        </h1>
+        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[var(--mich-muted)]">
+          Activa planes desde S/ {MONTHLY_PRICE_SOLES}/mes. 1 dispositivo
+          incluido; +S/ {EXTRA_DEVICE_MONTHLY_SOLES}/mes por cada extra.
+        </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="mich-soft-card p-5 sm:p-6">
-          <div className="mb-5 flex items-center gap-2">
-            <CreditCard className="size-5 text-[var(--mich-blue)]" />
-            <h2 className="font-heading text-lg font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
-              Activar membresía
-            </h2>
-          </div>
-          <ActivateMembershipForm users={users} />
-        </section>
+      <NewMembershipPanel users={pickerUsers} />
 
-        <section className="mich-soft-card p-5 sm:p-6">
-          <h2 className="font-heading mb-4 text-lg font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
-            Historial reciente
-          </h2>
-          <ul className="divide-y divide-[var(--mich-border)]">
-            {memberships.length === 0 ? (
-              <li className="py-8 text-center text-sm text-[var(--mich-muted)]">
-                Aún no hay membresías.
-              </li>
-            ) : (
-              memberships.map((item) => {
-                const provider = PROVIDERS[item.provider as ResourceProviderId]
-                const active = item.status === "ACTIVE"
-                return (
-                  <li key={item.id} className="py-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="flex min-w-0 items-start gap-3">
-                        <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl border border-[var(--mich-border)] bg-[var(--mich-surface-muted)] p-1.5">
-                          <Image
-                            src={provider?.logoSrc ?? "/envato.png"}
-                            alt=""
-                            width={28}
-                            height={28}
-                            unoptimized
-                            className="size-7 object-contain"
-                          />
-                        </span>
-                        <div className="min-w-0 space-y-1 text-sm">
-                          <p className="font-medium text-[var(--mich-text)]">
-                            {item.user.name}{" "}
-                            <span className="font-normal text-[var(--mich-muted)]">
-                              ({item.user.email})
-                            </span>
-                          </p>
-                          <p className="flex flex-wrap items-center gap-2 text-[var(--mich-muted)]">
-                            <span className="font-medium text-[var(--mich-text)]">
-                              {provider?.shortLabel ?? item.provider}
-                            </span>
-                            · {SUBSCRIPTION_PLANS[item.plan].label} · S/{" "}
-                            {Number(item.totalPriceSoles)} ·{" "}
-                            {item.maxDevices} disp.
-                            <span
-                              className={cn(
-                                "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase",
-                                active
-                                  ? "border-[color-mix(in_srgb,var(--mich-success)_35%,transparent)] bg-[color-mix(in_srgb,var(--mich-success)_12%,transparent)] text-[var(--mich-success)]"
-                                  : "border-[var(--mich-border)]"
-                              )}
-                            >
-                              {active ? (
-                                <span className="inline-flex items-center gap-1">
-                                  <CheckCircle2 className="size-3" />
-                                  {statusLabel[item.status]}
-                                </span>
-                              ) : (
-                                statusLabel[item.status]
-                              )}
-                            </span>
-                          </p>
-                          <p className="text-xs text-[var(--mich-muted)]">
-                            {item.startsAt.toLocaleString("es")} →{" "}
-                            {item.endsAt.toLocaleString("es")}
-                          </p>
-                        </div>
-                      </div>
-                      {active ? (
-                        <form action={cancelMembershipAction}>
-                          <input
-                            type="hidden"
-                            name="membershipId"
-                            value={item.id}
-                          />
-                          <Button type="submit" variant="destructive" size="sm">
-                            Cancelar
-                          </Button>
-                        </form>
-                      ) : null}
-                    </div>
-                    {active ? (
-                      <MembershipDevicesAdmin
-                        membershipId={item.id}
-                        maxDevices={item.maxDevices}
-                        devices={item.devices.map((d) => ({
-                          id: d.id,
-                          label: d.label,
-                          lastSeenAt: d.lastSeenAt.toISOString(),
-                        }))}
-                      />
-                    ) : null}
-                  </li>
-                )
-              })
-            )}
-          </ul>
-        </section>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <div key={stat.label} className="mich-soft-card px-4 py-4">
+            <div className="flex items-center gap-2">
+              <stat.icon className="size-4 text-[var(--mich-blue)]" />
+              <p className="text-[12px] text-[var(--mich-muted)]">
+                {stat.label}
+              </p>
+            </div>
+            <p className="mt-2 font-heading text-2xl font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
+              {stat.value}
+            </p>
+            <p className="mt-1 text-xs text-[var(--mich-muted)]">{stat.hint}</p>
+          </div>
+        ))}
       </div>
+
+      <MembershipsTable
+        memberships={rows}
+        providers={providerList().map((p) => ({
+          id: p.id,
+          shortLabel: p.shortLabel,
+        }))}
+      />
     </div>
   )
 }
