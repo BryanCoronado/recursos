@@ -7,7 +7,7 @@ Documentación operativa para publicar actualizaciones en producción.
 | Sitio | https://michitech.digital |
 | VPS | `root@38.250.161.192` |
 | Carpeta | `/var/www/recursos` |
-| Repo | `https://github.com/CoronadoBryan/recursos.git` |
+| Repo | `https://github.com/BryanCoronado/recursos.git` |
 | Rama | `master` |
 | Procesos PM2 | `recursos-web` (Next.js :3000) y `recursos-worker` (Playwright) |
 
