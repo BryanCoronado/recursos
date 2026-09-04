@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs"
 
+import { closeAllSharedBrowsers } from "./browser/shared-context"
 import {
   expireMembershipsTick,
   processAutomationRecording,
@@ -7,6 +8,7 @@ import {
   processQueuedDownloads,
 } from "./jobs/processor"
 import { prisma } from "./prisma"
+import { availableMemoryMb } from "./system/memory"
 
 const POLL_MS = 2500
 
@@ -37,8 +39,13 @@ async function tick() {
 async function main() {
   ensureDisplay()
   const max = process.env.WORKER_MAX_DOWNLOADS ?? "2"
+  const perProvider = process.env.WORKER_MAX_DOWNLOADS_PER_PROVIDER ?? max
+  const minFreeMb = process.env.WORKER_MIN_FREE_MB ?? "500"
   console.info(
-    `[worker] Iniciado. Providers: Envato + Magnific. Descargas paralelas: hasta ${max}.`
+    `[worker] Iniciado. Providers: Envato + Magnific. Descargas paralelas: hasta ${max} (${perProvider} por proveedor, en pestañas del mismo Chromium).`
+  )
+  console.info(
+    `[worker] RAM disponible ${availableMemoryMb()} MB; freno de cola bajo ${minFreeMb} MB libres.`
   )
   await tick()
   setInterval(() => {
@@ -52,12 +59,16 @@ main().catch(async (error) => {
   process.exit(1)
 })
 
-process.on("SIGINT", async () => {
+async function shutdown() {
+  await closeAllSharedBrowsers().catch(() => undefined)
   await prisma.$disconnect()
   process.exit(0)
+}
+
+process.on("SIGINT", () => {
+  void shutdown()
 })
 
-process.on("SIGTERM", async () => {
-  await prisma.$disconnect()
-  process.exit(0)
+process.on("SIGTERM", () => {
+  void shutdown()
 })

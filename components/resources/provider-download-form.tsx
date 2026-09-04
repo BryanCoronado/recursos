@@ -20,6 +20,7 @@ import type {
 } from "@/app/(dashboard)/resources/provider-download-actions"
 import { QuotaMeter } from "@/components/billing/quota-meter"
 import { ProviderHelpPanel } from "@/components/resources/provider-help-panel"
+import { DownloadPreview } from "@/components/resources/download-preview"
 import { DownloadProgressCard } from "@/components/resources/download-progress-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -399,6 +400,9 @@ export function ProviderDownloadForm({
                     : undefined
                 }
               >
+                {job.status === "RUNNING" ? (
+                  <DownloadPreview jobId={job.id} />
+                ) : null}
                 {job.status === "FAILED" && job.logs ? (
                   <div className="mt-3 space-y-2">
                     <div className="flex flex-wrap gap-2">

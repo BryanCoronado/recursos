@@ -19,8 +19,15 @@ module.exports = {
         NODE_ENV: "production",
         // Obligatoria para Chromium headed + Xvfb
         DISPLAY: ":99",
-        // 1 descarga a la vez = menos RAM en VPS pequeños
-        WORKER_MAX_DOWNLOADS: "1",
+        // Descargas en paralelo (pestañas del mismo Chromium por proveedor).
+        // Subirlo consume más RAM y arriesga que el proveedor limite la cuenta.
+        WORKER_MAX_DOWNLOADS: "4",
+        WORKER_MAX_DOWNLOADS_PER_PROVIDER: "4",
+        // Freno por RAM: no abre otra pestaña si quedan menos de estos MB
+        WORKER_MIN_FREE_MB: "500",
+        WORKER_TAB_MEMORY_MB: "350",
+        // Cierra el Chromium tras 2 min sin descargas (libera RAM y el perfil)
+        WORKER_BROWSER_IDLE_MS: "120000",
       },
     },
   ],

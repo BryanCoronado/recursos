@@ -337,13 +337,16 @@ async function runDownloadStep(
   downloadDir: string
 ) {
   const timeoutMs = step.timeoutMs ?? 120_000
-  const context = page.context()
-  log(`download: escuchando evento en context timeout=${timeoutMs}ms`)
+  // Escuchamos en la pestaña del job (y sus popups), no en el contexto: el
+  // Chromium es compartido y otra descarga en paralelo dispararía este evento.
+  log(`download: escuchando evento en la pestaña timeout=${timeoutMs}ms`)
   await describePageState(page, "antes-download-click")
 
   let resolved = false
   const downloadWait = new Promise<Download>((resolve, reject) => {
     const startedAt = Date.now()
+    const watched = new Set<Page>()
+
     const timer = setTimeout(() => {
       if (resolved) return
       resolved = true
@@ -355,7 +358,7 @@ async function runDownloadStep(
       )
     }, timeoutMs)
 
-    const onDownload = (download: Download) => {
+    function onDownload(download: Download) {
       if (resolved) return
       resolved = true
       cleanup()
@@ -365,23 +368,32 @@ async function runDownloadStep(
       resolve(download)
     }
 
-    const onPage = (newPage: Page) => {
+    function onPopup(newPage: Page) {
       log(`nueva pestaña abierta: ${newPage.url()}`)
-      newPage.on("download", onDownload)
+      watch(newPage)
       void newPage
         .waitForLoadState("domcontentloaded")
         .then(() => describePageState(newPage, "nueva-pestaña"))
         .catch(() => undefined)
     }
 
-    function cleanup() {
-      clearTimeout(timer)
-      context.off("download", onDownload)
-      context.off("page", onPage)
+    function watch(target: Page) {
+      if (watched.has(target)) return
+      watched.add(target)
+      target.on("download", onDownload)
+      target.on("popup", onPopup)
     }
 
-    context.on("download", onDownload)
-    context.on("page", onPage)
+    function cleanup() {
+      clearTimeout(timer)
+      for (const target of watched) {
+        target.off("download", onDownload)
+        target.off("popup", onPopup)
+      }
+      watched.clear()
+    }
+
+    watch(page)
   })
 
   try {

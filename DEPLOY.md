@@ -143,6 +143,69 @@ El worker necesita display virtual (`DISPLAY=:99` en `ecosystem.config.cjs`). Si
 pm2 logs recursos-worker --lines 80 --nostream
 ```
 
+### Proteger el noVNC (obligatorio)
+
+`/vnc/` y `/websockify` los resuelve **Nginx antes que Next.js**, así que el login de la app no los protege. Sin contraseña, cualquiera con la URL entra al escritorio del worker y **controla el Chromium logueado en Envato**. El modo «solo lectura» de noVNC es un parámetro de URL, no sirve como barrera.
+
+```bash
+sudo apt install -y apache2-utils
+sudo htpasswd -c /etc/nginx/.htpasswd-vnc admin
+sudo chown www-data:www-data /etc/nginx/.htpasswd-vnc
+sudo chmod 640 /etc/nginx/.htpasswd-vnc
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Verifica desde el celular con datos móviles y sin sesión: `https://michitech.digital/vnc/vnc.html` debe pedir usuario y contraseña.
+
+Segunda capa opcional (contraseña en el propio x11vnc):
+
+```bash
+VNC_PASSWORD='una-clave' bash scripts/start-display.sh
+```
+
+**Nunca** enlaces el noVNC desde la vista del cliente: muestra el escritorio completo, o sea las descargas de todos los usuarios a la vez. Para eso está el visor por capturas de abajo.
+
+### Vista en vivo de la descarga (cliente)
+
+El worker guarda un JPEG de la pestaña del job en `storage/downloads/<jobId>/preview.jpg` y la web lo sirve en `/api/downloads/<jobId>/preview` solo al dueño del job (o a un admin), únicamente mientras está en `RUNNING`. Se borra al terminar.
+
+| Variable | Default | Qué hace |
+|---|---|---|
+| `WORKER_PREVIEW` | activado | `0` desactiva las capturas |
+| `WORKER_PREVIEW_MS` | `1500` | Milisegundos entre capturas |
+
+Si el VPS va justo de CPU con varias descargas en paralelo, sube `WORKER_PREVIEW_MS` a `3000` o pon `WORKER_PREVIEW=0`.
+
+### Descargas en paralelo
+
+Cada proveedor usa **un solo Chromium** (el perfil de `storage/browser/<proveedor>` guarda la sesión y Chromium lo bloquea por proceso). Las descargas simultáneas corren como **pestañas** de ese navegador, con la misma cuenta.
+
+| Variable | Valor actual | Qué hace |
+|---|---|---|
+| `WORKER_MAX_DOWNLOADS` | `4` | Descargas en paralelo en todo el worker |
+| `WORKER_MAX_DOWNLOADS_PER_PROVIDER` | `4` | Pestañas simultáneas del mismo proveedor |
+| `WORKER_MIN_FREE_MB` | `500` | No abre otra pestaña si queda menos RAM libre (`0` desactiva el freno) |
+| `WORKER_TAB_MEMORY_MB` | `350` | Coste estimado por pestaña, para proyectar la RAM del tick |
+| `WORKER_BROWSER_IDLE_MS` | `120000` | Cierra Chromium tras este tiempo sin descargas |
+
+Se configuran en `ecosystem.config.cjs` y se aplican con:
+
+```bash
+pm2 restart recursos-worker --update-env
+```
+
+Subirlas consume más RAM (cada pestaña de Envato pesa) y aumenta el riesgo de que el proveedor limite la cuenta por descargas simultáneas. Si ves fallos raros o timeouts al subirlas, baja a `2`.
+
+El freno por RAM lee `MemAvailable` y deja los jobs en cola en vez de abrir pestañas cuando el VPS va justo; en los logs aparece `RAM libre … MB … la cola espera`. Siempre permite **una** descarga aunque la memoria esté baja, para que la cola nunca se quede trabada. Para vigilarlo:
+
+```bash
+free -h
+pm2 monit
+pm2 logs recursos-worker --lines 50 --nostream
+```
+
+Mientras la sincronización o la grabadora estén abiertas, el worker no toma descargas nuevas de ese proveedor y espera a que terminen las que estén en curso antes de cederles el perfil.
+
 ---
 
 ## 6. Problemas frecuentes

@@ -11,7 +11,8 @@ import { jobDownloadDir, providerProfilePath } from "../../lib/storage/paths"
 import { openEnvatoItemForDownload } from "./envato-open-item"
 import { detectEnvatoCategory, ensureDir, runAutomationSteps } from "./helpers"
 import { jobLog } from "./job-log"
-import { launchWorkerContext } from "./launch"
+import { startJobPreview } from "./job-preview"
+import { acquireProviderPage } from "./shared-context"
 import { prisma } from "../prisma"
 
 function detectCategory(provider: ResourceProviderId, url: string) {
@@ -28,7 +29,8 @@ class DownloadCancelledError extends Error {
 
 /**
  * Descarga un recurso con el perfil y reglas del proveedor.
- * Si el job pasa a FAILED (cancelación), cierra Chromium.
+ * Corre en una pestaña del Chromium compartido del proveedor; si el job pasa
+ * a FAILED (cancelación) se cierra solo esa pestaña, no el navegador.
  */
 export async function downloadProviderResource(
   provider: ResourceProviderId,
@@ -78,10 +80,8 @@ export async function downloadProviderResource(
   ensureDir(downloadDir)
   jobLog(`[download] profile=${profilePath} downloadDir=${downloadDir}`)
 
-  const context = await launchWorkerContext(profilePath, {
-    downloadsPath: downloadDir,
-  })
-  jobLog(`[download] Chromium lanzado`)
+  const lease = await acquireProviderPage(provider, profilePath)
+  jobLog(`[download] pestaña abierta en el Chromium de ${def.shortLabel}`)
 
   const cancelWatcher = setInterval(() => {
     void prisma.downloadJob
@@ -91,16 +91,20 @@ export async function downloadProviderResource(
       })
       .then((job) => {
         if (job && job.status !== "RUNNING" && job.status !== "QUEUED") {
-          void context.close().catch(() => undefined)
+          clearInterval(cancelWatcher)
+          void lease.release()
         }
       })
       .catch(() => undefined)
   }, 1200)
 
-  const closeBrowser = async () => {
+  let stopPreview: (() => void) | null = null
+
+  const releasePage = async () => {
     clearInterval(cancelWatcher)
-    await context.close().catch(() => undefined)
-    jobLog(`[download] Chromium cerrado`)
+    stopPreview?.()
+    await lease.release()
+    jobLog(`[download] pestaña cerrada`)
   }
 
   try {
@@ -109,11 +113,12 @@ export async function downloadProviderResource(
       select: { status: true },
     })
     if (!stillRunning || stillRunning.status !== "RUNNING") {
-      await closeBrowser()
+      await releasePage()
       throw new DownloadCancelledError()
     }
 
-    const page = context.pages()[0] ?? (await context.newPage())
+    const page = lease.page
+    stopPreview = startJobPreview(page, downloadDir)
 
     if (provider === "ENVATO") {
       await openEnvatoItemForDownload(page, url)
@@ -130,18 +135,18 @@ export async function downloadProviderResource(
       select: { status: true },
     })
     if (!after || after.status !== "RUNNING") {
-      await closeBrowser()
+      await releasePage()
       throw new DownloadCancelledError()
     }
 
-    // Devolvemos close para marcar DONE en DB ANTES de cerrar el VNC
+    // Devolvemos release para marcar DONE en DB ANTES de cerrar la pestaña
     return {
       ...result,
       category: rule.urlPattern || rule.category,
-      closeBrowser,
+      releasePage,
     }
   } catch (error) {
-    await closeBrowser()
+    await releasePage()
     throw error
   }
 }

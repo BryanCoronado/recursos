@@ -27,11 +27,29 @@ if command -v xsetroot >/dev/null 2>&1; then
   DISPLAY=":${DISPLAY_NUM}" xsetroot -solid "#1a2740" >/dev/null 2>&1 || true
 fi
 
+# Segunda capa además del auth_basic de Nginx: si alguien llega al puerto,
+# igual necesita la contraseña. Exporta VNC_PASSWORD antes de ejecutar.
+VNC_PASSWD_FILE="${VNC_PASSWD_FILE:-/tmp/recursos-vnc.pass}"
+if [ -n "${VNC_PASSWORD:-}" ]; then
+  x11vnc -storepasswd "${VNC_PASSWORD}" "${VNC_PASSWD_FILE}" >/dev/null 2>&1
+  chmod 600 "${VNC_PASSWD_FILE}"
+  VNC_AUTH_ARGS=(-rfbauth "${VNC_PASSWD_FILE}")
+else
+  VNC_AUTH_ARGS=(-nopw)
+fi
+
 if ! pgrep -f "x11vnc.*rfbport ${VNC_PORT}" >/dev/null 2>&1; then
   echo "[display] Iniciando x11vnc :${VNC_PORT}"
-  x11vnc -display ":${DISPLAY_NUM}" -forever -shared -rfbport "${VNC_PORT}" -nopw -localhost \
+  x11vnc -display ":${DISPLAY_NUM}" -forever -shared -rfbport "${VNC_PORT}" \
+    "${VNC_AUTH_ARGS[@]}" -localhost \
     >/tmp/recursos-x11vnc.log 2>&1 &
   sleep 1
+fi
+
+if [ -z "${VNC_PASSWORD:-}" ]; then
+  echo "[display] AVISO: x11vnc sin contraseña. Protege /vnc/ y /websockify"
+  echo "          con auth_basic en Nginx (scripts/nginx-novnc-snippet.conf)"
+  echo "          o exporta VNC_PASSWORD antes de ejecutar este script."
 fi
 
 if ! pgrep -f "websockify.*${NOVNC_PORT}" >/dev/null 2>&1; then
