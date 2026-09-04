@@ -113,18 +113,89 @@ export async function activateMembership(
   }
 }
 
-export async function cancelMembershipAction(formData: FormData) {
+export type MembershipRowResult = { ok?: string; error?: string }
+
+export async function cancelMembershipAction(
+  membershipId: string
+): Promise<MembershipRowResult> {
   const admin = await requirePermission(PERMISSIONS.SUBSCRIPTIONS_MANAGE)
-  const membershipId = String(formData.get("membershipId") ?? "")
-  await cancelMembership({
-    membershipId,
-    cancelledById: admin.id,
-  })
+  try {
+    await cancelMembership({
+      membershipId,
+      cancelledById: admin.id,
+    })
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "No se pudo cancelar",
+    }
+  }
+
   revalidatePath("/subscriptions")
   revalidatePath("/recharge")
   revalidatePath("/devices")
   revalidatePath("/envato")
   revalidatePath("/magnific")
+  return { ok: "Membresía cancelada" }
+}
+
+/**
+ * Renueva con el mismo plan y cupo de dispositivos. Si la actual sigue
+ * vigente, `createMembership` encadena la nueva desde su fecha de fin;
+ * si ya venció, arranca hoy.
+ */
+export async function renewMembershipAction(
+  membershipId: string
+): Promise<MembershipRowResult> {
+  const admin = await requirePermission(PERMISSIONS.SUBSCRIPTIONS_MANAGE)
+
+  const previous = await prisma.membership.findUnique({
+    where: { id: membershipId },
+    select: {
+      userId: true,
+      provider: true,
+      plan: true,
+      maxDevices: true,
+      user: { select: { name: true, phone: true } },
+    },
+  })
+
+  if (!previous) return { error: "Membresía no encontrada" }
+
+  let provider
+  try {
+    provider = requireProviderId(previous.provider)
+  } catch {
+    return { error: "Proveedor inválido" }
+  }
+
+  const plan = previous.plan as keyof typeof SUBSCRIPTION_PLANS
+
+  try {
+    const membership = await createMembership({
+      userId: previous.userId,
+      provider,
+      plan,
+      maxDevices: previous.maxDevices,
+      createdById: admin.id,
+      notes: "Renovación",
+    })
+    await ensureClientRoleForProvider(previous.userId, provider, admin.id)
+
+    revalidatePath("/subscriptions")
+    revalidatePath("/recharge")
+    revalidatePath("/devices")
+    revalidatePath("/dashboard")
+    revalidatePath("/users")
+    revalidatePath(getProvider(provider).dashboardPath)
+
+    return {
+      ok: `${getProvider(provider).shortLabel} · ${SUBSCRIPTION_PLANS[plan].label} · hasta ${membership.endsAt.toLocaleDateString("es")}`,
+    }
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "No se pudo renovar",
+    }
+  }
 }
 
 export async function updateMaxDevicesAction(formData: FormData) {

@@ -2,9 +2,13 @@
 
 import Image from "next/image"
 import { Fragment, useMemo, useState, useTransition } from "react"
-import { ChevronDown, Loader2, Search, X } from "lucide-react"
+import { ChevronDown, Loader2, RefreshCw, Search, X } from "lucide-react"
+import { toast } from "sonner"
 
-import { cancelMembershipAction } from "@/app/(dashboard)/subscriptions/actions"
+import {
+  cancelMembershipAction,
+  renewMembershipAction,
+} from "@/app/(dashboard)/subscriptions/actions"
 import { MembershipDevicesAdmin } from "@/components/admin/membership-devices-admin"
 import { Button } from "@/components/ui/button"
 import {
@@ -79,7 +83,28 @@ export function MembershipsTable({
   const [status, setStatus] = useState<StatusFilter>("ALL")
   const [provider, setProvider] = useState<string>("ALL")
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [pending, startTransition] = useTransition()
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
+
+  function runRowAction(
+    id: string,
+    action: () => Promise<{ ok?: string; error?: string }>,
+    successTitle: string
+  ) {
+    setBusyId(id)
+    startTransition(async () => {
+      try {
+        const result = await action()
+        if (result.error) {
+          toast.error(successTitle, { description: result.error })
+        } else {
+          toast.success(successTitle, { description: result.ok })
+        }
+      } finally {
+        setBusyId(null)
+      }
+    })
+  }
 
   const counts = useMemo(() => {
     return {
@@ -244,6 +269,8 @@ export function MembershipsTable({
                     </TableCell>
                     <TableCell>
                       <p className="text-[var(--mich-text)]">
+                        {formatDate(item.startsAt)}
+                        <span className="text-[var(--mich-muted)]"> → </span>
                         {formatDate(item.endsAt)}
                       </p>
                       <p
@@ -258,7 +285,7 @@ export function MembershipsTable({
                           ? left > 0
                             ? `${left} día${left === 1 ? "" : "s"} restantes`
                             : "vence hoy"
-                          : `desde ${formatDate(item.startsAt)}`}
+                          : STATUS_LABEL[item.status].toLowerCase()}
                       </p>
                     </TableCell>
                     <TableCell className="tabular-nums text-[var(--mich-muted)]">
@@ -271,6 +298,33 @@ export function MembershipsTable({
                     </TableCell>
                     <TableCell className="px-4 text-right sm:px-5">
                       <span className="inline-flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={busyId === item.id}
+                          title={`Renovar ${SUBSCRIPTION_PLANS[item.plan].label}${
+                            active
+                              ? " desde la fecha de vencimiento"
+                              : " a partir de hoy"
+                          }`}
+                          onClick={() =>
+                            runRowAction(
+                              item.id,
+                              () => renewMembershipAction(item.id),
+                              "Renovar membresía"
+                            )
+                          }
+                          className="rounded-lg"
+                        >
+                          {busyId === item.id ? (
+                            <Loader2 className="animate-spin" />
+                          ) : (
+                            <RefreshCw />
+                          )}
+                          Renovar
+                        </Button>
+
                         {active ? (
                           <Button
                             type="button"
@@ -291,33 +345,24 @@ export function MembershipsTable({
                             />
                           </Button>
                         ) : null}
+
                         {active ? (
-                          <form
-                            action={(fd) => {
-                              startTransition(async () => {
-                                await cancelMembershipAction(fd)
-                              })
-                            }}
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            disabled={busyId === item.id}
+                            onClick={() =>
+                              runRowAction(
+                                item.id,
+                                () => cancelMembershipAction(item.id),
+                                "Cancelar membresía"
+                              )
+                            }
+                            className="rounded-lg"
                           >
-                            <input
-                              type="hidden"
-                              name="membershipId"
-                              value={item.id}
-                            />
-                            <Button
-                              type="submit"
-                              variant="destructive"
-                              size="sm"
-                              disabled={pending}
-                              className="rounded-lg"
-                            >
-                              {pending ? (
-                                <Loader2 className="animate-spin" />
-                              ) : (
-                                "Cancelar"
-                              )}
-                            </Button>
-                          </form>
+                            Cancelar
+                          </Button>
                         ) : null}
                       </span>
                     </TableCell>

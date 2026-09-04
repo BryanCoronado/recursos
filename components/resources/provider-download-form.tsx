@@ -8,6 +8,8 @@ import {
   Clock3,
   Download,
   ExternalLink,
+  Eye,
+  EyeOff,
   FileText,
   Loader2,
 } from "lucide-react"
@@ -123,6 +125,8 @@ export function ProviderDownloadForm({
   const [history, setHistory] = useState(initialHistory)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [logOpenId, setLogOpenId] = useState<string | null>(null)
+  /** Mientras descarga, el panel derecho muestra la vista en vivo; esto la aparta. */
+  const [historyPinned, setHistoryPinned] = useState(false)
   const [deviceId, setDeviceId] = useState("")
   const [, startTransition] = useTransition()
   const lastNotifiedStatus = useRef<string | null>(null)
@@ -218,6 +222,7 @@ export function ProviderDownloadForm({
       error: null,
       logs: null,
     })
+    setHistoryPinned(false)
     void refreshHistory()
   }, [state.jobId])
 
@@ -225,6 +230,8 @@ export function ProviderDownloadForm({
   const jobId = job?.id
   const jobActive =
     job?.status === "QUEUED" || job?.status === "RUNNING"
+  const livePreviewJobId =
+    job && job.status === "RUNNING" && !historyPinned ? job.id : null
 
   useEffect(() => {
     if (!jobId || !jobActive) return
@@ -400,9 +407,6 @@ export function ProviderDownloadForm({
                     : undefined
                 }
               >
-                {job.status === "RUNNING" ? (
-                  <DownloadPreview jobId={job.id} />
-                ) : null}
                 {job.status === "FAILED" && job.logs ? (
                   <div className="mt-3 space-y-2">
                     <div className="flex flex-wrap gap-2">
@@ -453,36 +457,75 @@ export function ProviderDownloadForm({
         </div>
       </section>
 
-      {/* Derecha: historial */}
-      <section className="mich-page-card relative flex min-h-[22rem] flex-col lg:h-full lg:min-h-0">
+      {/* Derecha: historial, o la descarga en vivo mientras dura */}
+      <section className="mich-page-card relative flex min-h-[22rem] flex-col overflow-hidden lg:h-full lg:min-h-0">
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--mich-border)] px-5 py-3.5">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="font-heading text-base font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
-                Historial
-              </h2>
-              {history.length > 0 ? (
-                <span className="text-xs tabular-nums text-[var(--mich-muted)]">
-                  {history.length}
-                </span>
-              ) : null}
-            </div>
+          <div className="flex items-center gap-2">
+            <h2 className="font-heading text-base font-semibold tracking-[-0.03em] text-[var(--mich-text)]">
+              {livePreviewJobId ? "Tu descarga en vivo" : "Historial"}
+            </h2>
+            {livePreviewJobId ? (
+              <span className="mich-chip mich-chip-ok text-[10px]">
+                En curso
+              </span>
+            ) : history.length > 0 ? (
+              <span className="text-xs tabular-nums text-[var(--mich-muted)]">
+                {history.length}
+              </span>
+            ) : null}
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-xl"
-            onClick={() =>
-              startTransition(async () => {
-                await refreshHistory()
-              })
-            }
-          >
-            Actualizar
-          </Button>
+
+          {livePreviewJobId ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={() => setHistoryPinned(true)}
+            >
+              <EyeOff />
+              Ver historial
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2">
+              {job?.status === "RUNNING" ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => setHistoryPinned(false)}
+                >
+                  <Eye />
+                  Ver descarga
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-xl"
+                onClick={() =>
+                  startTransition(async () => {
+                    await refreshHistory()
+                  })
+                }
+              >
+                Actualizar
+              </Button>
+            </div>
+          )}
         </div>
 
+        {livePreviewJobId ? (
+          <>
+            <DownloadPreview jobId={livePreviewJobId} />
+            <p className="shrink-0 border-t border-[var(--mich-border)] px-5 py-2.5 text-[11px] text-[var(--mich-muted)]">
+              Es solo visual: no hace falta que hagas nada aquí. Al terminar
+              vuelve tu historial.
+            </p>
+          </>
+        ) : (
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4">
           {history.length === 0 ? (
             <div className="flex h-full min-h-[12rem] flex-col items-center justify-center px-5 text-center">
@@ -598,6 +641,7 @@ export function ProviderDownloadForm({
             </ul>
           )}
         </div>
+        )}
       </section>
     </div>
   )
