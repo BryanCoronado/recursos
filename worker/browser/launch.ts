@@ -39,6 +39,12 @@ export async function launchWorkerContext(
       "--no-sandbox",
       "--disable-dev-shm-usage",
       "--ozone-platform=x11",
+      // Xvfb no tiene GPU: sin esto Envato (app.envato / Elements) queda
+      // en blanco y la preview de descarga sale negra.
+      "--disable-gpu",
+      "--use-angle=swiftshader",
+      "--no-first-run",
+      "--no-default-browser-check",
       ...(optionArgs ?? []),
     ],
     env: {
