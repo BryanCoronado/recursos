@@ -1,8 +1,13 @@
 import type { BrowserContext, Page } from "playwright"
 
-import { type ResourceProviderId } from "../../lib/providers/catalog"
+import {
+  getProvider,
+  type ResourceProviderId,
+} from "../../lib/providers/catalog"
+import { providerProfilePath } from "../../lib/storage/paths"
 import { ensureDir } from "./helpers"
 import { launchWorkerContext } from "./launch"
+import { persistContextSession } from "./session-persist"
 
 /**
  * Un solo Chromium por proveedor, con una pestaña por descarga.
@@ -65,6 +70,15 @@ export async function closeSharedBrowser(provider: ResourceProviderId) {
   if (!entry) return
   if (entry.idleTimer) clearTimeout(entry.idleTimer)
   entries.delete(provider)
+  try {
+    const def = getProvider(provider)
+    await persistContextSession(
+      entry.context,
+      providerProfilePath(def.slug)
+    )
+  } catch {
+    // ignore
+  }
   await entry.context.close().catch(() => undefined)
 }
 

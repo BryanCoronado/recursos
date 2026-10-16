@@ -7,6 +7,7 @@ import {
 import { providerProfilePath } from "../../lib/storage/paths"
 import { ensureDir } from "./helpers"
 import { launchWorkerContext } from "./launch"
+import { persistContextSession } from "./session-persist"
 
 /** Una ventana de sync por proveedor (perfiles independientes). */
 const syncContexts = new Map<ResourceProviderId, BrowserContext>()
@@ -29,6 +30,7 @@ export async function openSyncBrowser(provider: ResourceProviderId) {
   if (existing) {
     closingIntentionally.add(provider)
     try {
+      await persistContextSession(existing, profilePath)
       await existing.close()
     } catch {
       // ignore
@@ -59,8 +61,12 @@ export async function openSyncBrowser(provider: ResourceProviderId) {
 export async function closeSyncBrowser(provider: ResourceProviderId) {
   const context = syncContexts.get(provider)
   if (!context) return
+  const def = getProvider(provider)
+  const profilePath = providerProfilePath(def.slug)
   closingIntentionally.add(provider)
   try {
+    // Guarda cookies antes de cerrar: si no, Envato vuelve a "Suscríbete"
+    await persistContextSession(context, profilePath)
     await context.close()
   } catch {
     // ignore

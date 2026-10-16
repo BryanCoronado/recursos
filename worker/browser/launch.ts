@@ -1,6 +1,7 @@
 import { chromium, type LaunchOptions } from "playwright"
 
 import { ensureWorkerDisplay } from "./display"
+import { restoreContextSession } from "./session-persist"
 
 type PersistentOptions = NonNullable<
   Parameters<typeof chromium.launchPersistentContext>[1]
@@ -28,7 +29,7 @@ export async function launchWorkerContext(
 
   const { env: optionEnv, args: optionArgs, ...rest } = options
 
-  return chromium.launchPersistentContext(profilePath, {
+  const context = await chromium.launchPersistentContext(profilePath, {
     headless: false,
     viewport: { width: 1360, height: 900 },
     acceptDownloads: true,
@@ -41,8 +42,10 @@ export async function launchWorkerContext(
       "--ozone-platform=x11",
       // Xvfb no tiene GPU: sin esto Envato (app.envato / Elements) queda
       // en blanco y la preview de descarga sale negra.
+      // Chrome 129+ exige enable-unsafe-swiftshader para software GL.
       "--disable-gpu",
       "--use-angle=swiftshader",
+      "--enable-unsafe-swiftshader",
       "--no-first-run",
       "--no-default-browser-check",
       ...(optionArgs ?? []),
@@ -53,4 +56,7 @@ export async function launchWorkerContext(
       DISPLAY: display,
     },
   })
+
+  await restoreContextSession(context, profilePath)
+  return context
 }
