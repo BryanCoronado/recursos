@@ -21,13 +21,17 @@ export const automationStepSchema = z.discriminatedUnion("type", [
     type: z.literal("download"),
     by: z.enum(["css", "xpath"]),
     selector: z.string().min(1),
-    timeoutMs: z.number().int().positive().max(180_000).optional(),
+    /** Packs grandes de Envato pueden tardar varios minutos en empezar el archivo. */
+    timeoutMs: z.number().int().positive().max(600_000).optional(),
   }),
 ])
 
 export type AutomationStep = z.infer<typeof automationStepSchema>
 
 export const automationStepsSchema = z.array(automationStepSchema).min(1)
+
+/** Espera por defecto tras pulsar Descargar (preparación CDN + packs grandes). */
+export const DEFAULT_DOWNLOAD_TIMEOUT_MS = 300_000
 
 export const DEFAULT_ENVATO_STEPS: AutomationStep[] = [
   { type: "wait", ms: 1500 },
@@ -49,6 +53,6 @@ export const DEFAULT_ENVATO_STEPS: AutomationStep[] = [
     by: "css",
     selector:
       'button:has-text("Descargar"), button:has-text("Download"), a:has-text("Descargar"), a:has-text("Download")',
-    timeoutMs: 120_000,
+    timeoutMs: DEFAULT_DOWNLOAD_TIMEOUT_MS,
   },
 ]

@@ -231,7 +231,7 @@ async function main() {
             by: "css",
             selector:
               'button:has-text("Download"), button:has-text("Descargar"), a:has-text("Download")',
-            timeoutMs: 120000,
+            timeoutMs: 300000,
           },
         ],
       },

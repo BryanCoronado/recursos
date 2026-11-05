@@ -3,7 +3,11 @@ import path from "node:path"
 
 import type { Download, Locator, Page } from "playwright"
 
-import type { AutomationStep } from "../../lib/automation/types"
+import {
+  DEFAULT_DOWNLOAD_TIMEOUT_MS,
+  type AutomationStep,
+} from "../../lib/automation/types"
+import { tryFastDownload } from "./fast-download"
 import { jobLog } from "./job-log"
 
 function log(...parts: unknown[]) {
@@ -336,7 +340,7 @@ async function runDownloadStep(
   step: Extract<AutomationStep, { type: "download" }>,
   downloadDir: string
 ) {
-  const timeoutMs = step.timeoutMs ?? 120_000
+  const timeoutMs = step.timeoutMs ?? DEFAULT_DOWNLOAD_TIMEOUT_MS
   // Escuchamos en la pestaña del job (y sus popups), no en el contexto: el
   // Chromium es compartido y otra descarga en paralelo dispararía este evento.
   log(`download: escuchando evento en la pestaña timeout=${timeoutMs}ms`)
@@ -407,6 +411,25 @@ async function runDownloadStep(
     )
   }
 
+  // Envato a veces prepara el pack y el 1er clic no dispara el archivo:
+  // reintentamos el clic a los 45s y 90s si aún no hay evento download.
+  void (async () => {
+    const retryAt = [45_000, 90_000] as const
+    let waited = 0
+    for (const atMs of retryAt) {
+      await page.waitForTimeout(atMs - waited)
+      waited = atMs
+      if (resolved) return
+      log(`download: sin evento tras ~${atMs / 1000}s; reintento clic Descargar`)
+      await describePageState(page, `reintento-clic-t+${atMs / 1000}s`)
+      try {
+        await clickWithFallbacks(page, step, 15_000)
+      } catch {
+        // ignore: el timeout principal decide
+      }
+    }
+  })()
+
   // Estado 2s y 8s después del clic (diagnóstico si tarda)
   void (async () => {
     await page.waitForTimeout(2000)
@@ -422,7 +445,15 @@ async function runDownloadStep(
     const targetPath = path.join(downloadDir, suggested)
     log(`guardando archivo → ${targetPath}`)
     const saveStarted = Date.now()
-    await download.saveAs(targetPath)
+    const fast = await tryFastDownload(page, download, targetPath).catch(
+      (error) => {
+        log(
+          `descarga rápida no disponible: ${error instanceof Error ? error.message : String(error)}`
+        )
+        return false
+      }
+    )
+    if (!fast) await download.saveAs(targetPath)
     const size = fs.existsSync(targetPath) ? fs.statSync(targetPath).size : 0
     log(
       `archivo OK name=${suggested} bytes=${size} saveMs=${Date.now() - saveStarted}`

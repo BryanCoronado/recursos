@@ -97,7 +97,7 @@ export function AutomationRuleForm({
                   by: "css",
                   selector:
                     'button:has-text("Download"), button:has-text("Descargar")',
-                  timeoutMs: 120000,
+                  timeoutMs: 300000,
                 },
               ],
               null,

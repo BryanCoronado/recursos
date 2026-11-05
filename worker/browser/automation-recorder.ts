@@ -198,7 +198,7 @@ async function attachRecorder(page: Page, provider: ResourceProviderId) {
           type: "download",
           by,
           selector,
-          timeoutMs: 120_000,
+          timeoutMs: 300_000,
         })
         return
       }

@@ -81,7 +81,7 @@ export function ensureDownloadStep(steps: AutomationStep[]): AutomationStep[] {
         type: "download",
         by: last.by,
         selector: last.selector,
-        timeoutMs: 120_000,
+        timeoutMs: 300_000,
       },
     ]
   }
